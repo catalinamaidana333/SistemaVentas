@@ -1,9 +1,170 @@
-﻿<Application x:Class="SistemaVentas.GUI.App"
+﻿<Application x:Class="GUI.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:SistemaVentas.GUI"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+
+        <!-- ========================================== -->
+        <!-- 🎨 PALETA DE COLORES "DEEP TWILIGHT"       -->
+        <!-- ========================================== -->
+
+        <!-- Fondos profundos -->
+        <SolidColorBrush x:Key="BgFondoPrincipal" Color="#000026"/>
+        <!-- Prussian Blue: Fondo general de la app -->
+        <SolidColorBrush x:Key="BgHeader" Color="#000035"/>
+        <!-- Deep Navy: Barras superiores o paneles secundarios -->
+        <SolidColorBrush x:Key="BgPaneles" Color="#021056"/>
+        <!-- Deep Twilight: Para tarjetas o tablas flotantes -->
+
+        <!-- Acentos dorados y botones -->
+        <SolidColorBrush x:Key="AcentoBoton" Color="#021056"/>
+        <!-- Deep Twilight (Botones principales) -->
+        <SolidColorBrush x:Key="DoradoSaffron" Color="#f2c832"/>
+        <!-- Saffron: Bordes y botones de acción secundaria -->
+        <SolidColorBrush x:Key="OroTexto" Color="#f7da59"/>
+        <!-- Royal Gold: Títulos y totales a cobrar -->
+
+        <!-- Alertas (Mantenemos un rojo oscuro elegante) -->
+        <SolidColorBrush x:Key="RojoPeligro" Color="#B71C1C"/>
+        <SolidColorBrush x:Key="BgInputs" Color="#E0E0E0"/>
+        <!-- Gris muy claro para que los inputs sean legibles -->
+
+        <!-- Textos -->
+        <SolidColorBrush x:Key="TextoClaro" Color="#FFFFFF"/>
+        <!-- Texto sobre fondos oscuros -->
+        <SolidColorBrush x:Key="TextoOscuro" Color="#000026"/>
+        <!-- Texto dentro de los inputs -->
+
+        <!-- ========================================== -->
+        <!-- 🔤 TIPOGRAFÍA BASE                           -->
+        <!-- ========================================== -->
+        <FontFamily x:Key="FuentePrimaria">Segoe UI, Arial, sans-serif</FontFamily>
+
+        <!-- ========================================== -->
+        <!-- 💅 ESTILOS DE COMPONENTES GLOBALES           -->
+        <!-- ========================================== -->
+
+        <!-- TÍTULO PRINCIPAL -->
+        <Style x:Key="TituloPrincipal" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource OroTexto}"/>
+            <Setter Property="FontFamily" Value="{StaticResource FuentePrimaria}"/>
+            <Setter Property="FontSize" Value="32"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+
+        <!-- BOTÓN PRIMARIO (Oscuro con reborde dorado sutil) -->
+        <Style x:Key="BotonPrimario" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource AcentoBoton}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextoClaro}"/>
+            <Setter Property="FontFamily" Value="{StaticResource FuentePrimaria}"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderBrush" Value="{StaticResource DoradoSaffron}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- CAMPOS DE TEXTO (TextBox) -->
+        <Style x:Key="InputTexto" TargetType="TextBox">
+            <Setter Property="FontFamily" Value="{StaticResource FuentePrimaria}"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Background" Value="{StaticResource BgInputs}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextoOscuro}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6">
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="0"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <!-- ========================================== -->
+        <!-- 📊 ESTILOS PARA TABLAS (DATAGRID)            -->
+        <!-- ========================================== -->
+
+        <!-- Estilo general del DataGrid -->
+        <Style TargetType="DataGrid">
+            <Setter Property="Background" Value="{StaticResource BgInputs}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource DoradoSaffron}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="RowBackground" Value="#FFFFFF"/>
+            <Setter Property="AlternatingRowBackground" Value="#F8F9FA"/>
+            <!-- Gris súper claro para alternar -->
+            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="#E0E0E0"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+            <Setter Property="CanUserAddRows" Value="False"/>
+            <Setter Property="SelectionMode" Value="Single"/>
+            <Setter Property="FontFamily" Value="{StaticResource FuentePrimaria}"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+
+        <!-- Estilo de la Cabecera (Columnas) -->
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="{StaticResource BgHeader}"/>
+            <!-- Deep Navy -->
+            <Setter Property="Foreground" Value="{StaticResource OroTexto}"/>
+            <!-- Dorado -->
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="BorderThickness" Value="0,0,0,2"/>
+            <Setter Property="BorderBrush" Value="{StaticResource DoradoSaffron}"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        </Style>
+
+        <!-- Estilo de las Filas -->
+        <Style TargetType="DataGridRow">
+            <Setter Property="Foreground" Value="{StaticResource TextoOscuro}"/>
+            <Style.Triggers>
+                <!-- Color cuando se selecciona una fila -->
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="{StaticResource BgPaneles}"/>
+                    <!-- Deep Twilight -->
+                    <Setter Property="Foreground" Value="{StaticResource TextoClaro}"/>
+                </Trigger>
+                <!-- Efecto Hover (al pasar el mouse) -->
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#D6E4FF"/>
+                    <!-- Un celeste muy suave -->
+                    <Setter Property="Foreground" Value="{StaticResource TextoOscuro}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Quitar el borde molesto de las celdas al hacer clic -->
+        <Style TargetType="DataGridCell">
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridCell">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="Transparent" 
+                                BorderThickness="0" 
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
     </Application.Resources>
 </Application>
