@@ -1,9 +1,7 @@
-﻿<Window x:Class="GUI.Ventas"
+﻿<UserControl x:Class="SistemaVentas.GUI.Ventas"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Punto de Venta" Height="768" Width="1100"
-        Background="{StaticResource BgFondoPrincipal}"
-        WindowStartupLocation="CenterScreen">
+        Background="{StaticResource BgFondoPrincipal}">
 
     <!-- Grilla Principal: Fila para Navbar y Fila para Contenido -->
     <Grid>
@@ -141,4 +139,4 @@
             </Border>
         </Grid>
     </Grid>
-</Window>
+</UserControl>

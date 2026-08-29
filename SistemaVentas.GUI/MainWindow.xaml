@@ -5,8 +5,37 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SistemaVentas.GUI"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="Sistema de Ventas" Height="768" Width="1280"
+        WindowStartupLocation="CenterScreen">
     <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="250"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
+        <!-- Menú Lateral -->
+        <Border Grid.Column="0" Background="{StaticResource BgHeader}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="80"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Text="MINIMARKET" 
+                           Foreground="{StaticResource OroTexto}" 
+                           FontSize="22" FontWeight="Bold" 
+                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+                <StackPanel Grid.Row="1" Margin="15,10">
+                    <Button Content="Punto de Venta" Style="{StaticResource BotonMenuLateral}"/>
+                    <Button Content="Productos" Style="{StaticResource BotonMenuLateral}" IsEnabled="False"/>
+                    <Button Content="Usuarios" Style="{StaticResource BotonMenuLateral}"/>
+                    <Button Content="Reportes" Style="{StaticResource BotonMenuLateral}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Área de Contenido Dinámico -->
+        <ContentControl x:Name="ContenedorPrincipal" Grid.Column="1"/>
     </Grid>
 </Window>

@@ -19,6 +19,7 @@ namespace SistemaVentas.GUI
         public MainWindow()
         {
             InitializeComponent();
+            ContenedorPrincipal.Content = new Ventas();
         }
     }
 }
