@@ -1,0 +1,144 @@
+﻿<Window x:Class="GUI.Ventas"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Punto de Venta" Height="768" Width="1100"
+        Background="{StaticResource BgFondoPrincipal}"
+        WindowStartupLocation="CenterScreen">
+
+    <!-- Grilla Principal: Fila para Navbar y Fila para Contenido -->
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Navbar Superior (Simulada) -->
+        <Grid Grid.Row="0" Background="{StaticResource BgHeader}">
+            <TextBlock Text="POS" Foreground="{StaticResource TextoClaro}" 
+                       FontSize="20" FontWeight="Bold" 
+                       VerticalAlignment="Center" Margin="20,0,0,0"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,20,0">
+                <TextBlock Text="⚙️ USERNAME" Foreground="{StaticResource TextoClaro}" FontSize="14"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Contenedor Principal Dividido (Izquierda 65% / Derecha 35%) -->
+        <Grid Grid.Row="1" Margin="30">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="6.5*"/>
+                <ColumnDefinition Width="3.5*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- ========================================== -->
+            <!-- COLUMNA IZQUIERDA (Lista de Productos)     -->
+            <!-- ========================================== -->
+            <Grid Grid.Column="0" Margin="0,0,20,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Título -->
+                <TextBlock Grid.Row="0" Text="POINT OF SALE" Style="{StaticResource TituloPrincipal}" Margin="0,0,0,20"/>
+
+                <!-- Buscador -->
+                <TextBox Grid.Row="1" Style="{StaticResource InputTexto}" Height="40" 
+                         Margin="0,0,0,15" Text="🔍 Search Item..."/>
+
+                <!-- Tabla de Ventas (DataGrid) -->
+                <DataGrid Grid.Row="2" x:Name="dgVentas" HeadersVisibility="Column">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="#" Width="50" Binding="{Binding Id}"/>
+                        <DataGridTextColumn Header="ITEM" Width="*" Binding="{Binding Nombre}"/>
+                        <DataGridTextColumn Header="QUANTITY" Width="100" Binding="{Binding Cantidad}"/>
+                        <DataGridTextColumn Header="UNIT" Width="80" Binding="{Binding Unidad}"/>
+                        <DataGridTextColumn Header="AMOUNT (MK)" Width="120" Binding="{Binding Monto}"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <!-- Panel Inferior Izquierdo (Acciones de fila) -->
+                <Grid Grid.Row="3" Margin="0,15,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Button Grid.Column="0" Content="DELETE" Style="{StaticResource BotonPeligro}" Width="100" Height="40" Margin="0,0,10,0"/>
+                    <Button Grid.Column="1" Content="▲" Style="{StaticResource BotonPrimario}" Width="50" Height="40" Margin="0,0,5,0"/>
+                    <Button Grid.Column="2" Content="▼" Style="{StaticResource BotonPrimario}" Width="50" Height="40" Margin="0,0,15,0"/>
+                    <TextBox Grid.Column="3" Style="{StaticResource InputTexto}" Height="40" Text="Notes..."/>
+                </Grid>
+            </Grid>
+
+            <!-- ========================================== -->
+            <!-- COLUMNA DERECHA (Panel de Cobro)           -->
+            <!-- ========================================== -->
+            <Border Grid.Column="1" Background="{StaticResource BgPaneles}" CornerRadius="8" Padding="20">
+                <StackPanel>
+
+                    <!-- Tarjeta del Total -->
+                    <Border BorderBrush="{StaticResource DoradoSaffron}" BorderThickness="3" CornerRadius="8" Padding="15" Margin="0,0,0,15">
+                        <StackPanel>
+                            <TextBlock Text="TOTAL" Foreground="{StaticResource TextoClaro}" FontSize="14" FontWeight="Bold"/>
+                            <TextBlock Text="MK 32,000" Foreground="{StaticResource OroTexto}" FontSize="36" FontWeight="Bold" Margin="0,5,0,0"/>
+                            <TextBlock Text="5 items" Foreground="#A0A0A0" FontSize="12"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Botón Principal de Venta -->
+                    <Button Content="PROCESS SALE" Style="{StaticResource BotonPrimario}" Height="50" Margin="0,0,0,15" FontSize="18"/>
+
+                    <!-- Selector de Método de Pago -->
+                    <ComboBox Height="40" Margin="0,0,0,20" SelectedIndex="0" 
+                              FontFamily="{StaticResource FuentePrimaria}" FontSize="14">
+                        <ComboBoxItem Content="💳 Cash"/>
+                        <ComboBoxItem Content="💳 Credit Card"/>
+                    </ComboBox>
+
+                    <!-- Grilla de Botones Secundarios (2x2) -->
+                    <Grid Margin="0,0,0,20">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="50"/>
+                            <RowDefinition Height="15"/>
+                            <RowDefinition Height="50"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="15"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Fila 1 -->
+                        <Button Grid.Row="0" Grid.Column="0" Content="⊗ VOID" Style="{StaticResource BotonContornoRojo}"/>
+                        <Button Grid.Row="0" Grid.Column="2" Content="⏸ HOLD" Style="{StaticResource BotonContornoAzul}"/>
+
+                        <!-- Fila 2 -->
+                        <Button Grid.Row="2" Grid.Column="0" Content="📄 RECEIPT" Style="{StaticResource BotonContornoAzul}"/>
+                        <Button Grid.Row="2" Grid.Column="2" Content="↪ LOGOUT" Style="{StaticResource BotonPeligro}"/>
+                    </Grid>
+
+                    <!-- Resumen de Impuestos -->
+                    <Separator Background="{StaticResource BgInputs}" Margin="0,0,0,15"/>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="10"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="Discount:" Foreground="{StaticResource TextoClaro}" HorizontalAlignment="Left"/>
+                        <TextBlock Grid.Row="0" Text="MK 0.00" Foreground="{StaticResource TextoClaro}" HorizontalAlignment="Right" FontWeight="Bold"/>
+
+                        <TextBlock Grid.Row="2" Text="Tax (0%):" Foreground="{StaticResource TextoClaro}" HorizontalAlignment="Left"/>
+                        <TextBlock Grid.Row="2" Text="MK 0.00" Foreground="{StaticResource TextoClaro}" HorizontalAlignment="Right" FontWeight="Bold"/>
+                    </Grid>
+
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>
