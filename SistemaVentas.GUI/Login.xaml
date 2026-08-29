@@ -1,0 +1,97 @@
+﻿<Window x:Class="GUI.Login"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Iniciar Sesión - Minimarket" Height="650" Width="900"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource BgFondoPrincipal}"
+        ResizeMode="NoResize">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="40"/>
+        </Grid.RowDefinitions>
+
+        <!-- Contenedor Central (Tarjeta del Login) -->
+        <Border Grid.Row="0" Background="{StaticResource BgPaneles}" 
+                Width="440" Height="480" VerticalAlignment="Center" HorizontalAlignment="Center"
+                CornerRadius="12" Padding="40,35"
+                BorderBrush="{StaticResource DoradoSaffron}" BorderThickness="1,1,1,3">
+
+            <StackPanel>
+
+                <!-- Título -->
+                <TextBlock Text="Iniciar Sesión" 
+                           Foreground="{StaticResource TextoOscuro}" 
+                           FontFamily="{StaticResource FuentePrimaria}"
+                           FontSize="26" FontWeight="Bold" 
+                           Margin="0,0,0,5"/>
+
+                <!-- Subtítulo -->
+                <TextBlock Text="Ingresa tus credenciales autorizadas de cajero o administrador." 
+                           Foreground="#6C757D" 
+                           FontFamily="{StaticResource FuentePrimaria}"
+                           FontSize="12" TextWrapping="Wrap"
+                           Margin="0,0,0,25"/>
+
+                <!-- Label Correo Electrónico -->
+                <TextBlock Text="CORREO ELECTRÓNICO" 
+                           Foreground="{StaticResource TextoOscuro}" 
+                           FontFamily="{StaticResource FuentePrimaria}"
+                           FontSize="11" FontWeight="Bold" 
+                           Margin="0,0,0,6"/>
+
+                <!-- TextBox Correo -->
+                <TextBox x:Name="txtUsuario" Style="{StaticResource InputTexto}" 
+                         Height="40" Margin="0,0,0,20" Text="usuario@minimarket.com"/>
+
+                <!-- Label Contraseña -->
+                <TextBlock Text="CONTRASEÑA" 
+                           Foreground="{StaticResource TextoOscuro}" 
+                           FontFamily="{StaticResource FuentePrimaria}"
+                           FontSize="11" FontWeight="Bold" 
+                           Margin="0,0,0,6"/>
+
+                <!-- PasswordBox con borde personalizado -->
+                <Border Background="{StaticResource BgInputs}" CornerRadius="6" Height="40" Margin="0,0,0,25">
+                    <PasswordBox x:Name="txtPassword" Background="Transparent" BorderThickness="0" 
+                                 Foreground="{StaticResource TextoOscuro}" Padding="10,8" FontSize="14"
+                                 VerticalContentAlignment="Center" Password="••••••••••••"/>
+                </Border>
+
+                <!-- Botón de Iniciar Sesión (Estilo Saffron/Dorado de alta visibilidad) -->
+                <Button x:Name="btnIngresar" Content="INICIAR SESIÓN" 
+                        Height="45" FontSize="14" FontWeight="Bold" Cursor="Hand"
+                        Background="{StaticResource DoradoSaffron}" 
+                        Foreground="{StaticResource TextoOscuro}"
+                        BorderThickness="0" Click="btnIngresar_Click">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="6">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+
+                <!-- Enlace Recuperar Contraseña -->
+                <TextBlock Margin="0,20,0,0" HorizontalAlignment="Center">
+                    <Hyperlink x:Name="lnkOlvidoPassword" Foreground="{StaticResource AcentoBoton}" NavigateUri="">
+                        ¿Olvidaste tu contraseña?
+                    </Hyperlink>
+                </TextBlock>
+
+                <!-- Mensaje de Error (Oculto por defecto) -->
+                <TextBlock x:Name="lblError" Text="Credenciales incorrectas." 
+                           Foreground="{StaticResource RojoPeligro}" 
+                           HorizontalAlignment="Center" Margin="0,10,0,0" 
+                           Visibility="Collapsed"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Pie de página inferior -->
+        <TextBlock Grid.Row="1" Text="© 2026 POS Terminal. Todos los derechos reservados." 
+                   Foreground="#8C9AA8" FontSize="12" 
+                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    </Grid>
+</Window>
