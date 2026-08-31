@@ -33,7 +33,7 @@ namespace SistemaVentas.DAL
 
             try
             {
-                using (SqlConnection conexion = new SqlConnection(cadenaConexion))
+                using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
                 {
                     conexion.Open();
 
@@ -59,7 +59,7 @@ namespace SistemaVentas.DAL
         {
             try
             {
-                using (SqlConnection conexion = new SqlConnection(cadenaConexion))
+                using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
                 {
                     conexion.Open();
 
@@ -102,7 +102,7 @@ namespace SistemaVentas.DAL
 
             try
             {
-                using (SqlConnection conexion = new SqlConnection(cadenaConexion))
+                using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
                 {
                     conexion.Open();
 
@@ -145,7 +145,7 @@ namespace SistemaVentas.DAL
 
             try
             {
-                using (SqlConnection conexion = new SqlConnection(cadenaConexion))
+                using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
                 {
                     conexion.Open();
 
@@ -181,7 +181,7 @@ namespace SistemaVentas.DAL
 
             try
             {
-                using (SqlConnection conexion = new SqlConnection(cadenaConexion))
+                using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
                 {
                     conexion.Open();
 
@@ -217,7 +217,7 @@ namespace SistemaVentas.DAL
 
             try
             {
-                using (SqlConnection conexion = new SqlConnection(cadenaConexion))
+                using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
                 {
                     conexion.Open();
 

@@ -21,17 +21,13 @@ namespace SistemaVentas.BLL
             string conexion = ConfigurationManager.ConnectionStrings["ConexionBD"].ConnectionString;
 
             // 2. Le inyectamos la conexión al DAL
-            usuarioDal = new UsuarioDAL(conexion);
+            usuarioDAL = new UsuarioDAL(conexion);
         }
 
-        // Constante del IdRol del Gerente (debe configurarse según la BD)
-        // En una aplicación real, esto debería venir de configuración
+        // Constante del IdRol hardcodeada en desarrollo (debe configurarse según la BD)
         private const int ID_ROL_GERENTE = 1;
 
-        public UsuarioBLL()
-        {
-            usuarioDAL = new UsuarioDAL();
-        }
+     
 
         /// <summary>
         /// Crea un nuevo usuario con validaciones completas de seguridad y reglas de negocio.
