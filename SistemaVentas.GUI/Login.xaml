@@ -1,4 +1,4 @@
-﻿<Window x:Class="GUI.Login"
+﻿<Window x:Class="SistemaVentas.GUI.Login"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Iniciar Sesión - Minimarket" Height="650" Width="900"
