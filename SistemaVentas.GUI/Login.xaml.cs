@@ -24,13 +24,14 @@ namespace SistemaVentas.GUI
     public partial class Login : Window
     {
         private UsuarioBLL usuarioBLL;
-        private UsuarioDAL usuarioDAL;
+        
 
         public Login()
         {
             InitializeComponent();
+            MessageBox.Show(BCrypt.Net.BCrypt.HashPassword("12345678"));
             usuarioBLL = new UsuarioBLL();
-            usuarioDAL = new UsuarioDAL();
+           
         }
 
         /// <summary>
@@ -64,7 +65,7 @@ namespace SistemaVentas.GUI
             try
             {
                 // PASO 4: Obtener usuario de BD por correo
-                Usuario usuarioEnBD = usuarioDAL.ObtenerUsuarioPorCorreo(correoIngresado);
+                Usuario usuarioEnBD = usuarioBLL.ObtenerUsuarioPorCorreo(correoIngresado);
 
                 if (usuarioEnBD == null)
                 {

@@ -17,11 +17,9 @@ namespace SistemaVentas.BLL
 
         public UsuarioBLL()
         {
-            // 1. Aquí SÍ leemos el App.config (estamos en una capa superior)
-            string conexion = ConfigurationManager.ConnectionStrings["ConexionBD"].ConnectionString;
-
+            
             // 2. Le inyectamos la conexión al DAL
-            usuarioDAL = new UsuarioDAL(conexion);
+            usuarioDAL = new UsuarioDAL();
         }
 
         // Constante del IdRol hardcodeada en desarrollo (debe configurarse según la BD)
@@ -209,6 +207,12 @@ namespace SistemaVentas.BLL
                 throw new UsuarioException(
                     $"Error al verificar la contraseña: {ex.Message}", ex);
             }
+        }
+
+        public Usuario ObtenerUsuarioPorCorreo(string correo)
+        {
+            // La BLL es la única autorizada para llamar a la DAL
+            return usuarioDAL.ObtenerUsuarioPorCorreo(correo);
         }
     }
 }

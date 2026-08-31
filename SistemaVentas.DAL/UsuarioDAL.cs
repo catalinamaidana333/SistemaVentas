@@ -5,6 +5,7 @@ using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 
+
 namespace SistemaVentas.DAL
 {
     /// <summary>
@@ -14,13 +15,11 @@ namespace SistemaVentas.DAL
     public class UsuarioDAL
     {
         private string _cadenaConexion;
-
-        public UsuarioDAL(string cadenaConexion)
+        // Constructor vacío (ya no pide parámetros)
+        public UsuarioDAL()
         {
-            if (string.IsNullOrWhiteSpace(cadenaConexion))
-                throw new ArgumentException("La cadena de conexión no puede estar vacía");
-
-            _cadenaConexion = cadenaConexion;
+            // Revisa tu App.config y reemplaza "NombreDeTuConexion" por el valor exacto del atributo name="..."
+            _cadenaConexion = ConfigurationManager.ConnectionStrings["ConexionBD"].ConnectionString;
         }
 
         /// <summary>

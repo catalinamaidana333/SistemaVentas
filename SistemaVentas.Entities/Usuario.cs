@@ -11,5 +11,6 @@ namespace SistemaVentas.Entities
         public string Correo { get; set; }
         public string Password { get; set; }
         public int IdRol { get; set; }
+        public bool Estado { get; set; }
     }
 }
