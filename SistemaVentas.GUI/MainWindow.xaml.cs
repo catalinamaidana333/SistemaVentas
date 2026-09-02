@@ -19,6 +19,18 @@ namespace SistemaVentas.GUI
         public MainWindow()
         {
             InitializeComponent();
+            // pantalla inicial al abrir MainWindow
+            ContenedorPrincipal.Content = new UsuarioControl();
+        }
+        private void btnUsuarios_Click(object sender, RoutedEventArgs e)
+        {
+            // Reemplaza el contenido con la vista de Usuarios
+            ContenedorPrincipal.Content = new UsuarioControl();
+        }
+
+        private void btnVentas_Click(object sender, RoutedEventArgs e)
+        {
+            // Reemplaza el contenido con la vista de Ventas
             ContenedorPrincipal.Content = new Ventas();
         }
     }
