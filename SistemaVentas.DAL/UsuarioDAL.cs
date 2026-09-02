@@ -96,42 +96,35 @@ namespace SistemaVentas.DAL
         /// </summary>
         public Usuario ObtenerUsuarioPorCorreo(string correo)
         {
-            if (string.IsNullOrWhiteSpace(correo))
-                return null;
+            Usuario usuario = null;
 
-            try
+            using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
             {
-                using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
-                {
-                    conexion.Open();
+                // 1. El string SQL usa estrictamente los nombres de la base de datos
+                string query = "SELECT id_usuario, nombre_completo, correo, password, id_rol, activo FROM Usuario WHERE correo = @correo";
 
-                    string consulta = "SELECT IdUsuario, Nombre, Correo, Password, IdRol FROM Usuario WHERE Correo = @correo";
-                    using (SqlCommand comando = new SqlCommand(consulta, conexion))
+                SqlCommand cmd = new SqlCommand(query, conexion);
+                cmd.Parameters.AddWithValue("@correo", correo);
+
+                conexion.Open();
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
                     {
-                        comando.Parameters.AddWithValue("@correo", correo);
-                        using (SqlDataReader lector = comando.ExecuteReader())
-                        {
-                            if (lector.Read())
-                            {
-                                return new Usuario
-                                {
-                                    IdUsuario = (int)lector["IdUsuario"],
-                                    Nombre = lector["Nombre"].ToString(),
-                                    Correo = lector["Correo"].ToString(),
-                                    Password = lector["Password"].ToString(),
-                                    IdRol = (int)lector["IdRol"]
-                                };
-                            }
-                        }
+                        usuario = new Usuario();
+
+                        // 2. Las propiedades de C# (izquierda) reciben los datos de las columnas SQL (derecha)
+                        usuario.IdUsuario = Convert.ToInt32(reader["id_usuario"]);
+                        usuario.Nombre = reader["nombre_completo"].ToString();
+                        usuario.Correo = reader["correo"].ToString();
+                        usuario.Password = reader["password"].ToString();
+                        usuario.IdRol = Convert.ToInt32(reader["id_rol"]);
+                        usuario.Estado = Convert.ToBoolean(reader["activo"]);
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                throw new UsuarioException($"Error al obtener usuario por correo: {ex.Message}", ex);
-            }
-
-            return null;
+            return usuario;
         }
 
         /// <summary>

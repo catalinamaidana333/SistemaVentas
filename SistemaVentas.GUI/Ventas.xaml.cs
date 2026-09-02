@@ -9,7 +9,7 @@ namespace SistemaVentas.GUI
     {
         public Ventas()
         {
-            InitializeComponent();
+            //InitializeComponent();
         }
     }
 }

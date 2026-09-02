@@ -29,7 +29,7 @@ namespace SistemaVentas.GUI
         public Login()
         {
             InitializeComponent();
-            MessageBox.Show(BCrypt.Net.BCrypt.HashPassword("12345678"));
+            
             usuarioBLL = new UsuarioBLL();
            
         }
@@ -70,7 +70,7 @@ namespace SistemaVentas.GUI
                 if (usuarioEnBD == null)
                 {
                     // Usuario no existe en BD
-                    MostrarError("Correo o contraseña incorrectos.");
+                    MostrarError("Correo no se encontro");
                     return;
                 }
 
@@ -79,7 +79,7 @@ namespace SistemaVentas.GUI
                 if (!usuarioBLL.VerificarPassword(passwordIngresada, usuarioEnBD.Password))
                 {
                     // Contraseña incorrecta
-                    MostrarError("Correo o contraseña incorrectos.");
+                    MostrarError("Contraseña incorrecta");
                     return;
                 }
 
