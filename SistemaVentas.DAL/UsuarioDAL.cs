@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 
 
 namespace SistemaVentas.DAL
@@ -15,10 +15,10 @@ namespace SistemaVentas.DAL
     public class UsuarioDAL
     {
         private string _cadenaConexion;
-        // Constructor vacío (ya no pide parámetros)
+        
         public UsuarioDAL()
         {
-            // Revisa tu App.config y reemplaza "NombreDeTuConexion" por el valor exacto del atributo name="..."
+            // segun App.config 
             _cadenaConexion = ConfigurationManager.ConnectionStrings["ConexionBD"].ConnectionString;
         }
 
@@ -62,7 +62,7 @@ namespace SistemaVentas.DAL
                 {
                     conexion.Open();
 
-                    string consulta = "SELECT IdUsuario, Nombre, Correo, Password, IdRol FROM Usuario WHERE IdUsuario = @idUsuario";
+                    string consulta = "SELECT id_suario, nombre_completo, correo, password, id_rol FROM Usuario WHERE id_usuario = @idUsuario";
                     using (SqlCommand comando = new SqlCommand(consulta, conexion))
                     {
                         comando.Parameters.AddWithValue("@idUsuario", idUsuario);
@@ -72,11 +72,11 @@ namespace SistemaVentas.DAL
                             {
                                 return new Usuario
                                 {
-                                    IdUsuario = (int)lector["IdUsuario"],
-                                    Nombre = lector["Nombre"].ToString(),
-                                    Correo = lector["Correo"].ToString(),
-                                    Password = lector["Password"].ToString(),
-                                    IdRol = (int)lector["IdRol"]
+                                    IdUsuario = (int)lector["id_usuario"],
+                                    Nombre = lector["nombre_completo"].ToString(),
+                                    Correo = lector["correo"].ToString(),
+                                    Password = lector["password"].ToString(),
+                                    IdRol = (int)lector["id_rol"]
                                 };
                             }
                         }
@@ -178,8 +178,8 @@ namespace SistemaVentas.DAL
                     conexion.Open();
 
                     string consulta = @"UPDATE Usuario 
-                                       SET Nombre = @nombre, Correo = @correo, Password = @password, IdRol = @idRol
-                                       WHERE IdUsuario = @idUsuario";
+                                       SET nombre_completo = @nombre, correo = @correo, password = @password, id_rol = @idRol
+                                       WHERE id_usuario = @idUsuario";
 
                     using (SqlCommand comando = new SqlCommand(consulta, conexion))
                     {
@@ -213,7 +213,7 @@ namespace SistemaVentas.DAL
                 {
                     conexion.Open();
 
-                    string consulta = "SELECT IdUsuario, Nombre, Correo, Password, IdRol FROM Usuario";
+                    string consulta = "SELECT id_usuario, nombre_completo, correo, password, id_rol FROM Usuario";
                     using (SqlCommand comando = new SqlCommand(consulta, conexion))
                     {
                         using (SqlDataReader lector = comando.ExecuteReader())
@@ -222,11 +222,11 @@ namespace SistemaVentas.DAL
                             {
                                 usuarios.Add(new Usuario
                                 {
-                                    IdUsuario = (int)lector["IdUsuario"],
-                                    Nombre = lector["Nombre"].ToString(),
-                                    Correo = lector["Correo"].ToString(),
-                                    Password = lector["Password"].ToString(),
-                                    IdRol = (int)lector["IdRol"]
+                                    IdUsuario = (int)lector["id_usuario"],
+                                    Nombre = lector["nombre_completo"].ToString(),
+                                    Correo = lector["correo"].ToString(),
+                                    Password = lector["password"].ToString(),
+                                    IdRol = (int)lector["id_rol"]
                                 });
                             }
                         }
