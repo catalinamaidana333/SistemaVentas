@@ -31,6 +31,7 @@
 
             <Button x:Name="btnCrearUsuario" 
                     Content="Crear Usuario" 
+                    Click="btnCrearUsuario_Click"
                     Style="{StaticResource BotonPrimario}" 
                     Grid.Column="1" 
                     Width="160" 
@@ -50,5 +51,43 @@
                 <DataGridTextColumn Header="Rol" Width="Auto"/>
             </DataGrid.Columns>
         </DataGrid>
+        <!-- ESTE ES EL MODAL SUPERPUESTO (Inicialmente oculto) -->
+        <Grid x:Name="ModalCrearUsuario" Visibility="Collapsed" Background="#80000000">
+            <!-- Contenedor blanco del formulario -->
+            <Border Width="350" Height="420" Background="White" CornerRadius="10" 
+                VerticalAlignment="Center" HorizontalAlignment="Center" Padding="25">
+                <StackPanel>
+                    <TextBlock Text="NUEVO USUARIO" FontWeight="Bold" FontSize="18" 
+                           HorizontalAlignment="Center" Margin="0,0,0,20"/>
+
+                    <TextBlock Text="Nombre Completo" FontWeight="SemiBold"/>
+                    <TextBox x:Name="txtNombre" Height="30" Margin="0,0,0,10" Padding="5"/>
+
+                    <TextBlock Text="Email" FontWeight="SemiBold"/>
+                    <TextBox x:Name="txtCorreo" Height="30" Margin="0,0,0,10" Padding="5"/>
+
+                    <TextBlock Text="Contraseña" FontWeight="SemiBold"/>
+                    <PasswordBox x:Name="txtPassword" Height="30" Margin="0,0,0,10" Padding="5"/>
+
+                    <TextBlock Text="Rol Asignado" FontWeight="SemiBold"/>
+                    <ComboBox x:Name="cmbRol" Height="30" Margin="0,0,0,25" Padding="5">
+                        <!-- Ajusta el Tag al ID real que tengan en tu base de datos -->
+                        <ComboBoxItem Content="Vendedor" Tag="2" IsSelected="True"/>
+                        <ComboBoxItem Content="Supervisor" Tag="3"/>
+                    </ComboBox>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Content="Guardar" Click="btnGuardarUsuario_Click" 
+                            Width="120" Height="35" Margin="0,0,15,0" 
+                            Background="#28a745" Foreground="White"/>
+                        <Button Content="Cancelar" Click="btnCerrarModal_Click" 
+                            Width="120" Height="35" 
+                            Background="#dc3545" Foreground="White"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+        <!-- </Grid> (Aquí termina tu Grid principal) -->
     </Grid>
+    
 </UserControl>

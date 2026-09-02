@@ -141,7 +141,7 @@ namespace SistemaVentas.DAL
                 {
                     conexion.Open();
 
-                    string consulta = @"INSERT INTO Usuario (Nombre, Correo, Password, IdRol) 
+                    string consulta = @"INSERT INTO Usuario (nombre_completo, correo, password, id_rol) 
                                        VALUES (@nombre, @correo, @password, @idRol);
                                        SELECT SCOPE_IDENTITY();";
 
