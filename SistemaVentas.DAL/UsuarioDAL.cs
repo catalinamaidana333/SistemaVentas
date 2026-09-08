@@ -240,5 +240,48 @@ namespace SistemaVentas.DAL
 
             return usuarios;
         }
+    
+    public List<Usuario> ObtenerPorRol(int idRolBuscado)
+        {
+            List<Usuario> usuarios = new List<Usuario>();
+
+            try
+            {
+                using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
+                {
+                    conexion.Open();
+                    // El filtrado ocurre en el motor de base de datos
+                    string consulta = "SELECT id_usuario, nombre_completo, correo, password, id_rol FROM Usuario WHERE id_rol = @IdRol";
+
+                    using (SqlCommand comando = new SqlCommand(consulta, conexion))
+                    {
+                        // Usamos parámetros por seguridad
+                        comando.Parameters.AddWithValue("@IdRol", idRolBuscado);
+
+                        using (SqlDataReader lector = comando.ExecuteReader())
+                        {
+                            while (lector.Read())
+                            {
+                                usuarios.Add(new Usuario
+                                {
+                                    IdUsuario = (int)lector["id_usuario"],
+                                    Nombre = lector["nombre_completo"].ToString(),
+                                    Correo = lector["correo"].ToString(),
+                                    Password = lector["password"].ToString(),
+                                    IdRol = (int)lector["id_rol"]
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new UsuarioException($"Error al filtrar usuarios por rol: {ex.Message}", ex);
+            }
+
+            return usuarios;
+        }
     }
 }
+

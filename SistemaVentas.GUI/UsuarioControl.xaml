@@ -40,15 +40,17 @@
         </Grid>
 
         <!-- DATAGRID: Tabla de usuarios heredando estilo base -->
+        <!-- DATAGRID: Tabla de usuarios heredando estilo base -->
         <DataGrid x:Name="dgListaUsuarios" 
-                  Grid.Row="1" 
-                  Margin="0,10,0,0">
-            <!-- Definición visual de columnas (Sin lógica aún) -->
+              Grid.Row="1" 
+              Margin="0,10,0,0"
+              AutoGenerateColumns="False">
+            <!-- Definición visual de columnas con sus respectivos Bindings -->
             <DataGrid.Columns>
-                <DataGridTextColumn Header="ID" Width="Auto"/>
-                <DataGridTextColumn Header="Nombre" Width="*"/>
-                <DataGridTextColumn Header="Correo Electrónico" Width="*"/>
-                <DataGridTextColumn Header="Rol" Width="Auto"/>
+                <DataGridTextColumn Header="ID" Width="Auto" Binding="{Binding IdUsuario}"/>
+                <DataGridTextColumn Header="Nombre" Width="*" Binding="{Binding Nombre}"/>
+                <DataGridTextColumn Header="Correo Electrónico" Width="*" Binding="{Binding Correo}"/>
+                <DataGridTextColumn Header="Rol" Width="Auto" Binding="{Binding IdRol}"/>
             </DataGrid.Columns>
         </DataGrid>
         <!-- ESTE ES EL MODAL SUPERPUESTO (Inicialmente oculto) -->

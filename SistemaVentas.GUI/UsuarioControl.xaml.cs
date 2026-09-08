@@ -3,42 +3,90 @@ using SistemaVentas.Entities;
 using SistemaVentas.GUI.Contexto;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace SistemaVentas.GUI
 {
-    /// <summary>
-    /// Lógica de interacción para UsuarioControl.xaml
-    /// </summary>
     public partial class UsuarioControl : UserControl
     {
+        private UsuarioBLL _usuarioLogica;
+
         public UsuarioControl()
         {
             InitializeComponent();
+            _usuarioLogica = new UsuarioBLL();
+
+            // Enganchamos el evento Loaded para que al abrir la vista cargue todo
+            this.Loaded += UsuarioControl_Loaded;
         }
-        // 1. Tu botón original que está arriba de la tabla ahora solo abre el modal
+
+        private void UsuarioControl_Loaded(object sender, RoutedEventArgs e)
+        {
+            ConfigurarAccesos();
+            CargarUsuarios();
+        }
+
+        private void ConfigurarAccesos()
+        {
+            int idRol = SesionGlobal.UsuarioActual.IdRol;
+
+            // 1. Vendedor (3): No debería poder ver este UserControl
+            if (idRol == 3)
+            {
+                MessageBox.Show("No tienes permisos para acceder a este módulo.", "Acceso Denegado", MessageBoxButton.OK, MessageBoxImage.Error);
+                this.Visibility = Visibility.Collapsed; // Oculta todo el control
+                return;
+            }
+
+            // 2. Supervisor (2): Solo lectura (ve vendedores, no puede crear ni editar)
+            if (idRol == 2)
+            {
+                btnCrearUsuario.Visibility = Visibility.Collapsed;
+
+                // Si usas edición directa en celdas, deshabilitamos la grilla
+                if (dgListaUsuarios != null)
+                {
+                    dgListaUsuarios.IsReadOnly = true;
+                }
+
+                // Nota: Si tenés una columna con un botón "Editar" por cada fila en el XAML,
+                // deberás manejar su visibilidad desde el XAML usando DataTriggers o en el evento AutoGeneratingColumn.
+            }
+
+            // 3. Gerente (1): Pasa de largo, tiene acceso a todo.
+        }
+
+        private void CargarUsuarios()
+        {
+            try
+            {
+                // La BLL se encarga de saber qué usuarios devolver según el rol
+                List<Usuario> listaUsuarios = _usuarioLogica.ObtenerUsuariosParaVista(SesionGlobal.UsuarioActual.IdRol);
+
+                // Asignamos la lista a la tabla (Asegurate que tu DataGrid se llame dgUsuarios)
+                if (dgListaUsuarios != null)
+                {
+                    dgListaUsuarios.ItemsSource = listaUsuarios;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar la lista de usuarios: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         private void btnCrearUsuario_Click(object sender, RoutedEventArgs e)
         {
             ModalCrearUsuario.Visibility = Visibility.Visible;
         }
 
-        // 2. Botón para cerrar el modal sin guardar
         private void btnCerrarModal_Click(object sender, RoutedEventArgs e)
         {
             ModalCrearUsuario.Visibility = Visibility.Collapsed;
             LimpiarFormulario();
         }
 
-        // 3. El nuevo botón de Guardar que está dentro del formulario
         private void btnGuardarUsuario_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -47,7 +95,6 @@ namespace SistemaVentas.GUI
                 string correo = txtCorreo.Text?.Trim();
                 string password = txtPassword.Password;
 
-                // Obtener el ID del rol desde el ComboBox (usando la propiedad Tag)
                 ComboBoxItem rolSeleccionado = (ComboBoxItem)cmbRol.SelectedItem;
                 int idRol = Convert.ToInt32(rolSeleccionado.Tag);
 
@@ -59,18 +106,15 @@ namespace SistemaVentas.GUI
                     IdRol = idRol
                 };
 
-                Usuario usuarioAutenticado = SesionGlobal.UsuarioActual;
-                UsuarioBLL usuarioLogica = new UsuarioBLL();
-
-                usuarioLogica.CrearUsuario(nuevoUsuario, usuarioAutenticado);
+                _usuarioLogica.CrearUsuario(nuevoUsuario, SesionGlobal.UsuarioActual);
 
                 MessageBox.Show("Usuario creado con éxito", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
 
-                // Cerrar modal y limpiar
                 ModalCrearUsuario.Visibility = Visibility.Collapsed;
                 LimpiarFormulario();
 
-                // AQUÍ DEBERÍAS RECARGAR TU TABLA
+                // AQUÍ RECARGAMOS LA TABLA
+                CargarUsuarios();
             }
             catch (Exception ex)
             {
@@ -83,7 +127,7 @@ namespace SistemaVentas.GUI
             txtNombre.Clear();
             txtCorreo.Clear();
             txtPassword.Clear();
-            cmbRol.SelectedIndex = 0; // Vuelve al primer elemento (Vendedor)
+            cmbRol.SelectedIndex = 0;
         }
     }
 }
