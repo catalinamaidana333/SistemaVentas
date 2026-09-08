@@ -232,5 +232,39 @@ namespace SistemaVentas.BLL
             // 3. Regla: El gerente ve a todos
             return usuarioDAL.ObtenerTodos();
         }
+
+        public bool ActualizarUsuario(Usuario usuarioActualizado)
+        {
+            // 1. Validaciones de negocio
+            if (string.IsNullOrWhiteSpace(usuarioActualizado.Nombre))
+            {
+                throw new Exception("El nombre del usuario no puede estar vacío.");
+            }
+
+            if (string.IsNullOrWhiteSpace(usuarioActualizado.Correo))
+            {
+                throw new Exception("El correo no puede estar vacío.");
+            }
+
+            if (usuarioActualizado.IdRol < 1 || usuarioActualizado.IdRol > 3)
+            {
+                throw new Exception("El rol seleccionado no es válido.");
+            }
+
+            // 2. Si todo está bien, mandamos a la DAL
+            return usuarioDAL.ActualizarUsuario(usuarioActualizado);
+        }
+
+        public bool DarDeBajaUsuario(int idUsuarioObjetivo)
+        {
+            // Opcional: Validación de negocio adicional
+            if (idUsuarioObjetivo <= 0)
+            {
+                throw new Exception("ID de usuario no válido.");
+            }
+
+            // Llamamos a la DAL para el borrado lógico
+            return usuarioDAL.DarDeBajaUsuario(idUsuarioObjetivo);
+        }
     }
 }

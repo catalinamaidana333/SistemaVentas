@@ -31,30 +31,34 @@ namespace SistemaVentas.GUI
         {
             int idRol = SesionGlobal.UsuarioActual.IdRol;
 
-            // 1. Vendedor (3): No debería poder ver este UserControl
-            if (idRol == 3)
+            // 1. Vendedor (Rol 2): No tiene permisos para ver la gestión de usuarios
+            if (idRol == 2)
             {
                 MessageBox.Show("No tienes permisos para acceder a este módulo.", "Acceso Denegado", MessageBoxButton.OK, MessageBoxImage.Error);
                 this.Visibility = Visibility.Collapsed; // Oculta todo el control
                 return;
             }
 
-            // 2. Supervisor (2): Solo lectura (ve vendedores, no puede crear ni editar)
-            if (idRol == 2)
+            // 2. Supervisor (Rol 3): Acceso de solo lectura (no puede crear ni editar)
+            if (idRol == 3)
             {
+                // Ocultar botón de crear usuario
                 btnCrearUsuario.Visibility = Visibility.Collapsed;
 
-                // Si usas edición directa en celdas, deshabilitamos la grilla
+                // Ocultar la columna de acciones (botón de editar)
+                if (colAcciones != null)
+                {
+                    colAcciones.Visibility = Visibility.Collapsed;
+                }
+
+                // Deshabilitar la edición directa en la grilla por seguridad
                 if (dgListaUsuarios != null)
                 {
                     dgListaUsuarios.IsReadOnly = true;
                 }
-
-                // Nota: Si tenés una columna con un botón "Editar" por cada fila en el XAML,
-                // deberás manejar su visibilidad desde el XAML usando DataTriggers o en el evento AutoGeneratingColumn.
             }
 
-            // 3. Gerente (1): Pasa de largo, tiene acceso a todo.
+            // 3. Gerente (Rol 1): Pasa de largo, mantiene visibilidad de la columna y botón de crear.
         }
 
         private void CargarUsuarios()
@@ -128,6 +132,106 @@ namespace SistemaVentas.GUI
             txtCorreo.Clear();
             txtPassword.Clear();
             cmbRol.SelectedIndex = 0;
+        }
+
+        // Variable para almacenar el usuario que seleccionamos en la grilla
+        private Usuario _usuarioSeleccionado;
+
+        // Método que se ejecuta al hacer clic en "Editar" en cualquier fila
+        private void BtnEditar_Click(object sender, RoutedEventArgs e)
+        {
+            // Obtenemos el botón que fue clickeado
+            Button btn = sender as Button;
+
+            // Extraemos la entidad Usuario que está vinculada a esa fila
+            _usuarioSeleccionado = btn.DataContext as Usuario;
+
+            if (_usuarioSeleccionado != null)
+            {
+                // Precargamos los TextBox
+                txtEditNombre.Text = _usuarioSeleccionado.Nombre;
+                txtEditCorreo.Text = _usuarioSeleccionado.Correo;
+
+                // Precargamos el ComboBox de Roles buscando el Tag que coincida
+                foreach (ComboBoxItem item in cmbEditRol.Items)
+                {
+                    if (Convert.ToInt32(item.Tag) == _usuarioSeleccionado.IdRol)
+                    {
+                        cmbEditRol.SelectedItem = item;
+                        break;
+                    }
+                }
+
+                // Mostramos el modal de edición
+                ModalEditarUsuario.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void btnGuardarEdicion_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // 1. Validar que tengamos un usuario seleccionado
+                if (_usuarioSeleccionado == null) return;
+
+                // 2. Extraer el rol del ComboBox
+                ComboBoxItem rolSeleccionado = (ComboBoxItem)cmbEditRol.SelectedItem;
+                int idRolNuevo = Convert.ToInt32(rolSeleccionado.Tag);
+
+                // 3. Actualizar la entidad con los datos del formulario
+                _usuarioSeleccionado.Nombre = txtEditNombre.Text.Trim();
+                _usuarioSeleccionado.Correo = txtEditCorreo.Text.Trim();
+                _usuarioSeleccionado.IdRol = idRolNuevo;
+
+                // 4. Mandar a la BLL
+                // (Ajusta el nombre del método según cómo lo hayas llamado en UsuarioBLL)
+                _usuarioLogica.ActualizarUsuario(_usuarioSeleccionado);
+
+                MessageBox.Show("Usuario actualizado con éxito", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                // 5. Ocultar modal y recargar grilla
+                ModalEditarUsuario.Visibility = Visibility.Collapsed;
+                CargarUsuarios();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al actualizar: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void btnDarDeBaja_Click(object sender, RoutedEventArgs e)
+        {
+            // Validar seguridad (Preguntar primero)
+            var respuesta = MessageBox.Show($"¿Estás seguro de que deseas dar de baja al usuario '{_usuarioSeleccionado.Nombre}'?",
+                                            "Confirmar Baja",
+                                            MessageBoxButton.YesNo,
+                                            MessageBoxImage.Warning);
+
+            if (respuesta == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    // Mandar solo el ID a la BLL para el borrado lógico
+                    // (Ajusta el nombre del método según cómo lo hayas llamado en UsuarioBLL)
+                    _usuarioLogica.DarDeBajaUsuario(_usuarioSeleccionado.IdUsuario);
+
+                    MessageBox.Show("Usuario dado de baja exitosamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                    // Ocultar modal y recargar grilla
+                    ModalEditarUsuario.Visibility = Visibility.Collapsed;
+                    CargarUsuarios();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error al dar de baja: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void btnCerrarModalEdicion_Click(object sender, RoutedEventArgs e)
+        {
+            // Simplemente ocultamos el modal de edición
+            ModalEditarUsuario.Visibility = Visibility.Collapsed;
         }
     }
 }

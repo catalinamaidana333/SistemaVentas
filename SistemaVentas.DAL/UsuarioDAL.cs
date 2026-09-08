@@ -282,6 +282,33 @@ namespace SistemaVentas.DAL
 
             return usuarios;
         }
+    
+    public bool DarDeBajaUsuario(int idUsuario)
+        {
+            bool respuesta = false;
+            using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
+            {
+                try
+                {
+                    // Borrado lógico: Actualizamos el estado a 0 (Inactivo) en lugar de usar DELETE
+                    // Ajusta "Activo = 0" según cómo se llame tu columna en SQL Server
+                    string query = "UPDATE Usuario SET Activo = 0 WHERE id_usuario = @IdUsuario";
+
+                    SqlCommand cmd = new SqlCommand(query, conexion);
+                    cmd.Parameters.AddWithValue("@IdUsuario", idUsuario);
+
+                    conexion.Open();
+                    int filasAfectadas = cmd.ExecuteNonQuery();
+
+                    respuesta = filasAfectadas > 0;
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("Error en la base de datos al dar de baja: " + ex.Message);
+                }
+            }
+            return respuesta;
+        }
     }
 }
 
