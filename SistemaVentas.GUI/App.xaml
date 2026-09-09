@@ -3,6 +3,15 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              StartupUri="Login.xaml">
     <Application.Resources>
+        <!-- Pincel para cuando hay un error -->
+        <SolidColorBrush x:Key="ColorBordeError" Color="#FF3333" />
+        <!-- Rojo -->
+
+        <!-- Pincel para el borde normal (elige el que más te guste para tu diseño) -->
+        <SolidColorBrush x:Key="ColorBordeNormalAzul" Color="#1E90FF" />
+        <!-- Azul Dodger -->
+        <SolidColorBrush x:Key="ColorBordeNormalAmarillo" Color="#FFFACD" />
+        <!-- Amarillo clarito (LemonChiffon) -->
 
         <!-- ========================================== -->
         <!-- 🎨 PALETA DE COLORES "DEEP TWILIGHT"       -->

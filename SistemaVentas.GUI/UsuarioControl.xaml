@@ -74,13 +74,13 @@
                            HorizontalAlignment="Center" Margin="0,0,0,20"/>
 
                     <TextBlock Text="Nombre Completo" FontWeight="SemiBold"/>
-                    <TextBox x:Name="txtNombre" Height="30" Margin="0,0,0,10" Padding="5"/>
+                    <TextBox x:Name="txtNombre" LostFocus="txtNombre_LostFocus" Height="30" Margin="0,0,0,10" Padding="5"/>
 
                     <TextBlock Text="Email" FontWeight="SemiBold"/>
-                    <TextBox x:Name="txtCorreo" Height="30" Margin="0,0,0,10" Padding="5"/>
+                    <TextBox x:Name="txtCorreo" LostFocus="txtCorreo_LostFocus" Height="30" Margin="0,0,0,10" Padding="5"/>
 
                     <TextBlock Text="Contraseña" FontWeight="SemiBold"/>
-                    <PasswordBox x:Name="txtPassword" Height="30" Margin="0,0,0,10" Padding="5"/>
+                    <PasswordBox x:Name="txtPassword" LostFocus="txtPassword_LostFocus" Height="30" Margin="0,0,0,10" Padding="5"/>
 
                     <TextBlock Text="Rol Asignado" FontWeight="SemiBold"/>
                     <ComboBox x:Name="cmbRol" Height="30" Margin="0,0,0,25" Padding="5">

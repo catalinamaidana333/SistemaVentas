@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace SistemaVentas.GUI
 {
@@ -232,6 +233,62 @@ namespace SistemaVentas.GUI
         {
             // Simplemente ocultamos el modal de edición
             ModalEditarUsuario.Visibility = Visibility.Collapsed;
+        }
+
+        private void txtNombre_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (!ValidadorGUI.EsNombreValido(txtNombre.Text, out string error))
+            {
+                // ACÁ: Usamos el rojo que definiste en App.xaml
+                txtNombre.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeError");
+
+                // TIP VISUAL: Podés engrosar el borde para que el error se note más
+                txtNombre.BorderThickness = new Thickness(2);
+
+                txtNombre.ToolTip = error;
+            }
+            else
+            {
+                txtNombre.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeNormalAzul");
+
+                // Volvemos el grosor a la normalidad
+                txtNombre.BorderThickness = new Thickness(1);
+
+                txtNombre.ToolTip = null;
+            }
+        }
+
+        private void txtCorreo_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (!ValidadorGUI.EsCorreoValido(txtCorreo.Text, out string error))
+            {
+                txtCorreo.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeError");
+                txtCorreo.BorderThickness = new Thickness(2);
+                txtCorreo.ToolTip = error;
+            }
+            else
+            {
+                txtCorreo.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeNormalAzul");
+                txtCorreo.BorderThickness = new Thickness(1);
+                txtCorreo.ToolTip = null;
+            }
+        }
+
+        private void txtPassword_LostFocus(object sender, RoutedEventArgs e)
+        {
+            // Ojo aquí: usamos .Password en lugar de .Text
+            if (!ValidadorGUI.EsPasswordValido(txtPassword.Password, out string error))
+            {
+                txtPassword.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeError");
+                txtPassword.BorderThickness = new Thickness(2);
+                txtPassword.ToolTip = error;
+            }
+            else
+            {
+                txtPassword.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeNormalAzul");
+                txtPassword.BorderThickness = new Thickness(1);
+                txtPassword.ToolTip = null;
+            }
         }
     }
 }
