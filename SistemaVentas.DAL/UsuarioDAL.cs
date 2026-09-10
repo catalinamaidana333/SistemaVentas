@@ -62,7 +62,7 @@ namespace SistemaVentas.DAL
                 {
                     conexion.Open();
 
-                    string consulta = "SELECT id_suario, nombre_completo, correo, password, id_rol FROM Usuario WHERE id_usuario = @idUsuario";
+                    string consulta = "SELECT id_usuario, nombre_completo, correo, password, id_rol FROM Usuario WHERE id_usuario = @idUsuario";
                     using (SqlCommand comando = new SqlCommand(consulta, conexion))
                     {
                         comando.Parameters.AddWithValue("@idUsuario", idUsuario);
