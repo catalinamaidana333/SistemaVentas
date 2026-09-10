@@ -3,6 +3,7 @@ using SistemaVentas.Entities;
 using System;
 using System.Configuration;
 using System.Text.RegularExpressions;
+using static SistemaVentas.Entities.Rol;
 using BC = BCrypt.Net.BCrypt;
 
 namespace SistemaVentas.BLL
@@ -213,6 +214,90 @@ namespace SistemaVentas.BLL
         {
             // La BLL es la única autorizada para llamar a la DAL
             return usuarioDAL.ObtenerUsuarioPorCorreo(correo);
+        }
+
+        public List<Usuario> ObtenerUsuariosParaVista(int idRolUsuarioActual)
+        {
+            // 1. Regla: El vendedor no tiene acceso
+            if (idRolUsuarioActual == (int)Roles.Vendedor)
+            {
+                throw new UnauthorizedAccessException("No tienes permisos para ver el listado de usuarios.");
+            }
+
+            // 2. Regla: El supervisor solo ve vendedores (pedimos filtrado directo a la DB)
+            if (idRolUsuarioActual == (int)Roles.Supervisor)
+            {
+                // En lugar de enviar un 3 duro a la DAL, también enviamos el enum casteado
+                return usuarioDAL.ObtenerPorRol((int)Roles.Vendedor);
+            }
+
+            // 3. Regla: El gerente ve a todos
+            // Si no es ni vendedor ni supervisor, asumimos que es Gerente y pasa de largo
+            return usuarioDAL.ObtenerTodos();
+        }
+
+        public bool ActualizarUsuario(Usuario usuarioActualizado)
+        {
+            // 1. Validaciones de negocio
+            if (string.IsNullOrWhiteSpace(usuarioActualizado.Nombre))
+            {
+                throw new Exception("El nombre del usuario no puede estar vacío.");
+            }
+
+            if (string.IsNullOrWhiteSpace(usuarioActualizado.Correo))
+            {
+                throw new Exception("El correo no puede estar vacío.");
+            }
+
+            if (usuarioActualizado.IdRol < 1 || usuarioActualizado.IdRol > 3)
+            {
+                throw new Exception("El rol seleccionado no es válido.");
+            }
+
+            // 2. Si todo está bien, mandamos a la DAL
+            return usuarioDAL.ActualizarUsuario(usuarioActualizado);
+        }
+        public Usuario AutenticarUsuario(string correo, string passwordPlano)
+        {
+            // 1. Buscamos al usuario
+            Usuario usuario = ObtenerUsuarioPorCorreo(correo);
+            if (usuario == null)
+                throw new Exception("Usuario o contraseña incorrectos.");
+
+            // 2. Verificamos la contraseña
+            if (!VerificarPassword(passwordPlano, usuario.Password))
+                throw new Exception("Usuario o contraseña incorrectos.");
+
+            // 3. NUEVA REGLA: Verificamos si está activo 
+            // (Ajusta la propiedad según cómo se llame en tu entidad Usuario, ej: Activo, Estado, etc.)
+            if (!usuario.Estado) // 
+                throw new Exception("El usuario se encuentra inactivo. Contacte al administrador.");
+
+            return usuario; // Si pasa todo, devolvemos el usuario autenticado
+        }
+
+        public bool DarDeBajaUsuario(int idUsuarioObjetivo)
+        {
+            // Opcional: Validación de negocio adicional
+            if (idUsuarioObjetivo <= 0)
+            {
+                throw new Exception("ID de usuario no válido.");
+            }
+
+            // Llamamos a la DAL para el borrado lógico
+            return usuarioDAL.DarDeBajaUsuario(idUsuarioObjetivo);
+        }
+
+        public bool PuedeAccederPantallaUsuarios(int idRol)
+        {
+            // Vendedor no entra. Gerente y Supervisor sí.
+            return idRol != (int)Roles.Vendedor;
+        }
+
+        public bool PuedeCrearOEditarUsuarios(int idRol)
+        {
+            // Solo el gerente puede editar/crear
+            return idRol == (int)Roles.Gerente;
         }
     }
 }

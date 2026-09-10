@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 
 
 namespace SistemaVentas.DAL
@@ -15,10 +15,10 @@ namespace SistemaVentas.DAL
     public class UsuarioDAL
     {
         private string _cadenaConexion;
-        // Constructor vacío (ya no pide parámetros)
+        
         public UsuarioDAL()
         {
-            // Revisa tu App.config y reemplaza "NombreDeTuConexion" por el valor exacto del atributo name="..."
+            // segun App.config 
             _cadenaConexion = ConfigurationManager.ConnectionStrings["ConexionBD"].ConnectionString;
         }
 
@@ -62,7 +62,7 @@ namespace SistemaVentas.DAL
                 {
                     conexion.Open();
 
-                    string consulta = "SELECT IdUsuario, Nombre, Correo, Password, IdRol FROM Usuario WHERE IdUsuario = @idUsuario";
+                    string consulta = "SELECT id_usuario, nombre_completo, correo, password, id_rol FROM Usuario WHERE id_usuario = @idUsuario";
                     using (SqlCommand comando = new SqlCommand(consulta, conexion))
                     {
                         comando.Parameters.AddWithValue("@idUsuario", idUsuario);
@@ -72,11 +72,11 @@ namespace SistemaVentas.DAL
                             {
                                 return new Usuario
                                 {
-                                    IdUsuario = (int)lector["IdUsuario"],
-                                    Nombre = lector["Nombre"].ToString(),
-                                    Correo = lector["Correo"].ToString(),
-                                    Password = lector["Password"].ToString(),
-                                    IdRol = (int)lector["IdRol"]
+                                    IdUsuario = (int)lector["id_usuario"],
+                                    Nombre = lector["nombre_completo"].ToString(),
+                                    Correo = lector["correo"].ToString(),
+                                    Password = lector["password"].ToString(),
+                                    IdRol = (int)lector["id_rol"]
                                 };
                             }
                         }
@@ -178,8 +178,8 @@ namespace SistemaVentas.DAL
                     conexion.Open();
 
                     string consulta = @"UPDATE Usuario 
-                                       SET Nombre = @nombre, Correo = @correo, Password = @password, IdRol = @idRol
-                                       WHERE IdUsuario = @idUsuario";
+                                       SET nombre_completo = @nombre, correo = @correo, password = @password, id_rol = @idRol
+                                       WHERE id_usuario = @idUsuario";
 
                     using (SqlCommand comando = new SqlCommand(consulta, conexion))
                     {
@@ -213,7 +213,7 @@ namespace SistemaVentas.DAL
                 {
                     conexion.Open();
 
-                    string consulta = "SELECT IdUsuario, Nombre, Correo, Password, IdRol FROM Usuario";
+                    string consulta = "SELECT id_usuario, nombre_completo, correo, password, id_rol FROM Usuario";
                     using (SqlCommand comando = new SqlCommand(consulta, conexion))
                     {
                         using (SqlDataReader lector = comando.ExecuteReader())
@@ -222,11 +222,11 @@ namespace SistemaVentas.DAL
                             {
                                 usuarios.Add(new Usuario
                                 {
-                                    IdUsuario = (int)lector["IdUsuario"],
-                                    Nombre = lector["Nombre"].ToString(),
-                                    Correo = lector["Correo"].ToString(),
-                                    Password = lector["Password"].ToString(),
-                                    IdRol = (int)lector["IdRol"]
+                                    IdUsuario = (int)lector["id_usuario"],
+                                    Nombre = lector["nombre_completo"].ToString(),
+                                    Correo = lector["correo"].ToString(),
+                                    Password = lector["password"].ToString(),
+                                    IdRol = (int)lector["id_rol"]
                                 });
                             }
                         }
@@ -240,5 +240,75 @@ namespace SistemaVentas.DAL
 
             return usuarios;
         }
+    
+    public List<Usuario> ObtenerPorRol(int idRolBuscado)
+        {
+            List<Usuario> usuarios = new List<Usuario>();
+
+            try
+            {
+                using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
+                {
+                    conexion.Open();
+                    // El filtrado ocurre en el motor de base de datos
+                    string consulta = "SELECT id_usuario, nombre_completo, correo, password, id_rol FROM Usuario WHERE id_rol = @IdRol";
+
+                    using (SqlCommand comando = new SqlCommand(consulta, conexion))
+                    {
+                        // Usamos parámetros por seguridad
+                        comando.Parameters.AddWithValue("@IdRol", idRolBuscado);
+
+                        using (SqlDataReader lector = comando.ExecuteReader())
+                        {
+                            while (lector.Read())
+                            {
+                                usuarios.Add(new Usuario
+                                {
+                                    IdUsuario = (int)lector["id_usuario"],
+                                    Nombre = lector["nombre_completo"].ToString(),
+                                    Correo = lector["correo"].ToString(),
+                                    Password = lector["password"].ToString(),
+                                    IdRol = (int)lector["id_rol"]
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new UsuarioException($"Error al filtrar usuarios por rol: {ex.Message}", ex);
+            }
+
+            return usuarios;
+        }
+    
+    public bool DarDeBajaUsuario(int idUsuario)
+        {
+            bool respuesta = false;
+            using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
+            {
+                try
+                {
+                    // Borrado lógico: Actualizamos el estado a 0 (Inactivo) en lugar de usar DELETE
+                    // Ajusta "Activo = 0" según cómo se llame tu columna en SQL Server
+                    string query = "UPDATE Usuario SET Activo = 0 WHERE id_usuario = @IdUsuario";
+
+                    SqlCommand cmd = new SqlCommand(query, conexion);
+                    cmd.Parameters.AddWithValue("@IdUsuario", idUsuario);
+
+                    conexion.Open();
+                    int filasAfectadas = cmd.ExecuteNonQuery();
+
+                    respuesta = filasAfectadas > 0;
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("Error en la base de datos al dar de baja: " + ex.Message);
+                }
+            }
+            return respuesta;
+        }
     }
 }
+
