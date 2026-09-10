@@ -3,6 +3,7 @@ using SistemaVentas.Entities;
 using System;
 using System.Configuration;
 using System.Text.RegularExpressions;
+using static SistemaVentas.Entities.Rol;
 using BC = BCrypt.Net.BCrypt;
 
 namespace SistemaVentas.BLL
@@ -265,6 +266,18 @@ namespace SistemaVentas.BLL
 
             // Llamamos a la DAL para el borrado lógico
             return usuarioDAL.DarDeBajaUsuario(idUsuarioObjetivo);
+        }
+
+        public bool PuedeAccederPantallaUsuarios(int idRol)
+        {
+            // Vendedor no entra. Gerente y Supervisor sí.
+            return idRol != (int)Roles.Vendedor;
+        }
+
+        public bool PuedeCrearOEditarUsuarios(int idRol)
+        {
+            // Solo el gerente puede editar/crear
+            return idRol == (int)Roles.Gerente;
         }
     }
 }

@@ -8,5 +8,13 @@ namespace SistemaVentas.Entities
     {
         public int IdRol { get; set; }
         public string Nombre { get; set; }
+
+       
+    }
+    public enum Roles
+    {
+        Gerente = 1,
+        Vendedor = 2,
+        Supervisor = 3
     }
 }

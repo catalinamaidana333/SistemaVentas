@@ -30,36 +30,27 @@ namespace SistemaVentas.GUI
 
         private void ConfigurarAccesos()
         {
-            int idRol = SesionGlobal.UsuarioActual.IdRol;
+            int idRolActual = SesionGlobal.UsuarioActual.IdRol;
 
-            // 1. Vendedor (Rol 2): No tiene permisos para ver la gestión de usuarios
-            if (idRol == 2)
+            // 1. Preguntamos a la BLL si puede entrar
+            if (!_usuarioLogica.PuedeAccederPantallaUsuarios(idRolActual))
             {
                 MessageBox.Show("No tienes permisos para acceder a este módulo.", "Acceso Denegado", MessageBoxButton.OK, MessageBoxImage.Error);
-                this.Visibility = Visibility.Collapsed; // Oculta todo el control
+                this.Visibility = Visibility.Collapsed;
                 return;
             }
 
-            // 2. Supervisor (Rol 3): Acceso de solo lectura (no puede crear ni editar)
-            if (idRol == 3)
+            // 2. Preguntamos a la BLL si puede editar/crear
+            if (!_usuarioLogica.PuedeCrearOEditarUsuarios(idRolActual))
             {
-                // Ocultar botón de crear usuario
                 btnCrearUsuario.Visibility = Visibility.Collapsed;
 
-                // Ocultar la columna de acciones (botón de editar)
                 if (colAcciones != null)
-                {
                     colAcciones.Visibility = Visibility.Collapsed;
-                }
 
-                // Deshabilitar la edición directa en la grilla por seguridad
                 if (dgListaUsuarios != null)
-                {
                     dgListaUsuarios.IsReadOnly = true;
-                }
             }
-
-            // 3. Gerente (Rol 1): Pasa de largo, mantiene visibilidad de la columna y botón de crear.
         }
 
         private void CargarUsuarios()
