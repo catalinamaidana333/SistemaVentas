@@ -257,6 +257,24 @@ namespace SistemaVentas.BLL
             // 2. Si todo está bien, mandamos a la DAL
             return usuarioDAL.ActualizarUsuario(usuarioActualizado);
         }
+        public Usuario AutenticarUsuario(string correo, string passwordPlano)
+        {
+            // 1. Buscamos al usuario
+            Usuario usuario = ObtenerUsuarioPorCorreo(correo);
+            if (usuario == null)
+                throw new Exception("Usuario o contraseña incorrectos.");
+
+            // 2. Verificamos la contraseña
+            if (!VerificarPassword(passwordPlano, usuario.Password))
+                throw new Exception("Usuario o contraseña incorrectos.");
+
+            // 3. NUEVA REGLA: Verificamos si está activo 
+            // (Ajusta la propiedad según cómo se llame en tu entidad Usuario, ej: Activo, Estado, etc.)
+            if (!usuario.Estado) // 
+                throw new Exception("El usuario se encuentra inactivo. Contacte al administrador.");
+
+            return usuario; // Si pasa todo, devolvemos el usuario autenticado
+        }
 
         public bool DarDeBajaUsuario(int idUsuarioObjetivo)
         {

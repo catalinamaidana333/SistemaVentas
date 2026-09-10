@@ -65,24 +65,9 @@ namespace SistemaVentas.GUI
             try
             {
                 // PASO 4: Obtener usuario de BD por correo
-                Usuario usuarioEnBD = usuarioBLL.ObtenerUsuarioPorCorreo(correoIngresado);
+                Usuario usuarioEnBD = usuarioBLL.AutenticarUsuario(correoIngresado, passwordIngresada);
 
-                if (usuarioEnBD == null)
-                {
-                    // Usuario no existe en BD
-                    MostrarError("Correo no se encontro");
-                    return;
-                }
-
-                // PASO 5: Verificar que la contraseña ingresada coincida con el hash en BD
-                // Usa BCrypt.Verify (seguro para contraseñas hasheadas)
-                if (!usuarioBLL.VerificarPassword(passwordIngresada, usuarioEnBD.Password))
-                {
-                    // Contraseña incorrecta
-                    MostrarError("Contraseña incorrecta");
-                    return;
-                }
-
+                
                 // ✅ PASO 6: LOGIN EXITOSO
                 // Guardar usuario en contexto global (accesible desde toda la app)
                 SesionGlobal.UsuarioActual = usuarioEnBD;
