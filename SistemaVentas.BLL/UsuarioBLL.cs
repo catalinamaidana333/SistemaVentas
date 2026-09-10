@@ -219,18 +219,20 @@ namespace SistemaVentas.BLL
         public List<Usuario> ObtenerUsuariosParaVista(int idRolUsuarioActual)
         {
             // 1. Regla: El vendedor no tiene acceso
-            if (idRolUsuarioActual == 3) // Vendedor
+            if (idRolUsuarioActual == (int)Roles.Vendedor)
             {
                 throw new UnauthorizedAccessException("No tienes permisos para ver el listado de usuarios.");
             }
 
             // 2. Regla: El supervisor solo ve vendedores (pedimos filtrado directo a la DB)
-            if (idRolUsuarioActual == 2) // Supervisor
+            if (idRolUsuarioActual == (int)Roles.Supervisor)
             {
-                return usuarioDAL.ObtenerPorRol(3); // Pide a la DB solo los que tienen rol 3
+                // En lugar de enviar un 3 duro a la DAL, también enviamos el enum casteado
+                return usuarioDAL.ObtenerPorRol((int)Roles.Vendedor);
             }
 
             // 3. Regla: El gerente ve a todos
+            // Si no es ni vendedor ni supervisor, asumimos que es Gerente y pasa de largo
             return usuarioDAL.ObtenerTodos();
         }
 
