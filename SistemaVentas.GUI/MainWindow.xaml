@@ -1,12 +1,48 @@
 ﻿<Window x:Class="SistemaVentas.GUI.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:SistemaVentas.GUI"
-        mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        Title="Sistema de Ventas - Productos" Height="550" Width="1050"
+        MinHeight="450" MinWidth="900"
+        WindowStartupLocation="CenterScreen"
+        Loaded="Window_Loaded">
+    <Grid Margin="10">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="250"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
+        <!-- PANEL DE CARGA DE DATOS -->
+        <StackPanel Grid.Column="0" Margin="0,0,15,0">
+            <TextBlock Text="Nombre del Producto:" FontWeight="Bold" Margin="0,5,0,2"/>
+            <TextBox x:Name="txtNombre" Padding="3"/>
+
+            <TextBlock Text="Precio Costo:" FontWeight="Bold" Margin="0,5,0,2"/>
+            <TextBox x:Name="txtPrecioCosto" Padding="3"/>
+
+            <TextBlock Text="Precio Venta:" FontWeight="Bold" Margin="0,5,0,2"/>
+            <TextBox x:Name="txtPrecioVenta" Padding="3"/>
+
+            <TextBlock Text="Stock Actual:" FontWeight="Bold" Margin="0,5,0,2"/>
+            <TextBox x:Name="txtStock" Padding="3"/>
+
+            <Button x:Name="btnGuardar" Content="Guardar Producto" 
+                    Margin="0,15,0,0" Height="32" 
+                    Background="#021056" Foreground="#F2C832" 
+                    FontWeight="Bold"
+                    Click="btnGuardar_Click"/>
+        </StackPanel>
+
+        <!-- GRILLA DE PRODUCTOS -->
+        <DataGrid x:Name="dgvProductos" Grid.Column="1"
+                  AutoGenerateColumns="False" IsReadOnly="True" HorizontalAlignment="Stretch">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="CÓDIGO BARRAS" Binding="{Binding CodigoBarras}" Width="130" />
+                <DataGridTextColumn Header="PRODUCTO" Binding="{Binding Nombre}" Width="120" />
+                <DataGridTextColumn Header="CATEGORÍA" Binding="{Binding Categoria.Nombre}" Width="120" />
+                <DataGridTextColumn Header="P. COSTO" Binding="{Binding PrecioCosto}" Width="120" />
+                <DataGridTextColumn Header="P. VENTA" Binding="{Binding PrecioVenta}" Width="120" />
+                <DataGridTextColumn Header="STOCK" Binding="{Binding StockActual}" Width="120" />
+            </DataGrid.Columns>
+        </DataGrid>
     </Grid>
 </Window>
