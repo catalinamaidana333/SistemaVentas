@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
-using System.Data.SqlClient;
 using SistemaVentas.Entities;
+using Microsoft.Data.SqlClient;
 
 namespace SistemaVentas.DAL
 {
@@ -20,13 +20,19 @@ namespace SistemaVentas.DAL
                 try
                 {
                     string query = @"
-                IF NOT EXISTS (SELECT 1 FROM dbo.Categoria)
-                BEGIN
-                    INSERT INTO dbo.Categoria (nombre, activa) VALUES ('Gral', 1);
-                END
-
-                INSERT INTO dbo.Producto (id_categoria, codigo_barras, nombre, precio_costo, precio_venta, stock_actual, stock_minimo, activo)
-                VALUES ((SELECT TOP 1 id_categoria FROM dbo.Categoria), @codigo_barras, @nombre, @precio_costo, @precio_venta, @stock_actual, 5, 1)";
+                SELECT  p.id_producto,
+                        p.id_categoria,
+                        p.codigo_barras,
+                        p.nombre,
+                        p.precio_costo,
+                        p.precio_venta,
+                        p.stock_actual,
+                        p.stock_minimo,
+                        p.activo,
+                        c.nombre AS NombreCategoria
+                FROM    dbo.Producto p
+                INNER JOIN dbo.Categoria c ON c.id_categoria = p.id_categoria
+                ORDER BY p.id_producto DESC";
 
                     SqlCommand cmd = new SqlCommand(query, oconexion);
                     cmd.CommandType = CommandType.Text;
@@ -77,44 +83,22 @@ namespace SistemaVentas.DAL
                 {
                     oconexion.Open();
 
-                    // 1. Crear categoría por defecto si la tabla está vacía
-                    string sqlCategoria = @"
-                IF NOT EXISTS (SELECT 1 FROM Categoria)
-                BEGIN
-                    INSERT INTO Categoria (nombre, activa) VALUES ('Gral', 1);
-                END";
-
-                    using (SqlCommand cmdCat = new SqlCommand(sqlCategoria, oconexion))
-                    {
-                        cmdCat.ExecuteNonQuery();
-                    }
-
-                    // 2. Obtener el ID de la categoría recién creada o existente
-                    int idCategoria = 0;
-                    string sqlGetId = "SELECT TOP 1 id_categoria FROM Categoria";
-                    using (SqlCommand cmdId = new SqlCommand(sqlGetId, oconexion))
-                    {
-                        idCategoria = Convert.ToInt32(cmdId.ExecuteScalar());
-                    }
-
-                    // 3. Insertar el producto asignando ese ID válido
-                    string query = @"INSERT INTO Producto (id_categoria, codigo_barras, nombre, precio_costo, precio_venta, stock_actual, stock_minimo, activo)
-                             VALUES (@id_categoria, @codigo_barras, @nombre, @precio_costo, @precio_venta, @stock_actual, 5, 1)";
+                    string query = @"INSERT INTO dbo.Producto
+                             (id_categoria, codigo_barras, nombre, precio_costo, precio_venta, stock_actual, stock_minimo, activo)
+                             VALUES
+                             (@id_categoria, @codigo_barras, @nombre, @precio_costo, @precio_venta, @stock_actual, 5, 1)";
 
                     using (SqlCommand cmd = new SqlCommand(query, oconexion))
                     {
-                        cmd.Parameters.AddWithValue("@id_categoria", idCategoria);
-                        cmd.Parameters.AddWithValue("@codigo_barras", obj.CodigoBarras ?? "");
+                        cmd.Parameters.AddWithValue("@id_categoria", obj.oCategoria.IdCategoria);
+                        cmd.Parameters.AddWithValue("@codigo_barras",
+    string.IsNullOrWhiteSpace(obj.CodigoBarras) ? (object)DBNull.Value : obj.CodigoBarras);
                         cmd.Parameters.AddWithValue("@nombre", obj.Nombre);
                         cmd.Parameters.AddWithValue("@precio_costo", obj.PrecioCosto);
                         cmd.Parameters.AddWithValue("@precio_venta", obj.PrecioVenta);
                         cmd.Parameters.AddWithValue("@stock_actual", obj.StockActual);
 
-                        int filasAfectadas = cmd.ExecuteNonQuery();
-                        if (filasAfectadas > 0)
-                        {
-                            respuesta = true;
-                        }
+                        respuesta = cmd.ExecuteNonQuery() > 0;
                     }
                 }
                 catch (Exception ex)
@@ -125,6 +109,38 @@ namespace SistemaVentas.DAL
             }
 
             return respuesta;
+        }
+
+        public List<Categoria> ListarCategorias()
+        {
+            List<Categoria> lista = new List<Categoria>();
+
+            using (SqlConnection oconexion = new SqlConnection(cadena))
+            {
+                try
+                {
+                    string query = "SELECT id_categoria, nombre FROM dbo.Categoria WHERE activa = 1 ORDER BY id_categoria";
+                    SqlCommand cmd = new SqlCommand(query, oconexion);
+                    oconexion.Open();
+
+                    using (SqlDataReader dr = cmd.ExecuteReader())
+                    {
+                        while (dr.Read())
+                        {
+                            lista.Add(new Categoria()
+                            {
+                                IdCategoria = Convert.ToInt32(dr["id_categoria"]),
+                                Nombre = dr["nombre"].ToString()
+                            });
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                    lista = new List<Categoria>();
+                }
+            }
+            return lista;
         }
     }
 }

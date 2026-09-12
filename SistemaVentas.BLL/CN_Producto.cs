@@ -12,6 +12,10 @@ namespace SistemaVentas.BLL
 		{
 			return objcd_producto.Listar();
 		}
+        public List<Categoria> ListarCategorias()
+        {
+            return objcd_producto.ListarCategorias();
+        }
 
         // Regla de negocio para asegurar ganancias
         public bool Registrar(Producto obj, out string Mensaje)

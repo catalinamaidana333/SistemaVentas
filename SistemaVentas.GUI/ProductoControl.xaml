@@ -17,6 +17,10 @@
             <TextBox x:Name="txtPrecioVenta" Padding="3"/>
             <TextBlock Text="Stock Actual:" FontWeight="Bold" Margin="0,5,0,2"/>
             <TextBox x:Name="txtStock" Padding="3"/>
+            <TextBlock Text="Categoría:" FontWeight="Bold" Margin="0,5,0,2"/>
+            <ComboBox x:Name="cmbCategoria" Padding="3"
+          DisplayMemberPath="Nombre"
+          SelectedValuePath="IdCategoria"/>
             <Button x:Name="btnGuardar" Content="Guardar Producto"
                     Margin="0,15,0,0" Height="32"
                     Background="#021056" Foreground="#F2C832"
