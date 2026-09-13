@@ -93,8 +93,8 @@
                     <!-- Selector de Método de Pago -->
                     <ComboBox Height="40" Margin="0,0,0,20" SelectedIndex="0" 
                               FontFamily="{StaticResource FuentePrimaria}" FontSize="14">
-                        <ComboBoxItem Content="💳 Cash"/>
-                        <ComboBoxItem Content="💳 Credit Card"/>
+                        <ComboBoxItem Content="💳 Efectivo"/>
+                        <ComboBoxItem Content="💳 Mercado Pago"/>
                     </ComboBox>
 
                     <!-- Grilla de Botones Secundarios (2x2) -->
