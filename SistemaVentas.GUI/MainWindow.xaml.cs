@@ -1,4 +1,8 @@
-﻿using System.Text;
+﻿using SistemaVentas.BLL;
+using SistemaVentas.Entities;
+using SistemaVentas.GUI.Contexto;
+using System;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -8,19 +12,33 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using SistemaVentas.BLL;
-using System;
-using SistemaVentas.Entities;
 
 namespace SistemaVentas.GUI
 {
     public partial class MainWindow : Window
-    {
+    { 
+
+        private UsuarioBLL _usuarioLogica = new UsuarioBLL();
+
         public MainWindow()
         {
             InitializeComponent();
-            // Pantalla inicial al abrir la aplicación
-            ContenedorPrincipal.Content = new UsuarioControl();
+
+            // Llamás a este método apenas arranca la ventana principal
+            ConfigurarMenu();
+        }
+
+        private void ConfigurarMenu()
+        {
+            // Traemos el rol de la sesión global
+            int idRolActual = SesionGlobal.UsuarioActual.IdRol;
+
+            // Le preguntamos a la BLL si tiene acceso
+            if (!_usuarioLogica.PuedeAccederPantallaUsuarios(idRolActual))
+            {
+               
+                btnUsuarios.IsEnabled = false; 
+            }
         }
 
         private void btnVentas_Click(object sender, RoutedEventArgs e)
@@ -37,7 +55,5 @@ namespace SistemaVentas.GUI
         {
             ContenedorPrincipal.Content = new UsuarioControl();
         }
-
-       
     }
 }
