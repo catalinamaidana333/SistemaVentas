@@ -55,5 +55,10 @@ namespace SistemaVentas.GUI
         {
             ContenedorPrincipal.Content = new UsuarioControl();
         }
+
+        private void btnCompra_Click(object sender, RoutedEventArgs e)
+        {
+            ContenedorPrincipal.Content = new Compra();
+        }
     }
 }

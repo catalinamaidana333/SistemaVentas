@@ -32,10 +32,7 @@ namespace SistemaVentas.GUI
         {
             int idRolActual = SesionGlobal.UsuarioActual.IdRol;
 
-            // ELIMINAMOS EL PASO 1 (El MessageBox de "Acceso Denegado" se borra).
-            // Como el botón está deshabilitado en el MainWindow, el vendedor no puede llegar acá.
-
-            // 2. Preguntamos a la BLL si puede editar/crear (Esto queda intacto)
+            
             // Esto va a afectar al Supervisor, que sí puede entrar, pero no editar.
             if (!_usuarioLogica.PuedeCrearOEditarUsuarios(idRolActual))
             {

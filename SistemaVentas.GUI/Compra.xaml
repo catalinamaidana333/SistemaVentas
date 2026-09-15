@@ -1,0 +1,165 @@
+﻿<UserControl x:Class="SistemaVentas.GUI.Compra"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Background="{StaticResource BgFondoPrincipal}">
+
+    <!-- Grilla Principal: Fila para Navbar y Fila para Contenido -->
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Navbar Superior -->
+        <Grid Grid.Row="0" Background="{StaticResource BgHeader}">
+            <TextBlock Text="COMPRAS E INGRESOS" Foreground="{StaticResource TextoClaro}" 
+                       FontSize="20" FontWeight="Bold" 
+                       VerticalAlignment="Center" Margin="20,0,0,0"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,20,0">
+                <TextBlock Text="⚙️ USERNAME" Foreground="{StaticResource TextoClaro}" FontSize="14"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Contenedor Principal Dividido (Izquierda 65% / Derecha 35%) -->
+        <Grid Grid.Row="1" Margin="30">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="6.5*"/>
+                <ColumnDefinition Width="3.5*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- ========================================== -->
+            <!-- COLUMNA IZQUIERDA (Proveedores y Productos)-->
+            <!-- ========================================== -->
+            <Grid Grid.Column="0" Margin="0,0,20,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <!-- Título -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- Proveedor y Factura -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- Buscador de Productos -->
+                    <RowDefinition Height="*"/>
+                    <!-- Tabla de Compras -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- Controles Inferiores -->
+                </Grid.RowDefinitions>
+
+                <!-- Título -->
+                <TextBlock Grid.Row="0" Text="PURCHASE ORDER" Style="{StaticResource TituloPrincipal}" Margin="0,0,0,20"/>
+
+                <!-- 1. SECCIÓN PROVEEDOR Y FACTURA -->
+                <Grid Grid.Row="1" Margin="0,0,0,15">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="150"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- ComboBox Editable para buscar o escribir el proveedor -->
+                    <ComboBox Grid.Column="0"  Height="40" IsEditable="True" 
+                              Text="🔍 Buscar o ingresar proveedor..." Margin="0,0,10,0"/>
+
+                    <!-- Botón para Alta Rápida de Proveedor -->
+                    <Button Grid.Column="1" Content="+" Style="{StaticResource BotonPrimario}" Width="40" Height="40" 
+                            Margin="0,0,10,0" ToolTip="Nuevo Proveedor"/>
+
+                    <TextBox Grid.Column="2" Style="{StaticResource InputTexto}" Height="40" Text="Factura N°..."/>
+                </Grid>
+
+                <!-- 2. BUSCADOR DE PRODUCTOS -->
+                <Grid Grid.Row="2" Margin="0,0,0,15">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox Grid.Column="0" Style="{StaticResource InputTexto}" Height="40" 
+                             Margin="0,0,10,0" Text="🔍 Search Item to Restock..."/>
+                    <Button Grid.Column="1" Content="+ NEW ITEM" Style="{StaticResource BotonPrimario}" Width="100" Height="40"/>
+                </Grid>
+
+                <!-- 3. TABLA DE COMPRAS (DataGrid) -->
+                <DataGrid Grid.Row="3" x:Name="dgCompras" HeadersVisibility="Column">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="#" Width="50" Binding="{Binding Id}"/>
+                        <DataGridTextColumn Header="ITEM" Width="*" Binding="{Binding Nombre}"/>
+                        <DataGridTextColumn Header="QTY IN" Width="100" Binding="{Binding Cantidad}"/>
+                        <DataGridTextColumn Header="UNIT COST" Width="100" Binding="{Binding Costo}"/>
+                        <DataGridTextColumn Header="SUBTOTAL" Width="120" Binding="{Binding Subtotal}"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <!-- 4. PANEL INFERIOR IZQUIERDO -->
+                <Grid Grid.Row="4" Margin="0,15,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Button Grid.Column="0" Content="ELIMINAR" Style="{StaticResource BotonPrimario}" Width="100" Height="40" Margin="0,0,10,0"/>
+                    <Button Grid.Column="1" Content="▲" Style="{StaticResource BotonPrimario}" Width="50" Height="40" Margin="0,0,5,0"/>
+                    <Button Grid.Column="2" Content="▼" Style="{StaticResource BotonPrimario}" Width="50" Height="40" Margin="0,0,15,0"/>
+                    <TextBox Grid.Column="3" Style="{StaticResource InputTexto}" Height="40" Text=" Notas..."/>
+                </Grid>
+            </Grid>
+
+            <!-- ========================================== -->
+            <!-- COLUMNA DERECHA (Panel de Pago / Egreso)   -->
+            <!-- ========================================== -->
+            <Border Grid.Column="1" Background="{StaticResource BgPaneles}" CornerRadius="8" Padding="20">
+                <StackPanel>
+
+                    <!-- Tarjeta del Total (Reutilizando tus estilos dorados por ahora) -->
+                    <Border BorderBrush="{StaticResource DoradoSaffron}" BorderThickness="3" CornerRadius="8" Padding="15" Margin="0,0,0,20">
+                        <StackPanel>
+                            <TextBlock Text="TOTAL" Foreground="{StaticResource TextoClaro}" FontSize="14" FontWeight="Bold"/>
+                            <TextBlock Text="MK 0.00" Foreground="{StaticResource OroTexto}" FontSize="36" FontWeight="Bold" Margin="0,5,0,0"/>
+                            <TextBlock Text="0 items to restock" Foreground="#A0A0A0" FontSize="12"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Botón Principal de Compra -->
+                    <Button Content="PROCESAR" Style="{StaticResource BotonPrimario}" Height="50" Margin="0,0,0,20" FontSize="18"/>
+
+                    <!-- Selección de Método de Pago con RadioButtons -->
+                    <TextBlock Text="METODO DE PAGO" Foreground="{StaticResource TextoClaro}" FontSize="14" FontWeight="Bold" Margin="0,0,0,10"/>
+
+                    <StackPanel Margin="0,0,0,15">
+                        <RadioButton x:Name="rbMercadoPago" Content="📱 Mercado Pago" Foreground="{StaticResource TextoClaro}" Margin="0,5" FontSize="14" IsChecked="True"/>
+                        <RadioButton x:Name="rbEfectivo" Content="💵 Efectivo" Foreground="{StaticResource TextoClaro}" Margin="0,5" FontSize="14"/>
+                    </StackPanel>
+
+                    <!-- PANEL CONDICIONAL: Origen del Efectivo -->
+                    <!-- Nota: Le puse un borde sutil para que resalte que es una sub-opción -->
+                    <Border x:Name="panelOrigenEfectivo" Background="{StaticResource BgInputs}" CornerRadius="5" Padding="15" Margin="0,0,0,20"
+                            Visibility="Visible">
+                        <!-- Lo dejo Visible para que lo veas al maquetar -->
+                        <StackPanel>
+                            <TextBlock Text="Source of Cash:" Foreground="#A0A0A0" FontSize="12" Margin="0,0,0,10"/>
+                            <RadioButton x:Name="rbCaja" Content="Register / Drawer (Affects Cash)" Foreground="{StaticResource TextoClaro}" Margin="0,5" IsChecked="True"/>
+                            <RadioButton x:Name="rbExterna" Content="External Funds (Manager/Owner)" Foreground="{StaticResource TextoClaro}" Margin="0,5"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Resumen de Impuestos / Costos Extra -->
+                    <Separator Background="{StaticResource BgInputs}" Margin="0,0,0,15"/>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="10"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="Envio" Foreground="{StaticResource TextoClaro}" HorizontalAlignment="Left"/>
+                        <TextBlock Grid.Row="0" Text="MK 0.00" Foreground="{StaticResource TextoClaro}" HorizontalAlignment="Right" FontWeight="Bold"/>
+
+                        <TextBlock Grid.Row="2" Text="Imp:" Foreground="{StaticResource TextoClaro}" HorizontalAlignment="Left"/>
+                        <TextBlock Grid.Row="2" Text="MK 0.00" Foreground="{StaticResource TextoClaro}" HorizontalAlignment="Right" FontWeight="Bold"/>
+                    </Grid>
+
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

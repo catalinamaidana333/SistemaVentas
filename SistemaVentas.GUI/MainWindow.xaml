@@ -37,6 +37,9 @@
                     <Button x:Name="btnUsuarios" Content="Usuarios"
                             Style="{StaticResource BotonMenuLateral}"
                             Click="btnUsuarios_Click"/>
+                    <Button x:Name="btnCompra" Content="Compras"
+        Style="{StaticResource BotonMenuLateral}"
+        Click="btnCompra_Click"/>
                     
                 </StackPanel>
             </Grid>
