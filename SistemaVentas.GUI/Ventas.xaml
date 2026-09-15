@@ -41,18 +41,32 @@
                 <!-- Título -->
                 <TextBlock Grid.Row="0" Text="POINT OF SALE" Style="{StaticResource TituloPrincipal}" Margin="0,0,0,20"/>
 
-                <!-- Buscador -->
-                <TextBox Grid.Row="1" Style="{StaticResource InputTexto}" Height="40" 
-                         Margin="0,0,0,15" Text="🔍 Search Item..."/>
+                <!-- Buscador y Botón Simular -->
+                <Grid Grid.Row="1" Margin="0,0,0,15">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBox Grid.Column="0" Style="{StaticResource InputTexto}" Height="40" 
+             Margin="0,0,10,0" Text="🔍 Search Item..."/>
+
+                    <!-- ACÁ ESTÁ EL BOTÓN QUE LLAMA AL CÓDIGO C# -->
+                    <Button Grid.Column="1" x:Name="btnAgregarPrueba" Content="+ AGREGAR" 
+            Style="{StaticResource BotonPrimario}" Width="100" Height="40" 
+            Click="btnAgregarPrueba_Click"/>
+                </Grid>
 
                 <!-- Tabla de Ventas (DataGrid) -->
-                <DataGrid Grid.Row="2" x:Name="dgVentas" HeadersVisibility="Column">
+                <!-- Tabla de Ventas (DataGrid) -->
+                <DataGrid Grid.Row="2" x:Name="dgVentas" HeadersVisibility="Column" 
+          AutoGenerateColumns="False" IsReadOnly="True">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="#" Width="50" Binding="{Binding Id}"/>
-                        <DataGridTextColumn Header="ITEM" Width="*" Binding="{Binding Nombre}"/>
+                        <DataGridTextColumn Header="#" Width="50" Binding="{Binding IdProducto}"/>
+                        <DataGridTextColumn Header="ITEM" Width="*" Binding="{Binding NombreProducto}"/>
                         <DataGridTextColumn Header="QUANTITY" Width="100" Binding="{Binding Cantidad}"/>
-                        <DataGridTextColumn Header="UNIT" Width="80" Binding="{Binding Unidad}"/>
-                        <DataGridTextColumn Header="AMOUNT (MK)" Width="120" Binding="{Binding Monto}"/>
+                        <DataGridTextColumn Header="PRICE" Width="80" Binding="{Binding PrecioUnitario}"/>
+                        <DataGridTextColumn Header="AMOUNT" Width="120" Binding="{Binding Subtotal}"/>
                     </DataGrid.Columns>
                 </DataGrid>
 
@@ -65,7 +79,7 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <Button Grid.Column="0" Content="DELETE" Style="{StaticResource BotonPrimario}" Width="100" Height="40" Margin="0,0,10,0"/>
+                    <Button Grid.Column="0" Content="DELETE" Style="{StaticResource BotonPrimario}" Width="100" Height="40" Margin="0,0,10,0" Click="Button_Click"/>
                     <Button Grid.Column="1" Content="▲" Style="{StaticResource BotonPrimario}" Width="50" Height="40" Margin="0,0,5,0"/>
                     <Button Grid.Column="2" Content="▼" Style="{StaticResource BotonPrimario}" Width="50" Height="40" Margin="0,0,15,0"/>
                     <TextBox Grid.Column="3" Style="{StaticResource InputTexto}" Height="40" Text="Notes..."/>
@@ -79,16 +93,17 @@
                 <StackPanel>
 
                     <!-- Tarjeta del Total -->
+                    <!-- Tarjeta del Total -->
                     <Border BorderBrush="{StaticResource DoradoSaffron}" BorderThickness="3" CornerRadius="8" Padding="15" Margin="0,0,0,15">
                         <StackPanel>
                             <TextBlock Text="TOTAL" Foreground="{StaticResource TextoClaro}" FontSize="14" FontWeight="Bold"/>
-                            <TextBlock Text="MK 32,000" Foreground="{StaticResource OroTexto}" FontSize="36" FontWeight="Bold" Margin="0,5,0,0"/>
-                            <TextBlock Text="5 items" Foreground="#A0A0A0" FontSize="12"/>
+                            <!-- Les agregamos x:Name para modificarlos desde el code-behind -->
+                            <TextBlock x:Name="txtTotal" Text="$ 0.00" Foreground="{StaticResource OroTexto}" FontSize="36" FontWeight="Bold" Margin="0,5,0,0"/>
+                            <TextBlock x:Name="txtCantidadItems" Text="0 items" Foreground="#A0A0A0" FontSize="12"/>
                         </StackPanel>
                     </Border>
-
                     <!-- Botón Principal de Venta -->
-                    <Button Content="PROCESS SALE" Style="{StaticResource BotonPrimario}" Height="50" Margin="0,0,0,15" FontSize="18"/>
+                    <Button Content="PROCESS SALE" Style="{StaticResource BotonPrimario}" Height="50" Margin="0,0,0,15" FontSize="18" Click="Button_Click_2"/>
 
                     <!-- Selector de Método de Pago -->
                     <ComboBox Height="40" Margin="0,0,0,20" SelectedIndex="0" 
@@ -116,7 +131,7 @@
 
                         <!-- Fila 2 -->
                         <Button Grid.Row="2" Grid.Column="0" Content="📄 RECEIPT" Style="{StaticResource BotonPrimario}"/>
-                        <Button Grid.Row="2" Grid.Column="2" Content="↪ LOGOUT" Style="{StaticResource BotonPrimario}"/>
+                        <Button Grid.Row="2" Grid.Column="2" Content="↪ CANCEL" Style="{StaticResource BotonPrimario}" Click="Button_Click_1"/>
                     </Grid>
 
                     <!-- Resumen de Impuestos -->
