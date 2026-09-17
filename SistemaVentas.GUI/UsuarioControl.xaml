@@ -4,15 +4,13 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d" 
-             d:DesignHeight="600" d:DesignWidth="800"
+             d:DesignHeight="600" d:DesignWidth="1000"
              Background="{StaticResource BgFondoPrincipal}">
 
     <!-- Contenedor principal con margen general -->
     <Grid Margin="30">
         <Grid.RowDefinitions>
-            <!-- Fila 0: Para el Header (Título y Botón) -->
             <RowDefinition Height="Auto"/>
-            <!-- Fila 1: Para la Grilla (Ocupa el resto de la pantalla) -->
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
@@ -39,107 +37,143 @@
                     VerticalAlignment="Center"/>
         </Grid>
 
-        <!-- DATAGRID: Tabla de usuarios heredando estilo base -->
-        <!-- DATAGRID: Tabla de usuarios heredando estilo base -->
+        <!-- DATAGRID: Tabla de usuarios -->
         <DataGrid x:Name="dgListaUsuarios" 
-              Grid.Row="1" 
-              Margin="0,10,0,0"
-              AutoGenerateColumns="False"
-              IsReadOnly="True">
-            <!-- Definición visual de columnas con sus respectivos Bindings -->
+                  Grid.Row="1" 
+                  Margin="0,10,0,0"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="ID" Width="Auto" Binding="{Binding IdUsuario}"/>
-                <DataGridTextColumn Header="Nombre" Width="*" Binding="{Binding Nombre}"/>
-                <DataGridTextColumn Header="Correo Electrónico" Width="*" Binding="{Binding Correo}"/>
+                <DataGridTextColumn Header="User" Width="Auto" Binding="{Binding NombreUsuario}"/>
+                <!-- Aquí usamos Nombree como lo definiste en tu entidad -->
+                <DataGridTextColumn Header="Nombre" Width="*" Binding="{Binding Nombree}"/>
+                <DataGridTextColumn Header="Apellido" Width="*" Binding="{Binding Apellido}"/>
+                <DataGridTextColumn Header="DNI" Width="Auto" Binding="{Binding DNI}"/>
+                <!-- Formato de fecha para que no muestre la hora -->
+                <DataGridTextColumn Header="F. Nacimiento" Width="Auto" Binding="{Binding FechaNacimiento, StringFormat=\{0:dd/MM/yyyy\}}"/>
+                <DataGridTextColumn Header="Dirección" Width="*" Binding="{Binding Direccion}"/>
+                <DataGridTextColumn Header="Correo" Width="*" Binding="{Binding Correo}"/>
                 <DataGridTextColumn Header="Rol" Width="Auto" Binding="{Binding IdRol}"/>
 
                 <DataGridTemplateColumn Header="Acciones" x:Name="colAcciones">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <Button Content="Editar" 
-                            Click="BtnEditar_Click" 
-                            Width="70" 
-                            Style="{StaticResource BotonPrimario}"/>
+                                    Click="BtnEditar_Click" 
+                                    Width="70" 
+                                    Style="{StaticResource BotonPrimario}"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
             </DataGrid.Columns>
         </DataGrid>
-        <!-- ESTE ES EL MODAL SUPERPUESTO (Inicialmente oculto) -->
-        <Grid x:Name="ModalCrearUsuario" Visibility="Collapsed" Background="#80000000">
-            <!-- Contenedor blanco del formulario -->
-            <Border Width="350" Height="420" Background="White" CornerRadius="10" 
-                VerticalAlignment="Center" HorizontalAlignment="Center" Padding="25">
-                <StackPanel>
-                    <TextBlock Text="NUEVO USUARIO" FontWeight="Bold" FontSize="18" 
-                           HorizontalAlignment="Center" Margin="0,0,0,20"/>
 
-                    <TextBlock Text="Nombre Completo" FontWeight="SemiBold"/>
-                    <TextBox x:Name="txtNombre" LostFocus="txtNombre_LostFocus" Height="30" Margin="0,0,0,10" Padding="5"/>
+        <!-- MODAL CREAR USUARIO -->
+        <Grid x:Name="ModalCrearUsuario" Visibility="Collapsed" Background="#80000000" Grid.RowSpan="2">
+            <Border Width="380" Background="White" CornerRadius="10" 
+                    VerticalAlignment="Center" HorizontalAlignment="Center" Padding="25">
+                <!-- ScrollViewer para evitar que se corte si la pantalla es chica -->
+                <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="450" Margin="-10" Padding="10">
+                    <StackPanel>
+                        <TextBlock Text="NUEVO USUARIO" FontWeight="Bold" FontSize="18" 
+                                   HorizontalAlignment="Center" Margin="0,0,0,20"/>
 
-                    <TextBlock Text="Email" FontWeight="SemiBold"/>
-                    <TextBox x:Name="txtCorreo" LostFocus="txtCorreo_LostFocus" Height="30" Margin="0,0,0,10" Padding="5"/>
+                        <TextBlock Text="Nombre de Usuario (User)" FontWeight="SemiBold"/>
+                        <TextBox x:Name="txtNombreUsuario" Height="30" Margin="0,0,0,10" Padding="5"/>
 
-                    <TextBlock Text="Contraseña" FontWeight="SemiBold"/>
-                    <PasswordBox x:Name="txtPassword" LostFocus="txtPassword_LostFocus" Height="30" Margin="0,0,0,10" Padding="5"/>
+                        <TextBlock Text="Nombre" FontWeight="SemiBold"/>
+                        <TextBox x:Name="txtNombree" LostFocus="txtNombre_LostFocus" Height="30" Margin="0,0,0,10" Padding="5"/>
 
-                    <TextBlock Text="Rol Asignado" FontWeight="SemiBold"/>
-                    <ComboBox x:Name="cmbRol" Height="30" Margin="0,0,0,25" Padding="5">
-                        <!-- Ajusta el Tag al ID real que tengan en tu base de datos -->
-                        <ComboBoxItem Content="Vendedor" Tag="2" IsSelected="True"/>
-                        <ComboBoxItem Content="Supervisor" Tag="3"/>
-                    </ComboBox>
+                        <TextBlock Text="Apellido" FontWeight="SemiBold"/>
+                        <TextBox x:Name="txtApellido" Height="30" Margin="0,0,0,10" Padding="5"/>
 
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                        <Button Content="Guardar" Click="btnGuardarUsuario_Click" 
-                            Width="120" Height="35" Margin="0,0,15,0" 
-                            Background="#28a745" Foreground="White"/>
-                        <Button Content="Cancelar" Click="btnCerrarModal_Click" 
-                            Width="120" Height="35" 
-                            Background="#dc3545" Foreground="White"/>
+                        <TextBlock Text="DNI" FontWeight="SemiBold"/>
+                        <TextBox x:Name="txtDNI" Height="30" Margin="0,0,0,10" Padding="5"/>
+
+                        <TextBlock Text="Fecha de Nacimiento" FontWeight="SemiBold"/>
+                        <DatePicker x:Name="dpFechaNacimiento" Height="30" Margin="0,0,0,10"/>
+
+                        <TextBlock Text="Dirección (Calle y Nro)" FontWeight="SemiBold"/>
+                        <TextBox x:Name="txtDireccion" Height="30" Margin="0,0,0,10" Padding="5"/>
+
+                        <TextBlock Text="Email" FontWeight="SemiBold"/>
+                        <TextBox x:Name="txtCorreo" LostFocus="txtCorreo_LostFocus" Height="30" Margin="0,0,0,10" Padding="5"/>
+
+                        <TextBlock Text="Contraseña" FontWeight="SemiBold"/>
+                        <PasswordBox x:Name="txtPassword" LostFocus="txtPassword_LostFocus" Height="30" Margin="0,0,0,10" Padding="5"/>
+
+                        <TextBlock Text="Rol Asignado" FontWeight="SemiBold"/>
+                        <ComboBox x:Name="cmbRol" Height="30" Margin="0,0,0,25" Padding="5">
+                            <ComboBoxItem Content="Vendedor" Tag="2" IsSelected="True"/>
+                            <ComboBoxItem Content="Supervisor" Tag="3"/>
+                        </ComboBox>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Button Content="Guardar" Click="btnGuardarUsuario_Click" 
+                                    Width="120" Height="35" Margin="0,0,15,0" 
+                                    Background="#28a745" Foreground="White"/>
+                            <Button Content="Cancelar" Click="btnCerrarModal_Click" 
+                                    Width="120" Height="35" 
+                                    Background="#dc3545" Foreground="White"/>
+                        </StackPanel>
                     </StackPanel>
-                </StackPanel>
+                </ScrollViewer>
             </Border>
         </Grid>
-        <!-- </Grid> (Aquí termina tu Grid principal) -->
-        <!-- MODAL DE EDICIÓN Y BAJA (Inicialmente oculto) -->
+
+        <!-- MODAL DE EDICIÓN Y BAJA -->
         <Grid x:Name="ModalEditarUsuario" Visibility="Collapsed" Background="#80000000" Grid.RowSpan="2">
-            <Border Width="350" Height="450" Background="White" CornerRadius="10" 
+            <Border Width="380" Background="White" CornerRadius="10" 
                     VerticalAlignment="Center" HorizontalAlignment="Center" Padding="25">
-                <StackPanel>
-                    <TextBlock Text="EDITAR USUARIO" FontWeight="Bold" FontSize="18" 
-                               HorizontalAlignment="Center" Margin="0,0,0,20"/>
+                <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="450" Margin="-10" Padding="10">
+                    <StackPanel>
+                        <TextBlock Text="EDITAR USUARIO" FontWeight="Bold" FontSize="18" 
+                                   HorizontalAlignment="Center" Margin="0,0,0,20"/>
 
-                    <TextBlock Text="Nombre Completo" FontWeight="SemiBold"/>
-                    <TextBox x:Name="txtEditNombre" Height="30" Margin="0,0,0,10" Padding="5"/>
+                        <TextBlock Text="Nombre de Usuario (User)" FontWeight="SemiBold"/>
+                        <TextBox x:Name="txtEditNombreUsuario" Height="30" Margin="0,0,0,10" Padding="5"/>
 
-                    <TextBlock Text="Email" FontWeight="SemiBold"/>
-                    <TextBox x:Name="txtEditCorreo" Height="30" Margin="0,0,0,10" Padding="5"/>
+                        <TextBlock Text="Nombre" FontWeight="SemiBold"/>
+                        <TextBox x:Name="txtEditNombree" Height="30" Margin="0,0,0,10" Padding="5"/>
 
-                    <TextBlock Text="Rol Asignado" FontWeight="SemiBold"/>
-                    <ComboBox x:Name="cmbEditRol" Height="30" Margin="0,0,0,25" Padding="5">
-                        <ComboBoxItem Content="Gerente" Tag="1"/>
-                        <ComboBoxItem Content="Vendedor" Tag="2"/>
-                        <ComboBoxItem Content="Supervisor" Tag="3"/>
-                    </ComboBox>
+                        <TextBlock Text="Apellido" FontWeight="SemiBold"/>
+                        <TextBox x:Name="txtEditApellido" Height="30" Margin="0,0,0,10" Padding="5"/>
 
-                    <!-- Botones de Acción -->
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
-                        <Button Content="Guardar Cambios" Click="btnGuardarEdicion_Click" 
-                                Width="130" Height="35" Margin="0,0,10,0" 
-                                Background="#28a745" Foreground="White"/>
+                        <TextBlock Text="DNI" FontWeight="SemiBold"/>
+                        <TextBox x:Name="txtEditDNI" Height="30" Margin="0,0,0,10" Padding="5"/>
 
-                        <Button Content="Dar de Baja" Click="btnDarDeBaja_Click" 
-                                Width="130" Height="35" 
-                                Background="#dc3545" Foreground="White"/>
+                        <TextBlock Text="Fecha de Nacimiento" FontWeight="SemiBold"/>
+                        <DatePicker x:Name="dpEditFechaNacimiento" Height="30" Margin="0,0,0,10"/>
+
+                        <TextBlock Text="Dirección" FontWeight="SemiBold"/>
+                        <TextBox x:Name="txtEditDireccion" Height="30" Margin="0,0,0,10" Padding="5"/>
+
+                        <TextBlock Text="Email" FontWeight="SemiBold"/>
+                        <TextBox x:Name="txtEditCorreo" Height="30" Margin="0,0,0,10" Padding="5"/>
+
+                        <TextBlock Text="Rol Asignado" FontWeight="SemiBold"/>
+                        <ComboBox x:Name="cmbEditRol" Height="30" Margin="0,0,0,25" Padding="5">
+                            <ComboBoxItem Content="Gerente" Tag="1"/>
+                            <ComboBoxItem Content="Vendedor" Tag="2"/>
+                            <ComboBoxItem Content="Supervisor" Tag="3"/>
+                        </ComboBox>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
+                            <Button Content="Guardar Cambios" Click="btnGuardarEdicion_Click" 
+                                    Width="130" Height="35" Margin="0,0,10,0" 
+                                    Background="#28a745" Foreground="White"/>
+                            <Button Content="Dar de Baja" Click="btnDarDeBaja_Click" 
+                                    Width="130" Height="35" 
+                                    Background="#dc3545" Foreground="White"/>
+                        </StackPanel>
+
+                        <Button Content="Cancelar" Click="btnCerrarModalEdicion_Click" 
+                                Width="270" Height="35" 
+                                Background="#6c757d" Foreground="White" HorizontalAlignment="Center"/>
                     </StackPanel>
-
-                    <Button Content="Cancelar" Click="btnCerrarModalEdicion_Click" 
-                            Width="270" Height="35" 
-                            Background="#6c757d" Foreground="White" HorizontalAlignment="Center"/>
-                </StackPanel>
+                </ScrollViewer>
             </Border>
         </Grid>
     </Grid>
-    
 </UserControl>

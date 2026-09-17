@@ -80,29 +80,43 @@ namespace SistemaVentas.GUI
         {
             try
             {
-                string nombre = txtNombre.Text?.Trim();
-                string correo = txtCorreo.Text?.Trim();
-                string password = txtPassword.Password;
+                // Validamos que haya seleccionado una fecha antes de continuar
+                if (!dpFechaNacimiento.SelectedDate.HasValue)
+                {
+                    MessageBox.Show("Por favor, seleccione una fecha de nacimiento.", "Atención", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
 
                 ComboBoxItem rolSeleccionado = (ComboBoxItem)cmbRol.SelectedItem;
-                int idRol = Convert.ToInt32(rolSeleccionado.Tag);
 
+                // Armamos el objeto con TODOS los campos de la interfaz
                 Usuario nuevoUsuario = new Usuario()
                 {
-                    Nombre = nombre,
-                    Correo = correo,
-                    Password = password,
-                    IdRol = idRol
+                    NombreUsuario = txtNombreUsuario.Text?.Trim(),
+                    Nombree = txtNombree.Text?.Trim(), // Ojo acá con el 'Nombree'
+                    Apellido = txtApellido.Text?.Trim(),
+                    DNI = txtDNI.Text?.Trim(),
+                    FechaNacimiento = dpFechaNacimiento.SelectedDate.Value,
+                    Direccion = txtDireccion.Text?.Trim(),
+                    Correo = txtCorreo.Text?.Trim(),
+                    Password = txtPassword.Password,
+                    IdRol = Convert.ToInt32(rolSeleccionado.Tag)
                 };
 
-                _usuarioLogica.CrearUsuario(nuevoUsuario, SesionGlobal.UsuarioActual);
+                
 
-                MessageBox.Show("Usuario creado con éxito", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                // LLAMAMOS A LA VALIDACIÓN NUEVA DE LA BLL
+                if (!_usuarioLogica.ValidarDatosNuevoUsuario(nuevoUsuario, out string error))
+                {
+                    MessageBox.Show(error, "Error de Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return; // Si hay error, cortamos acá
+                }
+
+                // Si pasó las validaciones, lo guardamos
+                _usuarioLogica.CrearUsuario(nuevoUsuario, SesionGlobal.UsuarioActual);
 
                 ModalCrearUsuario.Visibility = Visibility.Collapsed;
                 LimpiarFormulario();
-
-                // AQUÍ RECARGAMOS LA TABLA
                 CargarUsuarios();
             }
             catch (Exception ex)
@@ -113,7 +127,12 @@ namespace SistemaVentas.GUI
 
         private void LimpiarFormulario()
         {
-            txtNombre.Clear();
+            txtNombreUsuario.Clear();
+            txtNombree.Clear();
+            txtApellido.Clear();
+            txtDNI.Clear();
+            dpFechaNacimiento.SelectedDate = null; // Así se limpia el DatePicker
+            txtDireccion.Clear();
             txtCorreo.Clear();
             txtPassword.Clear();
             cmbRol.SelectedIndex = 0;
@@ -125,19 +144,21 @@ namespace SistemaVentas.GUI
         // Método que se ejecuta al hacer clic en "Editar" en cualquier fila
         private void BtnEditar_Click(object sender, RoutedEventArgs e)
         {
-            // Obtenemos el botón que fue clickeado
             Button btn = sender as Button;
-
-            // Extraemos la entidad Usuario que está vinculada a esa fila
             _usuarioSeleccionado = btn.DataContext as Usuario;
 
             if (_usuarioSeleccionado != null)
             {
-                // Precargamos los TextBox
-                txtEditNombre.Text = _usuarioSeleccionado.Nombre;
+                // Precargamos TODOS los TextBox y el DatePicker
+                txtEditNombreUsuario.Text = _usuarioSeleccionado.NombreUsuario;
+                txtEditNombree.Text = _usuarioSeleccionado.Nombree;
+                txtEditApellido.Text = _usuarioSeleccionado.Apellido;
+                txtEditDNI.Text = _usuarioSeleccionado.DNI;
+                dpEditFechaNacimiento.SelectedDate = _usuarioSeleccionado.FechaNacimiento;
+                txtEditDireccion.Text = _usuarioSeleccionado.Direccion;
                 txtEditCorreo.Text = _usuarioSeleccionado.Correo;
 
-                // Precargamos el ComboBox de Roles buscando el Tag que coincida
+                // La lógica del ComboBox queda igual
                 foreach (ComboBoxItem item in cmbEditRol.Items)
                 {
                     if (Convert.ToInt32(item.Tag) == _usuarioSeleccionado.IdRol)
@@ -147,42 +168,56 @@ namespace SistemaVentas.GUI
                     }
                 }
 
-                // Mostramos el modal de edición
                 ModalEditarUsuario.Visibility = Visibility.Visible;
             }
         }
 
         private void btnGuardarEdicion_Click(object sender, RoutedEventArgs e)
+{
+    try
+    {
+        if (_usuarioSeleccionado == null) return;
+        
+        // Validar fecha en edición también
+        if (!dpEditFechaNacimiento.SelectedDate.HasValue)
         {
-            try
-            {
-                // 1. Validar que tengamos un usuario seleccionado
-                if (_usuarioSeleccionado == null) return;
+            MessageBox.Show("La fecha de nacimiento no puede estar vacía.", "Atención", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
 
-                // 2. Extraer el rol del ComboBox
-                ComboBoxItem rolSeleccionado = (ComboBoxItem)cmbEditRol.SelectedItem;
-                int idRolNuevo = Convert.ToInt32(rolSeleccionado.Tag);
+        ComboBoxItem rolSeleccionado = (ComboBoxItem)cmbEditRol.SelectedItem;
 
-                // 3. Actualizar la entidad con los datos del formulario
-                _usuarioSeleccionado.Nombre = txtEditNombre.Text.Trim();
-                _usuarioSeleccionado.Correo = txtEditCorreo.Text.Trim();
-                _usuarioSeleccionado.IdRol = idRolNuevo;
+        // Actualizamos TODOS los campos
+        _usuarioSeleccionado.NombreUsuario = txtEditNombreUsuario.Text.Trim();
+        _usuarioSeleccionado.Nombree = txtEditNombree.Text.Trim();
+        _usuarioSeleccionado.Apellido = txtEditApellido.Text.Trim();
+        _usuarioSeleccionado.DNI = txtEditDNI.Text.Trim();
+        _usuarioSeleccionado.FechaNacimiento = dpEditFechaNacimiento.SelectedDate.Value;
+        _usuarioSeleccionado.Direccion = txtEditDireccion.Text.Trim();
+        _usuarioSeleccionado.Correo = txtEditCorreo.Text.Trim();
+        _usuarioSeleccionado.IdRol = Convert.ToInt32(rolSeleccionado.Tag);
 
-                // 4. Mandar a la BLL
-                // (Ajusta el nombre del método según cómo lo hayas llamado en UsuarioBLL)
+        if (!_usuarioLogica.ValidarDatosNuevoUsuario(_usuarioSeleccionado, out string error))
+                {
+                    // Si falta un dato o la fecha está mal, mostramos el cartel de advertencia amarillo y cortamos
+                    MessageBox.Show(error, "Error de Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                // Si pasa la validación, recién ahí mandamos a actualizar
                 _usuarioLogica.ActualizarUsuario(_usuarioSeleccionado);
 
-                MessageBox.Show("Usuario actualizado con éxito", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+               
+        MessageBox.Show("Usuario actualizado con éxito", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
 
-                // 5. Ocultar modal y recargar grilla
-                ModalEditarUsuario.Visibility = Visibility.Collapsed;
-                CargarUsuarios();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error al actualizar: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
+        ModalEditarUsuario.Visibility = Visibility.Collapsed;
+        CargarUsuarios();
+    }
+    catch (Exception ex)
+    {
+        MessageBox.Show($"Error al actualizar: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+    }
+}
 
         private void btnDarDeBaja_Click(object sender, RoutedEventArgs e)
         {
@@ -221,24 +256,24 @@ namespace SistemaVentas.GUI
 
         private void txtNombre_LostFocus(object sender, RoutedEventArgs e)
         {
-            if (!ValidadorGUI.EsNombreValido(txtNombre.Text, out string error))
+            if (!ValidadorGUI.EsNombreValido(txtNombree.Text, out string error))
             {
                 // ACÁ: Usamos el rojo que definiste en App.xaml
-                txtNombre.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeError");
+                txtNombree.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeError");
 
                 // TIP VISUAL: Podés engrosar el borde para que el error se note más
-                txtNombre.BorderThickness = new Thickness(2);
+                txtNombree.BorderThickness = new Thickness(2);
 
-                txtNombre.ToolTip = error;
+                txtNombree.ToolTip = error;
             }
             else
             {
-                txtNombre.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeNormalAzul");
+                txtNombree.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeNormalAzul");
 
                 // Volvemos el grosor a la normalidad
-                txtNombre.BorderThickness = new Thickness(1);
+                txtNombree.BorderThickness = new Thickness(1);
 
-                txtNombre.ToolTip = null;
+                txtNombree.ToolTip = null;
             }
         }
 

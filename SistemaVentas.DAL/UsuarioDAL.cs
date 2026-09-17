@@ -5,7 +5,6 @@ using System.Configuration;
 using System.Data;
 using Microsoft.Data.SqlClient;
 
-
 namespace SistemaVentas.DAL
 {
     /// <summary>
@@ -15,7 +14,7 @@ namespace SistemaVentas.DAL
     public class UsuarioDAL
     {
         private string _cadenaConexion;
-        
+
         public UsuarioDAL()
         {
             // segun App.config 
@@ -52,6 +51,35 @@ namespace SistemaVentas.DAL
         }
 
         /// <summary>
+        /// Verifica si ya existe un usuario con el DNI especificado
+        /// </summary>
+        public bool ExisteUsuarioPorDNI(string dni)
+        {
+            if (string.IsNullOrWhiteSpace(dni))
+                return false;
+
+            try
+            {
+                using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
+                {
+                    conexion.Open();
+
+                    string consulta = "SELECT COUNT(*) FROM Usuario WHERE dni = @dni";
+                    using (SqlCommand comando = new SqlCommand(consulta, conexion))
+                    {
+                        comando.Parameters.AddWithValue("@dni", dni);
+                        int cantidad = (int)comando.ExecuteScalar();
+                        return cantidad > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new UsuarioException($"Error al verificar DNI en base de datos: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
         /// Obtiene un usuario por su ID
         /// </summary>
         public Usuario ObtenerUsuarioPorId(int idUsuario)
@@ -62,7 +90,8 @@ namespace SistemaVentas.DAL
                 {
                     conexion.Open();
 
-                    string consulta = "SELECT id_usuario, nombre_completo, correo, password, id_rol FROM Usuario WHERE id_usuario = @idUsuario";
+                    // ACTUALIZADO: Traemos los campos nuevos en vez de nombre_completo
+                    string consulta = "SELECT id_usuario, nombre_usuario, nombre, apellido, dni, fecha_nacimiento, direccion, correo, password, id_rol FROM Usuario WHERE id_usuario = @idUsuario";
                     using (SqlCommand comando = new SqlCommand(consulta, conexion))
                     {
                         comando.Parameters.AddWithValue("@idUsuario", idUsuario);
@@ -73,7 +102,13 @@ namespace SistemaVentas.DAL
                                 return new Usuario
                                 {
                                     IdUsuario = (int)lector["id_usuario"],
-                                    Nombre = lector["nombre_completo"].ToString(),
+                                    NombreUsuario = lector["nombre_usuario"].ToString(),
+                                    Nombree = lector["nombre"].ToString(),
+                                    Apellido = lector["apellido"].ToString(),
+                                    DNI = lector["dni"].ToString(),
+                                    // Validamos si la fecha es NULL en la BD para que no explote
+                                    FechaNacimiento = lector["fecha_nacimiento"] != DBNull.Value ? Convert.ToDateTime(lector["fecha_nacimiento"]) : DateTime.MinValue,
+                                    Direccion = lector["direccion"].ToString(),
                                     Correo = lector["correo"].ToString(),
                                     Password = lector["password"].ToString(),
                                     IdRol = (int)lector["id_rol"]
@@ -100,8 +135,8 @@ namespace SistemaVentas.DAL
 
             using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
             {
-                // 1. El string SQL usa estrictamente los nombres de la base de datos
-                string query = "SELECT id_usuario, nombre_completo, correo, password, id_rol, activo FROM Usuario WHERE correo = @correo";
+                // ACTUALIZADO: Traemos los campos nuevos
+                string query = "SELECT id_usuario, nombre_usuario, nombre, apellido, dni, fecha_nacimiento, direccion, correo, password, id_rol, activo FROM Usuario WHERE correo = @correo";
 
                 SqlCommand cmd = new SqlCommand(query, conexion);
                 cmd.Parameters.AddWithValue("@correo", correo);
@@ -114,9 +149,13 @@ namespace SistemaVentas.DAL
                     {
                         usuario = new Usuario();
 
-                        // 2. Las propiedades de C# (izquierda) reciben los datos de las columnas SQL (derecha)
                         usuario.IdUsuario = Convert.ToInt32(reader["id_usuario"]);
-                        usuario.Nombre = reader["nombre_completo"].ToString();
+                        usuario.NombreUsuario = reader["nombre_usuario"].ToString();
+                        usuario.Nombree = reader["nombre"].ToString();
+                        usuario.Apellido = reader["apellido"].ToString();
+                        usuario.DNI = reader["dni"].ToString();
+                        usuario.FechaNacimiento = reader["fecha_nacimiento"] != DBNull.Value ? Convert.ToDateTime(reader["fecha_nacimiento"]) : DateTime.MinValue;
+                        usuario.Direccion = reader["direccion"].ToString();
                         usuario.Correo = reader["correo"].ToString();
                         usuario.Password = reader["password"].ToString();
                         usuario.IdRol = Convert.ToInt32(reader["id_rol"]);
@@ -141,13 +180,21 @@ namespace SistemaVentas.DAL
                 {
                     conexion.Open();
 
-                    string consulta = @"INSERT INTO Usuario (nombre_completo, correo, password, id_rol) 
-                                       VALUES (@nombre, @correo, @password, @idRol);
+                    // ACTUALIZADO: INSERT con todos los campos nuevos
+                    string consulta = @"INSERT INTO Usuario (nombre_usuario, nombre, apellido, dni, fecha_nacimiento, direccion, correo, password, id_rol) 
+                                       VALUES (@nombreUsuario, @nombre, @apellido, @dni, @fechaNacimiento, @direccion, @correo, @password, @idRol);
                                        SELECT SCOPE_IDENTITY();";
 
                     using (SqlCommand comando = new SqlCommand(consulta, conexion))
                     {
-                        comando.Parameters.AddWithValue("@nombre", usuario.Nombre);
+                        // Usamos ?? DBNull.Value por si en algún momento llega un dato nulo, que se guarde en SQL correctamente
+                        comando.Parameters.AddWithValue("@nombreUsuario", string.IsNullOrEmpty(usuario.NombreUsuario) ? (object)DBNull.Value : usuario.NombreUsuario);
+                        comando.Parameters.AddWithValue("@nombre", string.IsNullOrEmpty(usuario.Nombree) ? (object)DBNull.Value : usuario.Nombree);
+                        comando.Parameters.AddWithValue("@apellido", string.IsNullOrEmpty(usuario.Apellido) ? (object)DBNull.Value : usuario.Apellido);
+                        comando.Parameters.AddWithValue("@dni", string.IsNullOrEmpty(usuario.DNI) ? (object)DBNull.Value : usuario.DNI);
+                        comando.Parameters.AddWithValue("@fechaNacimiento", usuario.FechaNacimiento);
+                        comando.Parameters.AddWithValue("@direccion", string.IsNullOrEmpty(usuario.Direccion) ? (object)DBNull.Value : usuario.Direccion);
+
                         comando.Parameters.AddWithValue("@correo", usuario.Correo);
                         comando.Parameters.AddWithValue("@password", usuario.Password);
                         comando.Parameters.AddWithValue("@idRol", usuario.IdRol);
@@ -177,13 +224,28 @@ namespace SistemaVentas.DAL
                 {
                     conexion.Open();
 
+                    // ACTUALIZADO: UPDATE con todos los campos
                     string consulta = @"UPDATE Usuario 
-                                       SET nombre_completo = @nombre, correo = @correo, password = @password, id_rol = @idRol
+                                       SET nombre_usuario = @nombreUsuario, 
+                                           nombre = @nombre, 
+                                           apellido = @apellido, 
+                                           dni = @dni, 
+                                           fecha_nacimiento = @fechaNacimiento, 
+                                           direccion = @direccion, 
+                                           correo = @correo, 
+                                           password = @password, 
+                                           id_rol = @idRol
                                        WHERE id_usuario = @idUsuario";
 
                     using (SqlCommand comando = new SqlCommand(consulta, conexion))
                     {
-                        comando.Parameters.AddWithValue("@nombre", usuario.Nombre);
+                        comando.Parameters.AddWithValue("@nombreUsuario", string.IsNullOrEmpty(usuario.NombreUsuario) ? (object)DBNull.Value : usuario.NombreUsuario);
+                        comando.Parameters.AddWithValue("@nombre", string.IsNullOrEmpty(usuario.Nombree) ? (object)DBNull.Value : usuario.Nombree);
+                        comando.Parameters.AddWithValue("@apellido", string.IsNullOrEmpty(usuario.Apellido) ? (object)DBNull.Value : usuario.Apellido);
+                        comando.Parameters.AddWithValue("@dni", string.IsNullOrEmpty(usuario.DNI) ? (object)DBNull.Value : usuario.DNI);
+                        comando.Parameters.AddWithValue("@fechaNacimiento", usuario.FechaNacimiento);
+                        comando.Parameters.AddWithValue("@direccion", string.IsNullOrEmpty(usuario.Direccion) ? (object)DBNull.Value : usuario.Direccion);
+
                         comando.Parameters.AddWithValue("@correo", usuario.Correo);
                         comando.Parameters.AddWithValue("@password", usuario.Password);
                         comando.Parameters.AddWithValue("@idRol", usuario.IdRol);
@@ -213,7 +275,7 @@ namespace SistemaVentas.DAL
                 {
                     conexion.Open();
 
-                    string consulta = "SELECT id_usuario, nombre_completo, correo, password, id_rol FROM Usuario";
+                    string consulta = "SELECT id_usuario, nombre_usuario, nombre, apellido, dni, fecha_nacimiento, direccion, correo, password, id_rol FROM Usuario";
                     using (SqlCommand comando = new SqlCommand(consulta, conexion))
                     {
                         using (SqlDataReader lector = comando.ExecuteReader())
@@ -223,7 +285,12 @@ namespace SistemaVentas.DAL
                                 usuarios.Add(new Usuario
                                 {
                                     IdUsuario = (int)lector["id_usuario"],
-                                    Nombre = lector["nombre_completo"].ToString(),
+                                    NombreUsuario = lector["nombre_usuario"].ToString(),
+                                    Nombree = lector["nombre"].ToString(),
+                                    Apellido = lector["apellido"].ToString(),
+                                    DNI = lector["dni"].ToString(),
+                                    FechaNacimiento = lector["fecha_nacimiento"] != DBNull.Value ? Convert.ToDateTime(lector["fecha_nacimiento"]) : DateTime.MinValue,
+                                    Direccion = lector["direccion"].ToString(),
                                     Correo = lector["correo"].ToString(),
                                     Password = lector["password"].ToString(),
                                     IdRol = (int)lector["id_rol"]
@@ -240,8 +307,8 @@ namespace SistemaVentas.DAL
 
             return usuarios;
         }
-    
-    public List<Usuario> ObtenerPorRol(int idRolBuscado)
+
+        public List<Usuario> ObtenerPorRol(int idRolBuscado)
         {
             List<Usuario> usuarios = new List<Usuario>();
 
@@ -250,12 +317,10 @@ namespace SistemaVentas.DAL
                 using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
                 {
                     conexion.Open();
-                    // El filtrado ocurre en el motor de base de datos
-                    string consulta = "SELECT id_usuario, nombre_completo, correo, password, id_rol FROM Usuario WHERE id_rol = @IdRol";
+                    string consulta = "SELECT id_usuario, nombre_usuario, nombre, apellido, dni, fecha_nacimiento, direccion, correo, password, id_rol FROM Usuario WHERE id_rol = @IdRol";
 
                     using (SqlCommand comando = new SqlCommand(consulta, conexion))
                     {
-                        // Usamos parámetros por seguridad
                         comando.Parameters.AddWithValue("@IdRol", idRolBuscado);
 
                         using (SqlDataReader lector = comando.ExecuteReader())
@@ -265,7 +330,12 @@ namespace SistemaVentas.DAL
                                 usuarios.Add(new Usuario
                                 {
                                     IdUsuario = (int)lector["id_usuario"],
-                                    Nombre = lector["nombre_completo"].ToString(),
+                                    NombreUsuario = lector["nombre_usuario"].ToString(),
+                                    Nombree = lector["nombre"].ToString(),
+                                    Apellido = lector["apellido"].ToString(),
+                                    DNI = lector["dni"].ToString(),
+                                    FechaNacimiento = lector["fecha_nacimiento"] != DBNull.Value ? Convert.ToDateTime(lector["fecha_nacimiento"]) : DateTime.MinValue,
+                                    Direccion = lector["direccion"].ToString(),
                                     Correo = lector["correo"].ToString(),
                                     Password = lector["password"].ToString(),
                                     IdRol = (int)lector["id_rol"]
@@ -282,17 +352,15 @@ namespace SistemaVentas.DAL
 
             return usuarios;
         }
-    
-    public bool DarDeBajaUsuario(int idUsuario)
+
+        public bool DarDeBajaUsuario(int idUsuario)
         {
             bool respuesta = false;
             using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
             {
                 try
                 {
-                    // Borrado lógico: Actualizamos el estado a 0 (Inactivo) en lugar de usar DELETE
-                    // Ajusta "Activo = 0" según cómo se llame tu columna en SQL Server
-                    string query = "UPDATE Usuario SET Activo = 0 WHERE id_usuario = @IdUsuario";
+                    string query = "UPDATE Usuario SET activo = 0 WHERE id_usuario = @IdUsuario";
 
                     SqlCommand cmd = new SqlCommand(query, conexion);
                     cmd.Parameters.AddWithValue("@IdUsuario", idUsuario);
