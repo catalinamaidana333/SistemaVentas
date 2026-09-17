@@ -20,13 +20,18 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="80"/>
                     <RowDefinition Height="*"/>
+                    <!-- Aquí van los botones de navegación -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- Nueva fila para el usuario y logout -->
                 </Grid.RowDefinitions>
 
+                <!-- Título -->
                 <TextBlock Grid.Row="0" Text="MINIMARKET"
                            Foreground="{StaticResource OroTexto}"
                            FontSize="22" FontWeight="Bold"
                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
+                <!-- Botones de navegación -->
                 <StackPanel Grid.Row="1" Margin="15,10">
                     <Button x:Name="btnVentas" Content="Punto de Venta"
                             Style="{StaticResource BotonMenuLateral}"
@@ -38,9 +43,26 @@
                             Style="{StaticResource BotonMenuLateral}"
                             Click="btnUsuarios_Click"/>
                     <Button x:Name="btnCompra" Content="Compras"
-        Style="{StaticResource BotonMenuLateral}"
-        Click="btnCompra_Click"/>
-                    
+                            Style="{StaticResource BotonMenuLateral}"
+                            Click="btnCompra_Click"/>
+                </StackPanel>
+
+                <!-- SECCIÓN NUEVA: Información del Usuario y Logout -->
+                <StackPanel Grid.Row="2" Margin="15,20,15,20">
+                    <!-- Separador opcional para que quede más prolijo -->
+                    <Separator Margin="0,0,0,15" Background="LightGray" Opacity="0.3"/>
+
+                    <TextBlock x:Name="txtNombreUsuario" 
+                               Text="Usuario: Invitado" 
+                               Foreground="White" 
+                               FontSize="14" 
+                               FontWeight="SemiBold"
+                               HorizontalAlignment="Center" 
+                               Margin="0,0,0,15"/>
+
+                    <Button x:Name="btnLogout" Content="Cerrar Sesión"
+                            Style="{StaticResource BotonMenuLateral}"
+                            Click="btnLogout_Click"/>
                 </StackPanel>
             </Grid>
         </Border>
