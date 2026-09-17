@@ -222,7 +222,7 @@ namespace SistemaVentas.GUI
         private void btnDarDeBaja_Click(object sender, RoutedEventArgs e)
         {
             // Validar seguridad (Preguntar primero)
-            var respuesta = MessageBox.Show($"¿Estás seguro de que deseas dar de baja al usuario '{_usuarioSeleccionado.Nombre}'?",
+            var respuesta = MessageBox.Show($"¿Estás seguro de que deseas dar de baja al usuario '{_usuarioSeleccionado.Nombree}'?",
                                             "Confirmar Baja",
                                             MessageBoxButton.YesNo,
                                             MessageBoxImage.Warning);
@@ -307,6 +307,102 @@ namespace SistemaVentas.GUI
                 txtPassword.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeNormalAzul");
                 txtPassword.BorderThickness = new Thickness(1);
                 txtPassword.ToolTip = null;
+            }
+        }
+
+        private void txtDNI_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (!ValidadorGUI.EsDNIValido(txtDNI.Text, out string error))
+            {
+                txtDNI.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeError");
+                txtDNI.BorderThickness = new Thickness(2);
+                txtDNI.ToolTip = error;
+            }
+            else
+            {
+                txtDNI.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeNormalAzul");
+                txtDNI.BorderThickness = new Thickness(1);
+                txtDNI.ToolTip = null;
+            }
+        }
+
+        private void dpFechaNacimiento_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (!ValidadorGUI.EsFechaNacimientoValida(dpFechaNacimiento.SelectedDate, out string error))
+            {
+                dpFechaNacimiento.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeError");
+                dpFechaNacimiento.BorderThickness = new Thickness(2);
+                dpFechaNacimiento.ToolTip = error;
+            }
+            else
+            {
+                dpFechaNacimiento.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeNormalAzul");
+                dpFechaNacimiento.BorderThickness = new Thickness(1);
+                dpFechaNacimiento.ToolTip = null;
+            }
+        }
+
+        private void txtNombreUsuario_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (!ValidadorGUI.EsNombreUsuarioValido(txtNombreUsuario.Text, out string error))
+            {
+                txtNombreUsuario.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeError");
+                txtNombreUsuario.BorderThickness = new Thickness(2);
+                txtNombreUsuario.ToolTip = error;
+            }
+            else
+            {
+                txtNombreUsuario.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeNormalAzul");
+                txtNombreUsuario.BorderThickness = new Thickness(1);
+                txtNombreUsuario.ToolTip = null;
+            }
+        }
+
+        private void txtEditDNI_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (!ValidadorGUI.EsDNIValido(txtEditDNI.Text, out string error))
+            {
+                txtEditDNI.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeError");
+                txtEditDNI.BorderThickness = new Thickness(2);
+                txtEditDNI.ToolTip = error;
+            }
+            else
+            {
+                txtEditDNI.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeNormalAzul");
+                txtEditDNI.BorderThickness = new Thickness(1);
+                txtEditDNI.ToolTip = null;
+            }
+        }
+
+        private void dpEditFechaNacimiento_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (!ValidadorGUI.EsFechaNacimientoValida(dpEditFechaNacimiento.SelectedDate, out string error))
+            {
+                dpEditFechaNacimiento.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeError");
+                dpEditFechaNacimiento.BorderThickness = new Thickness(2);
+                dpEditFechaNacimiento.ToolTip = error;
+            }
+            else
+            {
+                dpEditFechaNacimiento.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeNormalAzul");
+                dpEditFechaNacimiento.BorderThickness = new Thickness(1);
+                dpEditFechaNacimiento.ToolTip = null;
+            }
+        }
+
+        private void txtEditNombreUsuario_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (!ValidadorGUI.EsNombreUsuarioValido(txtEditNombreUsuario.Text, out string error))
+            {
+                txtEditNombreUsuario.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeError");
+                txtEditNombreUsuario.BorderThickness = new Thickness(2);
+                txtEditNombreUsuario.ToolTip = error;
+            }
+            else
+            {
+                txtEditNombreUsuario.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeNormalAzul");
+                txtEditNombreUsuario.BorderThickness = new Thickness(1);
+                txtEditNombreUsuario.ToolTip = null;
             }
         }
     }

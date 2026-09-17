@@ -80,7 +80,7 @@
                                    HorizontalAlignment="Center" Margin="0,0,0,20"/>
 
                         <TextBlock Text="Nombre de Usuario (User)" FontWeight="SemiBold"/>
-                        <TextBox x:Name="txtNombreUsuario" Height="30" Margin="0,0,0,10" Padding="5"/>
+                        <TextBox x:Name="txtNombreUsuario" LostFocus="txtNombreUsuario_LostFocus" Height="30" Margin="0,0,0,10" Padding="5"/>
 
                         <TextBlock Text="Nombre" FontWeight="SemiBold"/>
                         <TextBox x:Name="txtNombree" LostFocus="txtNombre_LostFocus" Height="30" Margin="0,0,0,10" Padding="5"/>
@@ -89,10 +89,10 @@
                         <TextBox x:Name="txtApellido" Height="30" Margin="0,0,0,10" Padding="5"/>
 
                         <TextBlock Text="DNI" FontWeight="SemiBold"/>
-                        <TextBox x:Name="txtDNI" Height="30" Margin="0,0,0,10" Padding="5"/>
+                        <TextBox x:Name="txtDNI" LostFocus="txtDNI_LostFocus" Height="30" Margin="0,0,0,10" Padding="5"/>
 
                         <TextBlock Text="Fecha de Nacimiento" FontWeight="SemiBold"/>
-                        <DatePicker x:Name="dpFechaNacimiento" Height="30" Margin="0,0,0,10"/>
+                        <DatePicker x:Name="dpFechaNacimiento" LostFocus="dpFechaNacimiento_LostFocus" Height="30" Margin="0,0,0,10"/>
 
                         <TextBlock Text="Dirección (Calle y Nro)" FontWeight="SemiBold"/>
                         <TextBox x:Name="txtDireccion" Height="30" Margin="0,0,0,10" Padding="5"/>
@@ -132,7 +132,7 @@
                                    HorizontalAlignment="Center" Margin="0,0,0,20"/>
 
                         <TextBlock Text="Nombre de Usuario (User)" FontWeight="SemiBold"/>
-                        <TextBox x:Name="txtEditNombreUsuario" Height="30" Margin="0,0,0,10" Padding="5"/>
+                        <TextBox x:Name="txtEditNombreUsuario" LostFocus="txtEditNombreUsuario_LostFocus" Height="30" Margin="0,0,0,10" Padding="5"/>
 
                         <TextBlock Text="Nombre" FontWeight="SemiBold"/>
                         <TextBox x:Name="txtEditNombree" Height="30" Margin="0,0,0,10" Padding="5"/>
@@ -141,10 +141,10 @@
                         <TextBox x:Name="txtEditApellido" Height="30" Margin="0,0,0,10" Padding="5"/>
 
                         <TextBlock Text="DNI" FontWeight="SemiBold"/>
-                        <TextBox x:Name="txtEditDNI" Height="30" Margin="0,0,0,10" Padding="5"/>
+                        <TextBox x:Name="txtEditDNI" LostFocus="txtEditDNI_LostFocus" Height="30" Margin="0,0,0,10" Padding="5"/>
 
                         <TextBlock Text="Fecha de Nacimiento" FontWeight="SemiBold"/>
-                        <DatePicker x:Name="dpEditFechaNacimiento" Height="30" Margin="0,0,0,10"/>
+                        <DatePicker x:Name="dpEditFechaNacimiento" LostFocus="dpEditFechaNacimiento_LostFocus" Height="30" Margin="0,0,0,10"/>
 
                         <TextBlock Text="Dirección" FontWeight="SemiBold"/>
                         <TextBox x:Name="txtEditDireccion" Height="30" Margin="0,0,0,10" Padding="5"/>
