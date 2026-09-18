@@ -139,8 +139,8 @@
                         </Grid.ColumnDefinitions>
 
                         <!-- Fila 1 -->
-                        <Button Grid.Row="0" Grid.Column="0" Content="⊗ VOID" Style="{StaticResource BotonPrimario}"/>
-                        <Button Grid.Row="0" Grid.Column="2" Content="⏸ HOLD" Style="{StaticResource BotonPrimario}"/>
+                        <Button Grid.Row="0" Grid.Column="0" Content="Yerba Mate PROMO" Style="{StaticResource BotonPrimario}" Click="btnAgregarPrueba_Click"/>
+                        <Button Grid.Row="0" Grid.Column="2" Content="Coca Cola 1.5L" Style="{StaticResource BotonPrimario}"/>
 
                         <!-- Fila 2 -->
                         <Button Grid.Row="2" Grid.Column="0" Content="📄 RECEIPT" Style="{StaticResource BotonPrimario}"/>
