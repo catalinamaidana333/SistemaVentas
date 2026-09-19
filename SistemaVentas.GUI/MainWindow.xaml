@@ -38,9 +38,23 @@
                             Style="{StaticResource BotonMenuLateral}"
                             Click="btnUsuarios_Click"/>
                     <Button x:Name="btnCompra" Content="Compras"
-        Style="{StaticResource BotonMenuLateral}"
-        Click="btnCompra_Click"/>
+                            Style="{StaticResource BotonMenuLateral}"
+                            Click="btnCompra_Click"/>
                     
+                    <!-- Botón Principal de Reportes -->
+                    <Button x:Name="btnReportes" Content="Reportes" 
+                            Style="{StaticResource BotonMenuLateral}" 
+                            Click="btnReportes_Click"/>
+
+                    <!-- Subbotones Gerente -->
+                    <Button x:Name="btnSubRentabilidad" Content="  • Rentabilidad" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubRentabilidad_Click"/>
+                    <Button x:Name="btnSubAuditoria" Content="  • Auditoría" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubAuditoria_Click"/>
+                    <Button x:Name="btnSubRendimiento" Content="  • Rendimiento" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubRendimiento_Click"/>
+
+                    <!-- Subbotones Supervisor -->
+                    <Button x:Name="btnSubStockCritico" Content="  • Stock Crítico" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubStockCritico_Click"/>
+                    <Button x:Name="btnSubVentasCanceladas" Content="  • Ventas Canceladas" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubVentasCanceladas_Click"/>
+                    <Button x:Name="btnSubVentasVendedor" Content="  • Ventas por Vendedor" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubVentasVendedor_Click"/>
                 </StackPanel>
             </Grid>
         </Border>

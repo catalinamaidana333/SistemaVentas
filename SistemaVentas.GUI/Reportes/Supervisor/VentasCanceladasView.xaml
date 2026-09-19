@@ -1,0 +1,38 @@
+﻿<UserControl x:Class="SistemaVentas.GUI.Views.Reportes.Supervisor.VentasCanceladasView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d" d:DesignHeight="600" d:DesignWidth="900">
+    <UserControl.Resources>
+        <SolidColorBrush x:Key="AzulOscuro" Color="#0B132B"/>
+        <SolidColorBrush x:Key="AzulMedio" Color="#1C2541"/>
+        <SolidColorBrush x:Key="Amarillo" Color="#F2C832"/>
+    </UserControl.Resources>
+
+    <Grid Background="{StaticResource AzulOscuro}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="VENTAS CANCELADAS Y DEVOLUCIONES (DÍA)"
+                   Foreground="{StaticResource Amarillo}"
+                   FontSize="24" FontWeight="Bold" Margin="20"/>
+
+        <DataGrid Grid.Row="1" x:Name="DgVentasCanceladas"
+                  Margin="20,0,20,20"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  Background="{StaticResource AzulMedio}"
+                  Foreground="Black"
+                  HeadersVisibility="Column">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="ID Venta" Binding="{Binding IdVenta}" Width="2*"/>
+                <DataGridTextColumn Header="Fecha y Hora" Binding="{Binding FechaHora, StringFormat='dd/MM/yyyy HH:mm'}" Width="2*"/>
+                <DataGridTextColumn Header="Método de Pago" Binding="{Binding MetodoPago}" Width="2*"/>
+                <DataGridTextColumn Header="Monto Revertido" Binding="{Binding Total, StringFormat='c'}" Width="2*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</UserControl>
