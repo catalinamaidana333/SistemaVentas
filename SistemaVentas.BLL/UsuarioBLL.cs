@@ -23,10 +23,8 @@ namespace SistemaVentas.BLL
             usuarioDAL = new UsuarioDAL();
         }
 
-        // Constante del IdRol hardcodeada en desarrollo (debe configurarse según la BD)
-        private const int ID_ROL_GERENTE = 1;
+       
 
-     
 
         /// <summary>
         /// Crea un nuevo usuario con validaciones completas de seguridad y reglas de negocio.
@@ -398,6 +396,17 @@ namespace SistemaVentas.BLL
             // Llamamos a la DAL para el borrado lógico
             return usuarioDAL.DarDeBajaUsuario(idUsuarioObjetivo);
         }
+        public bool DarDeAltaUsuario(int idUsuarioObjetivo)
+        {
+            // Opcional: Validación de negocio adicional
+            if (idUsuarioObjetivo <= 0)
+            {
+                throw new Exception("ID de usuario no válido.");
+            }
+
+            // Llamamos a la DAL para el borrado lógico
+            return usuarioDAL.DarDeAltaUsuario(idUsuarioObjetivo);
+        }
 
         public bool PuedeAccederPantallaUsuarios(int idRol)
         {
@@ -409,6 +418,24 @@ namespace SistemaVentas.BLL
         {
             // Solo el gerente puede editar/crear
             return idRol == (int)Roles.Gerente;
+        }
+
+        /// <summary>
+        /// Obtiene usuarios filtrados por rol y/o estado
+        /// </summary>
+        /// <param name="idRol">ID del rol (null para no filtrar por rol)</param>
+        /// <param name="estado">estado activo/inactivo (null para ambos)</param>
+        /// <returns>Lista de usuarios filtrada</returns>
+        public List<Usuario> ObtenerUsuariosFiltrados(int? idRol, bool? estado)
+        {
+            try
+            {
+                return usuarioDAL.ObtenerUsuariosConFiltros(idRol, estado);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error al obtener usuarios filtrados: {ex.Message}", ex);
+            }
         }
     }
 }

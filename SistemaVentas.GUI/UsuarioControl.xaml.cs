@@ -13,6 +13,8 @@ namespace SistemaVentas.GUI
     {
         private UsuarioBLL _usuarioLogica;
 
+        private bool _controlsInitialized = false;
+
         public UsuarioControl()
         {
             InitializeComponent();
@@ -24,6 +26,9 @@ namespace SistemaVentas.GUI
 
         private void UsuarioControl_Loaded(object sender, RoutedEventArgs e)
         {
+            // Marcar que los controles están listos
+            _controlsInitialized = true;
+
             ConfigurarAccesos();
             CargarUsuarios();
         }
@@ -142,6 +147,7 @@ namespace SistemaVentas.GUI
         private Usuario _usuarioSeleccionado;
 
         // Método que se ejecuta al hacer clic en "Editar" en cualquier fila
+        // Método que se ejecuta al hacer clic en "Editar" en cualquier fila
         private void BtnEditar_Click(object sender, RoutedEventArgs e)
         {
             Button btn = sender as Button;
@@ -158,7 +164,6 @@ namespace SistemaVentas.GUI
                 txtEditDireccion.Text = _usuarioSeleccionado.Direccion;
                 txtEditCorreo.Text = _usuarioSeleccionado.Correo;
 
-                // La lógica del ComboBox queda igual
                 foreach (ComboBoxItem item in cmbEditRol.Items)
                 {
                     if (Convert.ToInt32(item.Tag) == _usuarioSeleccionado.IdRol)
@@ -166,6 +171,18 @@ namespace SistemaVentas.GUI
                         cmbEditRol.SelectedItem = item;
                         break;
                     }
+                }
+
+                // --- NUEVA LÓGICA PARA EL BOTÓN DE ESTADO ---
+                if (_usuarioSeleccionado.Estado == true)
+                {
+                    btnCambiarEstado.Content = "Dar de Baja";
+                    btnCambiarEstado.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#dc3545")); // Rojo
+                }
+                else
+                {
+                    btnCambiarEstado.Content = "Dar de Alta";
+                    btnCambiarEstado.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#28a745")); // Verde
                 }
 
                 ModalEditarUsuario.Visibility = Visibility.Visible;
@@ -219,11 +236,16 @@ namespace SistemaVentas.GUI
     }
 }
 
-        private void btnDarDeBaja_Click(object sender, RoutedEventArgs e)
+        
+        private void btnCambiarEstado_Click(object sender, RoutedEventArgs e)
         {
-            // Validar seguridad (Preguntar primero)
-            var respuesta = MessageBox.Show($"¿Estás seguro de que deseas dar de baja al usuario '{_usuarioSeleccionado.Nombree}'?",
-                                            "Confirmar Baja",
+            if (_usuarioSeleccionado == null) return;
+
+            // Determinamos qué texto mostrar en las alertas según el estado
+            string accion = _usuarioSeleccionado.Estado ? "dar de baja" : "dar de alta";
+
+            var respuesta = MessageBox.Show($"¿Estás seguro de que deseas {accion} al usuario '{_usuarioSeleccionado.Nombree}'?",
+                                            $"Confirmar {accion.ToUpper()}",
                                             MessageBoxButton.YesNo,
                                             MessageBoxImage.Warning);
 
@@ -231,11 +253,17 @@ namespace SistemaVentas.GUI
             {
                 try
                 {
-                    // Mandar solo el ID a la BLL para el borrado lógico
-                    // (Ajusta el nombre del método según cómo lo hayas llamado en UsuarioBLL)
-                    _usuarioLogica.DarDeBajaUsuario(_usuarioSeleccionado.IdUsuario);
-
-                    MessageBox.Show("Usuario dado de baja exitosamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                    // Verificamos el estado y llamamos a la BLL correspondiente
+                    if (_usuarioSeleccionado.Estado == true)
+                    {
+                        _usuarioLogica.DarDeBajaUsuario(_usuarioSeleccionado.IdUsuario);
+                        MessageBox.Show("Usuario dado de baja exitosamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    else
+                    {
+                        _usuarioLogica.DarDeAltaUsuario(_usuarioSeleccionado.IdUsuario);
+                        MessageBox.Show("Usuario dado de alta exitosamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
 
                     // Ocultar modal y recargar grilla
                     ModalEditarUsuario.Visibility = Visibility.Collapsed;
@@ -243,7 +271,7 @@ namespace SistemaVentas.GUI
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error al dar de baja: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"Error al {accion}: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
@@ -403,6 +431,86 @@ namespace SistemaVentas.GUI
                 txtEditNombreUsuario.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeNormalAzul");
                 txtEditNombreUsuario.BorderThickness = new Thickness(1);
                 txtEditNombreUsuario.ToolTip = null;
+            }
+        }
+        
+        /// <summary>
+        /// Manejador para cambios en el filtro de rol
+        /// </summary>
+        private void cmbFiltroRol_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            AplicarFiltros();
+        }
+
+        /// <summary>
+        /// Manejador para cambios en el filtro de estado
+        /// </summary>
+        private void cmbFiltroEstado_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            AplicarFiltros();
+        }
+
+        /// <summary>
+        /// Aplica los filtros seleccionados a la grilla de usuarios
+        /// Solo se ejecuta después de que todos los controles han sido inicializados
+        /// </summary>
+        private void AplicarFiltros()
+        {
+            try
+            {
+                // Evitar ejecutarse durante la inicialización del control
+                if (!_controlsInitialized)
+                {
+                    return;
+                }
+
+                // Validar que los controles existan
+                if (cmbFiltroEstado == null || cmbFiltroRol == null)
+                {
+                    return;
+                }
+
+                // Obtener valores seleccionados de los filtros
+                int? idRolSeleccionado = null;
+                bool? estadoSeleccionado = null;
+
+                // Leer filtro de rol
+                if (cmbFiltroRol.SelectedItem is ComboBoxItem itemRol)
+                {
+                    string tagRol = itemRol.Tag?.ToString();
+                    if (!string.IsNullOrEmpty(tagRol) && tagRol != "0")
+                    {
+                        idRolSeleccionado = int.Parse(tagRol);
+                    }
+                }
+
+                // Leer filtro de estado
+                if (cmbFiltroEstado.SelectedItem is ComboBoxItem itemEstado)
+                {
+                    string tagEstado = itemEstado.Tag?.ToString();
+                    if (tagEstado == "1") // Solo Activos
+                    {
+                        estadoSeleccionado = true;
+                    }
+                    else if (tagEstado == "2") // Solo Inactivos
+                    {
+                        estadoSeleccionado = false;
+                    }
+                    // Si tagEstado es "0", significa ambos, así que estadoSeleccionado permanece null
+                }
+
+                // Obtener usuarios filtrados desde BLL
+                List<Usuario> usuariosFiltrados = _usuarioLogica.ObtenerUsuariosFiltrados(idRolSeleccionado, estadoSeleccionado);
+
+                // Asignar la lista filtrada al DataGrid
+                if (dgListaUsuarios != null)
+                {
+                    dgListaUsuarios.ItemsSource = usuariosFiltrados;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al aplicar filtros: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }
