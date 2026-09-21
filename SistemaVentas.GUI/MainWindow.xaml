@@ -63,6 +63,22 @@
                     <Button x:Name="btnLogout" Content="Cerrar Sesión"
                             Style="{StaticResource BotonMenuLateral}"
                             Click="btnLogout_Click"/>
+                    </StackPanel>
+                    <StackPanel>
+                    <!-- Botón Principal de Reportes -->
+                    <Button x:Name="btnReportes" Content="Reportes" 
+                            Style="{StaticResource BotonMenuLateral}" 
+                            Click="btnReportes_Click"/>
+
+                    <!-- Subbotones Gerente -->
+                    <Button x:Name="btnSubRentabilidad" Content="  • Rentabilidad" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubRentabilidad_Click"/>
+                    <Button x:Name="btnSubAuditoria" Content="  • Auditoría" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubAuditoria_Click"/>
+                    <Button x:Name="btnSubRendimiento" Content="  • Rendimiento" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubRendimiento_Click"/>
+
+                    <!-- Subbotones Supervisor -->
+                    <Button x:Name="btnSubStockCritico" Content="  • Stock Crítico" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubStockCritico_Click"/>
+                    <Button x:Name="btnSubVentasCanceladas" Content="  • Ventas Canceladas" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubVentasCanceladas_Click"/>
+                    <Button x:Name="btnSubVentasVendedor" Content="  • Ventas por Vendedor" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubVentasVendedor_Click"/>
                 </StackPanel>
             </Grid>
         </Border>

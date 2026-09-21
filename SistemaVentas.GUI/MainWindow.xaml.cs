@@ -1,6 +1,7 @@
 ﻿using SistemaVentas.BLL;
 using SistemaVentas.Entities;
 using SistemaVentas.GUI.Contexto;
+using SistemaVentas.GUI;
 using System;
 using System.Text;
 using System.Windows;
@@ -16,7 +17,7 @@ using System.Windows.Shapes;
 namespace SistemaVentas.GUI
 {
     public partial class MainWindow : Window
-    { 
+    {
 
         private UsuarioBLL _usuarioLogica = new UsuarioBLL();
 
@@ -36,8 +37,8 @@ namespace SistemaVentas.GUI
             // Le preguntamos a la BLL si tiene acceso
             if (!_usuarioLogica.PuedeAccederPantallaUsuarios(idRolActual))
             {
-               
-                btnUsuarios.IsEnabled = false; 
+
+                btnUsuarios.IsEnabled = false;
             }
             if (SesionGlobal.HayUsuarioLogueado)
             {
@@ -80,6 +81,64 @@ namespace SistemaVentas.GUI
 
             // 3. Cerramos el MainWindow actual
             this.Close();
+
+        // Eventos Gerente
+        private void btnSubRentabilidad_Click(object sender, RoutedEventArgs e)
+            => ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Gerente.RentabilidadView();
+
+        private void btnSubAuditoria_Click(object sender, RoutedEventArgs e)
+            => ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Gerente.AuditoriaView();
+
+        private void btnSubRendimiento_Click(object sender, RoutedEventArgs e)
+            => ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Gerente.RendimientoMensualView();
+
+        // Eventos Supervisor
+        private void btnSubStockCritico_Click(object sender, RoutedEventArgs e)
+            => ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Supervisor.StockCriticoView();
+
+        private void btnSubVentasCanceladas_Click(object sender, RoutedEventArgs e)
+            => ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Supervisor.VentasCanceladasView();
+
+        private void btnSubVentasVendedor_Click(object sender, RoutedEventArgs e)
+            => ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Supervisor.VentasVendedorView();
+
+        private void OcultarSubmenus()
+        {
+            btnSubRentabilidad.Visibility = Visibility.Collapsed;
+            btnSubAuditoria.Visibility = Visibility.Collapsed;
+            btnSubRendimiento.Visibility = Visibility.Collapsed;
+
+            btnSubStockCritico.Visibility = Visibility.Collapsed;
+            btnSubVentasCanceladas.Visibility = Visibility.Collapsed;
+            btnSubVentasVendedor.Visibility = Visibility.Collapsed;
+        }
+
+        private void btnReportes_Click(object sender, RoutedEventArgs e)
+        {
+            int idRol = SesionGlobal.UsuarioActual.IdRol;
+
+            OcultarSubmenus();
+
+            if (idRol == 1) // Gerente
+            {
+                btnSubRentabilidad.Visibility = Visibility.Visible;
+                btnSubAuditoria.Visibility = Visibility.Visible;
+                btnSubRendimiento.Visibility = Visibility.Visible;
+
+                ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Gerente.RentabilidadView();
+            }
+            else if (idRol == 2) // Supervisor
+            {
+                btnSubStockCritico.Visibility = Visibility.Visible;
+                btnSubVentasCanceladas.Visibility = Visibility.Visible;
+                btnSubVentasVendedor.Visibility = Visibility.Visible;
+
+                ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Supervisor.StockCriticoView();
+            }
+            else if (idRol == 3) // Vendedor
+            {
+                ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Vendedor.ArqueoDiarioView(1);
+            }
         }
     }
 }
