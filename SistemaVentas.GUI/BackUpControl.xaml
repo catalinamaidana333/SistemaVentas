@@ -1,0 +1,75 @@
+﻿<UserControl x:Class="SistemaVentas.GUI.BackUpControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:SistemaVentas.GUI"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800"
+             Background="{StaticResource BgFondoPrincipal}">
+    <Grid>
+        <StackPanel Margin="20" Orientation="Vertical" VerticalAlignment="Stretch">
+            <!-- Título -->
+            <TextBlock Text="Gestión de Backups" 
+                       Style="{StaticResource TituloPrincipal}"
+                       Margin="0,0,0,20"/>
+
+            <!-- Sección de Acción -->
+            <Grid Margin="0,0,0,20">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="BtnGenerarBackup"
+                            Content="Generar Backup"
+                            Style="{StaticResource BotonPrimario}"
+                            Click="BtnGenerarBackup_Click"
+                            Padding="20,10"
+                            Margin="0,0,15,0"/>
+
+                    <!-- Mensaje de Éxito -->
+                    <TextBlock x:Name="TbMensajeExito"
+                               Text="✓ Backup generado exitosamente"
+                               Foreground="#4CAF50"
+                               FontSize="14"
+                               FontWeight="Bold"
+                               VerticalAlignment="Center"
+                               Visibility="Collapsed"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Tabla de Backups -->
+            <StackPanel Orientation="Vertical" VerticalAlignment="Stretch">
+                <TextBlock Text="Historial de Backups"
+                           Foreground="{StaticResource TextoClaro}"
+                           FontFamily="{StaticResource FuentePrimaria}"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           Margin="0,0,0,10"/>
+
+                <DataGrid x:Name="DgBackups"
+                          Height="250"
+                          CanUserResizeRows="False"
+                          CanUserReorderColumns="False"
+                          CanUserResizeColumns="True"
+                          CanUserSortColumns="True">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="ID" 
+                                           Binding="{Binding BackupId}"
+                                           Width="60"
+                                           IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Nombre del Archivo"
+                                           Binding="{Binding NombreArchivo}"
+                                           Width="250"
+                                           IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Fecha y Hora"
+                                           Binding="{Binding FechaHora, StringFormat=dd/MM/yyyy HH:mm:ss}"
+                                           Width="180"
+                                           IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Estado"
+                                           Binding="{Binding Estado}"
+                                           Width="100"
+                                           IsReadOnly="True"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>
