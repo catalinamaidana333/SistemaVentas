@@ -1,0 +1,46 @@
+﻿<UserControl x:Class="SistemaVentas.GUI.Views.Reportes.Gerente.RentabilidadView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d" d:DesignHeight="600" d:DesignWidth="900">
+    <UserControl.Resources>
+        <SolidColorBrush x:Key="AzulOscuro" Color="#0B132B"/>
+        <SolidColorBrush x:Key="AzulMedio" Color="#000038"/>
+        <SolidColorBrush x:Key="Amarillo" Color="#F2C832"/>
+    </UserControl.Resources>
+
+    <Grid Background="{StaticResource AzulOscuro}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="REPORTE DE RENTABILIDAD"
+                   Foreground="{StaticResource Amarillo}"
+                   FontSize="24" FontWeight="Bold" Margin="20"/>
+
+        <UniformGrid Grid.Row="1" Columns="3" Margin="20" VerticalAlignment="Top">
+            <Border Background="{StaticResource AzulMedio}" Margin="10" Padding="20" CornerRadius="8">
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="Total Ventas" Foreground="White" FontSize="16" HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="TxtTotalVentas" Text="$0.00" Foreground="#4CAF50" FontSize="24" FontWeight="Bold" Margin="0,10,0,0" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+
+            <Border Background="{StaticResource AzulMedio}" Margin="10" Padding="20" CornerRadius="8">
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="Total Compras" Foreground="White" FontSize="16" HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="TxtTotalCompras" Text="$0.00" Foreground="#F44336" FontSize="24" FontWeight="Bold" Margin="0,10,0,0" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+
+            <Border Background="{StaticResource AzulMedio}" Margin="10" Padding="20" CornerRadius="8">
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="Ganancia Neta" Foreground="White" FontSize="16" HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="TxtGananciaNeta" Text="$0.00" Foreground="{StaticResource Amarillo}" FontSize="24" FontWeight="Bold" Margin="0,10,0,0" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+        </UniformGrid>
+    </Grid>
+</UserControl>

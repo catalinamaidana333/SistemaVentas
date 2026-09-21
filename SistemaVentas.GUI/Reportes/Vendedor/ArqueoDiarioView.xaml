@@ -1,0 +1,66 @@
+﻿<UserControl x:Class="SistemaVentas.GUI.Views.Reportes.Vendedor.ArqueoDiarioView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="650" d:DesignWidth="900">
+
+    <UserControl.Resources>
+        <SolidColorBrush x:Key="AzulOscuro" Color="#0B132B"/>
+        <SolidColorBrush x:Key="AzulMedio" Color="#000038"/>
+        <SolidColorBrush x:Key="Amarillo" Color="#F2C832"/>
+        <SolidColorBrush x:Key="AmarilloClaro" Color="#F7DA69"/>
+    </UserControl.Resources>
+
+    <Grid Background="{StaticResource AzulOscuro}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="ARQUEO DIARIO"
+                   Foreground="{StaticResource Amarillo}"
+                   FontSize="28" FontWeight="Bold"
+                   Margin="20,20,20,10"/>
+
+        <TextBlock Grid.Row="1" x:Name="TxtFecha"
+                   Foreground="White" FontSize="16"
+                   Margin="20,0,20,20"/>
+
+        <Border Grid.Row="2" Background="Transparent"
+                BorderBrush="{StaticResource Amarillo}" BorderThickness="2"
+                CornerRadius="4" Margin="20,0,20,20" Padding="20">
+            <StackPanel>
+
+                <TextBlock Text="MONTO INICIAL DE CAJA" Foreground="LightGray" FontSize="12"/>
+                <TextBlock x:Name="TxtMontoInicial" Foreground="White" FontSize="18" FontWeight="Bold" Margin="0,0,0,15"/>
+
+                <TextBlock Text="TOTAL VENTAS EN EFECTIVO" Foreground="LightGray" FontSize="12"/>
+                <TextBlock x:Name="TxtVentasEfectivo" Foreground="White" FontSize="18" FontWeight="Bold" Margin="0,0,0,15"/>
+
+                <TextBlock Text="TOTAL VENTAS MERCADO PAGO" Foreground="LightGray" FontSize="12"/>
+                <TextBlock x:Name="TxtVentasMp" Foreground="White" FontSize="18" FontWeight="Bold" Margin="0,0,0,15"/>
+
+                <TextBlock Text="TOTAL COMPRAS EN EFECTIVO" Foreground="LightGray" FontSize="12"/>
+                <TextBlock x:Name="TxtComprasEfectivo" Foreground="White" FontSize="18" FontWeight="Bold" Margin="0,0,0,15"/>
+
+                <Rectangle Height="1" Fill="{StaticResource Amarillo}" Margin="0,0,0,15"/>
+
+                <TextBlock Text="MONTO ESPERADO EN CAJA (SISTEMA)" Foreground="LightGray" FontSize="12"/>
+                <TextBlock x:Name="TxtMontoSistema" Foreground="{StaticResource Amarillo}" FontSize="22" FontWeight="Bold" Margin="0,0,0,15"/>
+
+                <TextBlock Text="MONTO DECLARADO (CONTADO POR VENDEDOR)" Foreground="LightGray" FontSize="12"/>
+                <TextBlock x:Name="TxtMontoDeclarado" Foreground="White" FontSize="18" FontWeight="Bold" Margin="0,0,0,15"/>
+
+                <TextBlock Text="DIFERENCIA" Foreground="LightGray" FontSize="12"/>
+                <TextBlock x:Name="TxtDiferencia" FontSize="22" FontWeight="Bold" Margin="0,0,0,15"/>
+
+                <TextBlock Text="ESTADO" Foreground="LightGray" FontSize="12"/>
+                <TextBlock x:Name="TxtEstado" Foreground="White" FontSize="16" FontWeight="Bold"/>
+
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>
