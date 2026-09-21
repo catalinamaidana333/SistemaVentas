@@ -500,7 +500,7 @@ namespace SistemaVentas.GUI
                 }
 
                 // Obtener usuarios filtrados desde BLL
-                List<Usuario> usuariosFiltrados = _usuarioLogica.ObtenerUsuariosFiltrados(idRolSeleccionado, estadoSeleccionado);
+                List<Usuario> usuariosFiltrados = _usuarioLogica.ObtenerUsuariosFiltrados(idRolSeleccionado, estadoSeleccionado, SesionGlobal.UsuarioActual.IdRol);
 
                 // Asignar la lista filtrada al DataGrid
                 if (dgListaUsuarios != null)

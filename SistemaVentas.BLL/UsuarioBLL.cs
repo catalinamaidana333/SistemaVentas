@@ -426,10 +426,30 @@ namespace SistemaVentas.BLL
         /// <param name="idRol">ID del rol (null para no filtrar por rol)</param>
         /// <param name="estado">estado activo/inactivo (null para ambos)</param>
         /// <returns>Lista de usuarios filtrada</returns>
-        public List<Usuario> ObtenerUsuariosFiltrados(int? idRol, bool? estado)
+        public List<Usuario> ObtenerUsuariosFiltrados(int? idRol, bool? estado, int idRolUsuarioActual)
         {
             try
             {
+                // 1. Regla: El vendedor no puede filtrar usuarios
+                if (idRolUsuarioActual == (int)Roles.Vendedor)
+                {
+                    throw new UnauthorizedAccessException("No tienes permisos para filtrar usuarios.");
+                }
+
+                // 2. Regla: El supervisor solo puede filtrar vendedores
+                if (idRolUsuarioActual == (int)Roles.Supervisor)
+                {
+                    // Si intenta filtrar por un rol diferente a vendedor, denegar acceso
+                    if (idRol.HasValue && idRol.Value != (int)Roles.Vendedor)
+                    {
+                        throw new UnauthorizedAccessException("Los supervisores solo pueden ver vendedores.");
+                    }
+                    // Forzar que siempre filtre por vendedores
+                    idRol = (int)Roles.Vendedor;
+                }
+
+                // 3. Regla: El gerente puede ver todos los roles (no hay restricción)
+
                 return usuarioDAL.ObtenerUsuariosConFiltros(idRol, estado);
             }
             catch (Exception ex)

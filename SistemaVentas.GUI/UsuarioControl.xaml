@@ -137,6 +137,7 @@
                         <ComboBox x:Name="cmbRol" Height="30" Margin="0,0,0,25" Padding="5">
                             <ComboBoxItem Content="Vendedor" Tag="2" IsSelected="True"/>
                             <ComboBoxItem Content="Supervisor" Tag="3"/>
+                            <ComboBoxItem Content="Gerente" Tag="1"/>
                         </ComboBox>
 
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
