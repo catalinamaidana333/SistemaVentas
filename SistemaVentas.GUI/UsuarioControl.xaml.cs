@@ -1,4 +1,4 @@
-﻿using SistemaVentas.BLL;
+using SistemaVentas.BLL;
 using SistemaVentas.Entities;
 using SistemaVentas.GUI.Contexto;
 using System;
@@ -222,7 +222,7 @@ namespace SistemaVentas.GUI
                 }
 
                 // Si pasa la validación, recién ahí mandamos a actualizar
-                _usuarioLogica.ActualizarUsuario(_usuarioSeleccionado);
+                _usuarioLogica.ActualizarUsuario(_usuarioSeleccionado, SesionGlobal.UsuarioActual);
 
                
         MessageBox.Show("Usuario actualizado con éxito", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -256,12 +256,12 @@ namespace SistemaVentas.GUI
                     // Verificamos el estado y llamamos a la BLL correspondiente
                     if (_usuarioSeleccionado.Estado == true)
                     {
-                        _usuarioLogica.DarDeBajaUsuario(_usuarioSeleccionado.IdUsuario);
+                        _usuarioLogica.DarDeBajaUsuario(_usuarioSeleccionado.IdUsuario, SesionGlobal.UsuarioActual);
                         MessageBox.Show("Usuario dado de baja exitosamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
                     }
                     else
                     {
-                        _usuarioLogica.DarDeAltaUsuario(_usuarioSeleccionado.IdUsuario);
+                        _usuarioLogica.DarDeAltaUsuario(_usuarioSeleccionado.IdUsuario, SesionGlobal.UsuarioActual);
                         MessageBox.Show("Usuario dado de alta exitosamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
                     }
 

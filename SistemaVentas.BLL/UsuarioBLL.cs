@@ -43,19 +43,29 @@ namespace SistemaVentas.BLL
         /// <exception cref="UsuarioException">Para otros errores de usuario</exception>
         public int CrearUsuario(Usuario nuevoUsuario, Usuario usuarioAutenticado)
         {
-                // 1. Verificamos que el correo no exista ya en la base de datos
-                if (usuarioDAL.ExisteUsuarioPorCorreo(nuevoUsuario.Correo))
-                {
-                    throw new Exception("Ya existe un usuario registrado con este correo electrónico.");
-                }
-                // Paso 12: Hashear la contraseña (transformación de seguridad)
-                string passwordHasheada = HashearPassword(nuevoUsuario.Password);
-                nuevoUsuario.Password = passwordHasheada;
+            // 1. Verificación de autorización: solo Gerente puede crear usuarios
+            if (usuarioAutenticado == null || usuarioAutenticado.IdRol != (int)Roles.Gerente)
+            {
+                throw new AutorizacionException("No tiene permisos para crear usuarios. Solo los usuarios con rol Gerente pueden realizar esta acción.");
+            }
 
-            // 3. Mandamos a guardar a la Capa de Datos (DAL)
+            if (nuevoUsuario == null)
+            {
+                throw new ValidacionException("Los datos del nuevo usuario no pueden ser nulos.");
+            }
+
+            // 2. Verificamos que el correo no exista ya en la base de datos
+            if (usuarioDAL.ExisteUsuarioPorCorreo(nuevoUsuario.Correo))
+            {
+                throw new UsuarioException("Ya existe un usuario registrado con este correo electrónico.");
+            }
+
+            // 3. Hashear la contraseña (transformación de seguridad)
+            string passwordHasheada = HashearPassword(nuevoUsuario.Password);
+            nuevoUsuario.Password = passwordHasheada;
+
+            // 4. Mandamos a guardar a la Capa de Datos (DAL)
             return usuarioDAL.GuardarUsuario(nuevoUsuario);
-
-
         }
         public bool ValidarDatosNuevoUsuario(Usuario usuario, out string mensajeError)
         {
@@ -356,9 +366,28 @@ namespace SistemaVentas.BLL
             return usuarioDAL.ObtenerTodos();
         }
 
-        public bool ActualizarUsuario(Usuario usuarioActualizado)
+        /// <summary>
+        /// Actualiza la información de un usuario en el sistema.
+        /// Solo permitido para usuarios con rol Gerente.
+        /// </summary>
+        /// <param name="usuarioActualizado">Entidad con los datos modificados</param>
+        /// <param name="usuarioAutenticado">Usuario que ejecuta la acción (debe ser Gerente)</param>
+        /// <returns>True si la actualización fue exitosa</returns>
+        /// <exception cref="AutorizacionException">Si el usuario ejecutor no es Gerente</exception>
+        /// <exception cref="ValidacionException">Si los datos a actualizar son inválidos</exception>
+        public bool ActualizarUsuario(Usuario usuarioActualizado, Usuario usuarioAutenticado)
         {
-            bool exito = usuarioDAL.ActualizarUsuario(usuarioActualizado); // Asegurate de usar tu instancia de DAL
+            if (usuarioAutenticado == null || usuarioAutenticado.IdRol != (int)Roles.Gerente)
+            {
+                throw new AutorizacionException("No tiene permisos para modificar usuarios. Solo los usuarios con rol Gerente pueden realizar esta acción.");
+            }
+
+            if (usuarioActualizado == null)
+            {
+                throw new ValidacionException("Los datos del usuario a actualizar no pueden ser nulos.");
+            }
+
+            bool exito = usuarioDAL.ActualizarUsuario(usuarioActualizado);
 
             if (!exito)
             {
@@ -385,23 +414,55 @@ namespace SistemaVentas.BLL
             return usuario; // Si pasa todo, devolvemos el usuario autenticado
         }
 
-        public bool DarDeBajaUsuario(int idUsuarioObjetivo)
+        /// <summary>
+        /// Realiza la baja lógica de un usuario.
+        /// Solo permitido para usuarios con rol Gerente.
+        /// </summary>
+        /// <param name="idUsuarioObjetivo">ID del usuario a dar de baja</param>
+        /// <param name="usuarioAutenticado">Usuario que ejecuta la acción (debe ser Gerente)</param>
+        /// <returns>True si la baja lógica fue exitosa</returns>
+        /// <exception cref="AutorizacionException">Si el usuario ejecutor no es Gerente</exception>
+        /// <exception cref="ValidacionException">Si el ID es inválido o se intenta dar de baja a sí mismo</exception>
+        public bool DarDeBajaUsuario(int idUsuarioObjetivo, Usuario usuarioAutenticado)
         {
-            // Opcional: Validación de negocio adicional
+            if (usuarioAutenticado == null || usuarioAutenticado.IdRol != (int)Roles.Gerente)
+            {
+                throw new AutorizacionException("No tiene permisos para dar de baja usuarios. Solo los usuarios con rol Gerente pueden realizar esta acción.");
+            }
+
             if (idUsuarioObjetivo <= 0)
             {
-                throw new Exception("ID de usuario no válido.");
+                throw new ValidacionException("ID de usuario no válido.");
+            }
+
+            if (usuarioAutenticado.IdUsuario == idUsuarioObjetivo)
+            {
+                throw new ValidacionException("No puede dar de baja su propia cuenta de usuario.");
             }
 
             // Llamamos a la DAL para el borrado lógico
             return usuarioDAL.DarDeBajaUsuario(idUsuarioObjetivo);
         }
-        public bool DarDeAltaUsuario(int idUsuarioObjetivo)
+
+        /// <summary>
+        /// Realiza el alta lógica de un usuario previamente desactivado.
+        /// Solo permitido para usuarios con rol Gerente.
+        /// </summary>
+        /// <param name="idUsuarioObjetivo">ID del usuario a dar de alta</param>
+        /// <param name="usuarioAutenticado">Usuario que ejecuta la acción (debe ser Gerente)</param>
+        /// <returns>True si el alta lógica fue exitosa</returns>
+        /// <exception cref="AutorizacionException">Si el usuario ejecutor no es Gerente</exception>
+        /// <exception cref="ValidacionException">Si el ID es inválido</exception>
+        public bool DarDeAltaUsuario(int idUsuarioObjetivo, Usuario usuarioAutenticado)
         {
-            // Opcional: Validación de negocio adicional
+            if (usuarioAutenticado == null || usuarioAutenticado.IdRol != (int)Roles.Gerente)
+            {
+                throw new AutorizacionException("No tiene permisos para dar de alta usuarios. Solo los usuarios con rol Gerente pueden realizar esta acción.");
+            }
+
             if (idUsuarioObjetivo <= 0)
             {
-                throw new Exception("ID de usuario no válido.");
+                throw new ValidacionException("ID de usuario no válido.");
             }
 
             // Llamamos a la DAL para el borrado lógico
