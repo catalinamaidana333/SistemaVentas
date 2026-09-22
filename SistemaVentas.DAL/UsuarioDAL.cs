@@ -24,7 +24,7 @@ namespace SistemaVentas.DAL
         /// <summary>
         /// Verifica si ya existe un usuario con el correo especificado
         /// </summary>
-        public bool ExisteUsuarioPorCorreo(string correo)
+        public bool ExisteUsuarioPorCorreo(string correo, int? excluirIdUsuario = null)
         {
             if (string.IsNullOrWhiteSpace(correo))
                 return false;
@@ -35,10 +35,17 @@ namespace SistemaVentas.DAL
                 {
                     conexion.Open();
 
-                    string consulta = "SELECT COUNT(*) FROM Usuario WHERE Correo = @correo";
+                    string consulta = excluirIdUsuario.HasValue
+                        ? "SELECT COUNT(*) FROM Usuario WHERE Correo = @correo AND id_usuario != @excluirIdUsuario"
+                        : "SELECT COUNT(*) FROM Usuario WHERE Correo = @correo";
+
                     using (SqlCommand comando = new SqlCommand(consulta, conexion))
                     {
                         comando.Parameters.AddWithValue("@correo", correo);
+                        if (excluirIdUsuario.HasValue)
+                        {
+                            comando.Parameters.AddWithValue("@excluirIdUsuario", excluirIdUsuario.Value);
+                        }
                         int cantidad = (int)comando.ExecuteScalar();
                         return cantidad > 0;
                     }
@@ -53,7 +60,7 @@ namespace SistemaVentas.DAL
         /// <summary>
         /// Verifica si ya existe un usuario con el DNI especificado
         /// </summary>
-        public bool ExisteUsuarioPorDNI(string dni)
+        public bool ExisteUsuarioPorDNI(string dni, int? excluirIdUsuario = null)
         {
             if (string.IsNullOrWhiteSpace(dni))
                 return false;
@@ -64,10 +71,17 @@ namespace SistemaVentas.DAL
                 {
                     conexion.Open();
 
-                    string consulta = "SELECT COUNT(*) FROM Usuario WHERE dni = @dni";
+                    string consulta = excluirIdUsuario.HasValue
+                        ? "SELECT COUNT(*) FROM Usuario WHERE dni = @dni AND id_usuario != @excluirIdUsuario"
+                        : "SELECT COUNT(*) FROM Usuario WHERE dni = @dni";
+
                     using (SqlCommand comando = new SqlCommand(consulta, conexion))
                     {
                         comando.Parameters.AddWithValue("@dni", dni);
+                        if (excluirIdUsuario.HasValue)
+                        {
+                            comando.Parameters.AddWithValue("@excluirIdUsuario", excluirIdUsuario.Value);
+                        }
                         int cantidad = (int)comando.ExecuteScalar();
                         return cantidad > 0;
                     }
@@ -224,19 +238,30 @@ namespace SistemaVentas.DAL
                 {
                     conexion.Open();
 
-                    // ACTUALIZADO: UPDATE con todos los campos
-                    string consulta = @"UPDATE Usuario 
-                                       SET nombre_usuario = @nombreUsuario, 
-                                           nombre = @nombre, 
-                                           apellido = @apellido, 
-                                           dni = @dni, 
-                                           fecha_nacimiento = @fechaNacimiento, 
-                                           direccion = @direccion, 
-                                           correo = @correo, 
-                                           password = @password, 
-                                           id_rol = @idRol
-                                           
-                                       WHERE id_usuario = @idUsuario";
+                    bool actualizaPassword = !string.IsNullOrWhiteSpace(usuario.Password);
+
+                    string consulta = actualizaPassword
+                        ? @"UPDATE Usuario 
+                            SET nombre_usuario = @nombreUsuario, 
+                                nombre = @nombre, 
+                                apellido = @apellido, 
+                                dni = @dni, 
+                                fecha_nacimiento = @fechaNacimiento, 
+                                direccion = @direccion, 
+                                correo = @correo, 
+                                password = @password, 
+                                id_rol = @idRol
+                            WHERE id_usuario = @idUsuario"
+                        : @"UPDATE Usuario 
+                            SET nombre_usuario = @nombreUsuario, 
+                                nombre = @nombre, 
+                                apellido = @apellido, 
+                                dni = @dni, 
+                                fecha_nacimiento = @fechaNacimiento, 
+                                direccion = @direccion, 
+                                correo = @correo, 
+                                id_rol = @idRol
+                            WHERE id_usuario = @idUsuario";
 
                     using (SqlCommand comando = new SqlCommand(consulta, conexion))
                     {
@@ -246,12 +271,13 @@ namespace SistemaVentas.DAL
                         comando.Parameters.AddWithValue("@dni", string.IsNullOrEmpty(usuario.DNI) ? (object)DBNull.Value : usuario.DNI);
                         comando.Parameters.AddWithValue("@fechaNacimiento", usuario.FechaNacimiento);
                         comando.Parameters.AddWithValue("@direccion", string.IsNullOrEmpty(usuario.Direccion) ? (object)DBNull.Value : usuario.Direccion);
-
                         comando.Parameters.AddWithValue("@correo", usuario.Correo);
-                        comando.Parameters.AddWithValue("@password", usuario.Password);
+                        if (actualizaPassword)
+                        {
+                            comando.Parameters.AddWithValue("@password", usuario.Password);
+                        }
                         comando.Parameters.AddWithValue("@idRol", usuario.IdRol);
                         comando.Parameters.AddWithValue("@idUsuario", usuario.IdUsuario);
-                       
 
                         int filasAfectadas = comando.ExecuteNonQuery();
                         return filasAfectadas > 0;

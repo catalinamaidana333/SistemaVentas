@@ -164,6 +164,12 @@ namespace SistemaVentas.GUI
                 txtEditDireccion.Text = _usuarioSeleccionado.Direccion;
                 txtEditCorreo.Text = _usuarioSeleccionado.Correo;
 
+                // Limpiar campo de contraseña (se visualiza enmascarado por el PasswordBox)
+                txtEditPassword.Password = string.Empty;
+                txtEditPassword.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeNormalAzul");
+                txtEditPassword.BorderThickness = new Thickness(1);
+                txtEditPassword.ToolTip = null;
+
                 foreach (ComboBoxItem item in cmbEditRol.Items)
                 {
                     if (Convert.ToInt32(item.Tag) == _usuarioSeleccionado.IdRol)
@@ -190,51 +196,62 @@ namespace SistemaVentas.GUI
         }
 
         private void btnGuardarEdicion_Click(object sender, RoutedEventArgs e)
-{
-    try
-    {
-        if (_usuarioSeleccionado == null) return;
-        
-        // Validar fecha en edición también
-        if (!dpEditFechaNacimiento.SelectedDate.HasValue)
         {
-            MessageBox.Show("La fecha de nacimiento no puede estar vacía.", "Atención", MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
-        }
+            try
+            {
+                if (_usuarioSeleccionado == null) return;
+                
+                // Validar fecha en edición también
+                if (!dpEditFechaNacimiento.SelectedDate.HasValue)
+                {
+                    MessageBox.Show("La fecha de nacimiento no puede estar vacía.", "Atención", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
 
-        ComboBoxItem rolSeleccionado = (ComboBoxItem)cmbEditRol.SelectedItem;
+                ComboBoxItem rolSeleccionado = (ComboBoxItem)cmbEditRol.SelectedItem;
 
-        // Actualizamos TODOS los campos
-        _usuarioSeleccionado.NombreUsuario = txtEditNombreUsuario.Text.Trim();
-        _usuarioSeleccionado.Nombree = txtEditNombree.Text.Trim();
-        _usuarioSeleccionado.Apellido = txtEditApellido.Text.Trim();
-        _usuarioSeleccionado.DNI = txtEditDNI.Text.Trim();
-        _usuarioSeleccionado.FechaNacimiento = dpEditFechaNacimiento.SelectedDate.Value;
-        _usuarioSeleccionado.Direccion = txtEditDireccion.Text.Trim();
-        _usuarioSeleccionado.Correo = txtEditCorreo.Text.Trim();
-        _usuarioSeleccionado.IdRol = Convert.ToInt32(rolSeleccionado.Tag);
+                // Actualizamos campos de la entidad
+                _usuarioSeleccionado.NombreUsuario = txtEditNombreUsuario.Text.Trim();
+                _usuarioSeleccionado.Nombree = txtEditNombree.Text.Trim();
+                _usuarioSeleccionado.Apellido = txtEditApellido.Text.Trim();
+                _usuarioSeleccionado.DNI = txtEditDNI.Text.Trim();
+                _usuarioSeleccionado.FechaNacimiento = dpEditFechaNacimiento.SelectedDate.Value;
+                _usuarioSeleccionado.Direccion = txtEditDireccion.Text.Trim();
+                _usuarioSeleccionado.Correo = txtEditCorreo.Text.Trim();
+                _usuarioSeleccionado.IdRol = Convert.ToInt32(rolSeleccionado.Tag);
 
-        if (!_usuarioLogica.ValidarDatosNuevoUsuario(_usuarioSeleccionado, out string error))
+                // Si se escribió una nueva contraseña en el PasswordBox:
+                if (!string.IsNullOrWhiteSpace(txtEditPassword.Password))
+                {
+                    if (!ValidadorGUI.EsPasswordValido(txtEditPassword.Password, out string errorPass))
+                    {
+                        MessageBox.Show(errorPass, "Error de Validación de Contraseña", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return;
+                    }
+                    _usuarioSeleccionado.Password = txtEditPassword.Password;
+                }
+
+                if (!_usuarioLogica.ValidarDatosEdicionUsuario(_usuarioSeleccionado, out string error))
                 {
                     // Si falta un dato o la fecha está mal, mostramos el cartel de advertencia amarillo y cortamos
                     MessageBox.Show(error, "Error de Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
-                // Si pasa la validación, recién ahí mandamos a actualizar
+                // Si pasa la validación, mandamos a actualizar (la BLL hasheará con BCrypt si es texto plano)
                 _usuarioLogica.ActualizarUsuario(_usuarioSeleccionado, SesionGlobal.UsuarioActual);
 
-               
-        MessageBox.Show("Usuario actualizado con éxito", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Usuario actualizado con éxito", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
 
-        ModalEditarUsuario.Visibility = Visibility.Collapsed;
-        CargarUsuarios();
-    }
-    catch (Exception ex)
-    {
-        MessageBox.Show($"Error al actualizar: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-    }
-}
+                txtEditPassword.Password = string.Empty;
+                ModalEditarUsuario.Visibility = Visibility.Collapsed;
+                CargarUsuarios();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al actualizar: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
 
         
         private void btnCambiarEstado_Click(object sender, RoutedEventArgs e)
@@ -266,6 +283,7 @@ namespace SistemaVentas.GUI
                     }
 
                     // Ocultar modal y recargar grilla
+                    txtEditPassword.Password = string.Empty;
                     ModalEditarUsuario.Visibility = Visibility.Collapsed;
                     CargarUsuarios();
                 }
@@ -278,7 +296,8 @@ namespace SistemaVentas.GUI
 
         private void btnCerrarModalEdicion_Click(object sender, RoutedEventArgs e)
         {
-            // Simplemente ocultamos el modal de edición
+            // Limpiamos el PasswordBox y ocultamos el modal de edición
+            txtEditPassword.Password = string.Empty;
             ModalEditarUsuario.Visibility = Visibility.Collapsed;
         }
 
@@ -431,6 +450,31 @@ namespace SistemaVentas.GUI
                 txtEditNombreUsuario.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeNormalAzul");
                 txtEditNombreUsuario.BorderThickness = new Thickness(1);
                 txtEditNombreUsuario.ToolTip = null;
+            }
+        }
+
+        private void txtEditPassword_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (!string.IsNullOrWhiteSpace(txtEditPassword.Password))
+            {
+                if (!ValidadorGUI.EsPasswordValido(txtEditPassword.Password, out string error))
+                {
+                    txtEditPassword.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeError");
+                    txtEditPassword.BorderThickness = new Thickness(2);
+                    txtEditPassword.ToolTip = error;
+                }
+                else
+                {
+                    txtEditPassword.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeNormalAzul");
+                    txtEditPassword.BorderThickness = new Thickness(1);
+                    txtEditPassword.ToolTip = null;
+                }
+            }
+            else
+            {
+                txtEditPassword.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeNormalAzul");
+                txtEditPassword.BorderThickness = new Thickness(1);
+                txtEditPassword.ToolTip = null;
             }
         }
         

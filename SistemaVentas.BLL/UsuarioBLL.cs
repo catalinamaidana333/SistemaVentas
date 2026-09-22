@@ -84,13 +84,12 @@ namespace SistemaVentas.BLL
                 // Opcional: Si en el formulario de creación también validamos correo y pass:
                 ValidarCorreo(usuario.Correo);
 
-                // Si el usuario es nuevo, validamos la contraseña. 
-                // (En la edición a veces la contraseña viaja vacía si no la quieren cambiar, 
-                // pero para la creación es obligatoria).
-                if (!string.IsNullOrWhiteSpace(usuario.Password))
+                // Si el usuario es nuevo, validamos la contraseña obligatoriamente.
+                if (string.IsNullOrWhiteSpace(usuario.Password))
                 {
-                    ValidarPassword(usuario.Password);
+                    throw new ValidacionException("La contraseña es obligatoria para un nuevo usuario.");
                 }
+                ValidarPassword(usuario.Password);
 
                 // Si todas las líneas de arriba se ejecutaron sin lanzar un "throw", 
                 // significa que los datos están perfectos.
@@ -106,6 +105,44 @@ namespace SistemaVentas.BLL
             catch (Exception ex)
             {
                 // Por si ocurre algún otro error inesperado
+                mensajeError = "Error inesperado al validar: " + ex.Message;
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Valida los datos de un usuario en edición. Permite omitir la contraseña si no fue modificada,
+        /// y excluye el propio ID al comprobar duplicidad de DNI y Correo.
+        /// </summary>
+        public bool ValidarDatosEdicionUsuario(Usuario usuario, out string mensajeError)
+        {
+            mensajeError = string.Empty;
+
+            try
+            {
+                ValidarNombreUsuario(usuario.NombreUsuario);
+                ValidarNombre(usuario.Nombree);
+                ValidarAppellido(usuario.Apellido);
+                ValidarDNI(usuario.DNI, usuario.IdUsuario);
+                ValidarFechaNacimiento(usuario.FechaNacimiento);
+                ValidarDireccion(usuario.Direccion);
+                ValidarCorreo(usuario.Correo, usuario.IdUsuario);
+
+                // Si se proporcionó una nueva contraseña en texto plano, la validamos
+                if (!string.IsNullOrWhiteSpace(usuario.Password) && !EsBCryptHash(usuario.Password))
+                {
+                    ValidarPassword(usuario.Password);
+                }
+
+                return true;
+            }
+            catch (ValidacionException ex)
+            {
+                mensajeError = ex.Message;
+                return false;
+            }
+            catch (Exception ex)
+            {
                 mensajeError = "Error inesperado al validar: " + ex.Message;
                 return false;
             }
@@ -180,9 +217,14 @@ namespace SistemaVentas.BLL
         /// - No debe ser nulo o vacío
         /// - Debe contener solo números
         /// - Debe tener entre 7 y 8 dígitos
-        /// - No puede estar duplicado (solo un usuario por DNI)
+        /// <summary>
+        /// Valida que el DNI tenga un formato válido.
+        /// - No debe ser nulo o vacío
+        /// - Debe contener solo números
+        /// - Debe tener entre 7 y 8 dígitos
+        /// - No puede estar duplicado (solo un usuario por DNI, excluyendo el usuario actual en edición)
         /// </summary>
-        private void ValidarDNI(string dni)
+        private void ValidarDNI(string dni, int? excluirIdUsuario = null)
         {
             if (string.IsNullOrWhiteSpace(dni))
                 throw new ValidacionException("El DNI no puede estar vacío.");
@@ -196,7 +238,7 @@ namespace SistemaVentas.BLL
                     "El DNI debe contener solo números y tener entre 7 y 8 dígitos.");
 
             // Verifica que el DNI no esté duplicado en la base de datos
-            if (usuarioDAL.ExisteUsuarioPorDNI(dni))
+            if (usuarioDAL.ExisteUsuarioPorDNI(dni, excluirIdUsuario))
             {
                 throw new UsuarioException(
                     $"El DNI '{dni}' ya está registrado en el sistema. El DNI debe ser único para cada usuario.");
@@ -263,7 +305,7 @@ namespace SistemaVentas.BLL
         /// Valida que el correo tenga un formato válido.
         /// Utiliza una expresión regular para verificar estructura de email estándar.
         /// </summary>
-        private void ValidarCorreo(string correo)
+        private void ValidarCorreo(string correo, int? excluirIdUsuario = null)
         {
             if (string.IsNullOrWhiteSpace(correo))
                 throw new ValidacionException("El correo no puede estar vacío.");
@@ -281,6 +323,12 @@ namespace SistemaVentas.BLL
             if (correo.Length > 254)
                 throw new ValidacionException(
                     "El correo no puede exceder 254 caracteres.");
+
+            if (usuarioDAL.ExisteUsuarioPorCorreo(correo, excluirIdUsuario))
+            {
+                throw new UsuarioException(
+                    $"El correo '{correo}' ya está registrado en el sistema.");
+            }
         }
 
         /// <summary>
@@ -300,6 +348,17 @@ namespace SistemaVentas.BLL
             if (password.Length > 128)
                 throw new ValidacionException(
                     "La contraseña no puede exceder 128 caracteres.");
+        }
+
+        /// <summary>
+        /// Determina si una cadena ya representa un hash de BCrypt válido.
+        /// </summary>
+        public bool EsBCryptHash(string password)
+        {
+            if (string.IsNullOrWhiteSpace(password) || password.Length != 60)
+                return false;
+
+            return Regex.IsMatch(password, @"^\$2[abxy]\$\d{2}\$[./0-9A-Za-z]{53}$");
         }
 
         /// <summary>
@@ -369,6 +428,7 @@ namespace SistemaVentas.BLL
         /// <summary>
         /// Actualiza la información de un usuario en el sistema.
         /// Solo permitido para usuarios con rol Gerente.
+        /// Aplica hashing seguro con BCrypt si se editó la contraseña.
         /// </summary>
         /// <param name="usuarioActualizado">Entidad con los datos modificados</param>
         /// <param name="usuarioAutenticado">Usuario que ejecuta la acción (debe ser Gerente)</param>
@@ -385,6 +445,17 @@ namespace SistemaVentas.BLL
             if (usuarioActualizado == null)
             {
                 throw new ValidacionException("Los datos del usuario a actualizar no pueden ser nulos.");
+            }
+
+            // Validación y Hashing seguro de contraseña en edición
+            if (!string.IsNullOrWhiteSpace(usuarioActualizado.Password))
+            {
+                // Si la contraseña no es un hash BCrypt previo (es decir, fue editada con texto plano):
+                if (!EsBCryptHash(usuarioActualizado.Password))
+                {
+                    ValidarPassword(usuarioActualizado.Password);
+                    usuarioActualizado.Password = HashearPassword(usuarioActualizado.Password);
+                }
             }
 
             bool exito = usuarioDAL.ActualizarUsuario(usuarioActualizado);
