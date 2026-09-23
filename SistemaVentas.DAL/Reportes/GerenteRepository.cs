@@ -55,7 +55,7 @@ namespace SistemaVentas.DAL.Reportes
 
             string consulta = @"
         SELECT 
-            u.nombre_completo,
+            (u.nombre + ' ' + u.apellido) AS nombre_completo,
             u.correo,
             r.nombre AS nombre_rol,
             COUNT(v.id_venta) AS total_ventas,
@@ -65,7 +65,7 @@ namespace SistemaVentas.DAL.Reportes
         INNER JOIN Rol r ON u.id_rol = r.id_rol
         LEFT JOIN CajaUsuario cu ON u.id_usuario = cu.id_usuario
         LEFT JOIN Venta v ON cu.id_caja_usuario = v.id_caja_usuario
-        GROUP BY u.nombre_completo, u.correo, r.nombre";
+        GROUP BY (u.nombre + ' ' + u.apellido), u.correo, r.nombre";
 
             using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
             {

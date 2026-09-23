@@ -114,38 +114,41 @@ namespace SistemaVentas.DAL.Reportes
             try
             {
                 string consulta = @"
-                    SELECT 
-                        u.nombre_completo AS NombreVendedor,
-                        COUNT(v.id_venta) AS CantidadVentas
-                    FROM Usuario u
-                    INNER JOIN Rol r ON u.id_rol = r.id_rol
-                    LEFT JOIN CajaUsuario cu ON u.id_usuario = cu.id_usuario
-                    LEFT JOIN Venta v ON cu.id_caja_usuario = v.id_caja_usuario
-                    WHERE r.nombre = 'Vendedor'
-                    GROUP BY u.nombre_completo";
+SELECT 
+    u.nombre AS nombre_completo,
+    u.correo,
+    r.nombre AS nombre_rol,
+    COUNT(v.id_venta) AS total_ventas,
+    ISNULL(SUM(v.total), 0) AS total_monto,
+    MAX(v.fecha_hora) AS ultima_venta
+FROM Usuario u
+INNER JOIN Rol r ON u.id_rol = r.id_rol
+LEFT JOIN CajaUsuario cu ON u.id_usuario = cu.id_usuario
+LEFT JOIN Venta v ON cu.id_caja_usuario = v.id_caja_usuario
+GROUP BY u.nombre, u.correo, r.nombre";
 
                 using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
                 {
                     conexion.Open();
                     using (SqlCommand comando = new SqlCommand(consulta, conexion))
+                    using (SqlDataReader lector = comando.ExecuteReader())
                     {
-                        using (SqlDataReader lector = comando.ExecuteReader())
+                        while (lector.Read())
                         {
-                            while (lector.Read())
+                            lista.Add(new VentaVendedor
                             {
-                                lista.Add(new VentaVendedor
-                                {
-                                    NombreVendedor = lector["NombreVendedor"].ToString(),
-                                    CantidadVentas = Convert.ToInt32(lector["CantidadVentas"])
-                                });
-                            }
+                                NombreVendedor = lector["nombre_completo"].ToString(),
+                                CantidadVentas = Convert.ToInt32(lector["total_ventas"]),
+                                TotalRecaudado = lector["total_monto"] == DBNull.Value ? 0m : Convert.ToDecimal(lector["total_monto"])
+                            });
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error al obtener ventas por vendedor: {ex.Message}", ex);
+                System.Diagnostics.Debug.WriteLine($"Error SQL al obtener ventas por vendedor: {ex.Message}");
+                throw new Exception("Error al obtener la lista de ventas por vendedor. Consulte con el administrador.");
             }
 
             return lista;
