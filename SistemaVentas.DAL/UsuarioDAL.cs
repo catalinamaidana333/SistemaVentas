@@ -225,7 +225,7 @@ namespace SistemaVentas.DAL
         }
 
         /// <summary>
-        /// Actualiza un usuario existente en la base de datos
+        /// Actualiza un usuario existente en la base de datos (solo datos de perfil, no modifica la contraseña)
         /// </summary>
         public bool ActualizarUsuario(Usuario usuario)
         {
@@ -238,21 +238,7 @@ namespace SistemaVentas.DAL
                 {
                     conexion.Open();
 
-                    bool actualizaPassword = !string.IsNullOrWhiteSpace(usuario.Password);
-
-                    string consulta = actualizaPassword
-                        ? @"UPDATE Usuario 
-                            SET nombre_usuario = @nombreUsuario, 
-                                nombre = @nombre, 
-                                apellido = @apellido, 
-                                dni = @dni, 
-                                fecha_nacimiento = @fechaNacimiento, 
-                                direccion = @direccion, 
-                                correo = @correo, 
-                                password = @password, 
-                                id_rol = @idRol
-                            WHERE id_usuario = @idUsuario"
-                        : @"UPDATE Usuario 
+                    string consulta = @"UPDATE Usuario 
                             SET nombre_usuario = @nombreUsuario, 
                                 nombre = @nombre, 
                                 apellido = @apellido, 
@@ -272,10 +258,6 @@ namespace SistemaVentas.DAL
                         comando.Parameters.AddWithValue("@fechaNacimiento", usuario.FechaNacimiento);
                         comando.Parameters.AddWithValue("@direccion", string.IsNullOrEmpty(usuario.Direccion) ? (object)DBNull.Value : usuario.Direccion);
                         comando.Parameters.AddWithValue("@correo", usuario.Correo);
-                        if (actualizaPassword)
-                        {
-                            comando.Parameters.AddWithValue("@password", usuario.Password);
-                        }
                         comando.Parameters.AddWithValue("@idRol", usuario.IdRol);
                         comando.Parameters.AddWithValue("@idUsuario", usuario.IdUsuario);
 
@@ -287,6 +269,37 @@ namespace SistemaVentas.DAL
             catch (Exception ex)
             {
                 throw new UsuarioException($"Error al actualizar usuario: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Actualiza exclusivamente el hash de la contraseña de un usuario en la base de datos.
+        /// </summary>
+        public bool ActualizarPassword(int idUsuario, string passwordHasheada)
+        {
+            try
+            {
+                using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
+                {
+                    conexion.Open();
+
+                    string consulta = @"UPDATE Usuario 
+                            SET password = @password 
+                            WHERE id_usuario = @idUsuario";
+
+                    using (SqlCommand comando = new SqlCommand(consulta, conexion))
+                    {
+                        comando.Parameters.AddWithValue("@password", passwordHasheada);
+                        comando.Parameters.AddWithValue("@idUsuario", idUsuario);
+
+                        int filasAfectadas = comando.ExecuteNonQuery();
+                        return filasAfectadas > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new UsuarioException($"Error al actualizar contraseña del usuario: {ex.Message}", ex);
             }
         }
 

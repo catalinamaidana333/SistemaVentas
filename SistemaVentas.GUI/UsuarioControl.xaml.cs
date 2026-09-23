@@ -220,15 +220,15 @@ namespace SistemaVentas.GUI
                 _usuarioSeleccionado.Correo = txtEditCorreo.Text.Trim();
                 _usuarioSeleccionado.IdRol = Convert.ToInt32(rolSeleccionado.Tag);
 
-                // Si se escribió una nueva contraseña en el PasswordBox:
-                if (!string.IsNullOrWhiteSpace(txtEditPassword.Password))
+                // Si se escribió una nueva contraseña en el PasswordBox, validar formato antes de continuar
+                bool cambiarPassword = !string.IsNullOrWhiteSpace(txtEditPassword.Password);
+                if (cambiarPassword)
                 {
                     if (!ValidadorGUI.EsPasswordValido(txtEditPassword.Password, out string errorPass))
                     {
                         MessageBox.Show(errorPass, "Error de Validación de Contraseña", MessageBoxButton.OK, MessageBoxImage.Warning);
                         return;
                     }
-                    _usuarioSeleccionado.Password = txtEditPassword.Password;
                 }
 
                 if (!_usuarioLogica.ValidarDatosEdicionUsuario(_usuarioSeleccionado, out string error))
@@ -238,8 +238,14 @@ namespace SistemaVentas.GUI
                     return;
                 }
 
-                // Si pasa la validación, mandamos a actualizar (la BLL hasheará con BCrypt si es texto plano)
+                // 1. Actualizar los datos de perfil
                 _usuarioLogica.ActualizarUsuario(_usuarioSeleccionado, SesionGlobal.UsuarioActual);
+
+                // 2. Si se solicitó cambio de clave, ejecutar el flujo explícito e independiente de contraseña
+                if (cambiarPassword)
+                {
+                    _usuarioLogica.CambiarPassword(_usuarioSeleccionado.IdUsuario, txtEditPassword.Password, SesionGlobal.UsuarioActual);
+                }
 
                 MessageBox.Show("Usuario actualizado con éxito", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
 

@@ -128,12 +128,6 @@ namespace SistemaVentas.BLL
                 ValidarDireccion(usuario.Direccion);
                 ValidarCorreo(usuario.Correo, usuario.IdUsuario);
 
-                // Si se proporcionó una nueva contraseña en texto plano, la validamos
-                if (!string.IsNullOrWhiteSpace(usuario.Password) && !EsBCryptHash(usuario.Password))
-                {
-                    ValidarPassword(usuario.Password);
-                }
-
                 return true;
             }
             catch (ValidacionException ex)
@@ -426,11 +420,11 @@ namespace SistemaVentas.BLL
         }
 
         /// <summary>
-        /// Actualiza la información de un usuario en el sistema.
+        /// Actualiza la información de perfil de un usuario en el sistema.
         /// Solo permitido para usuarios con rol Gerente.
-        /// Aplica hashing seguro con BCrypt si se editó la contraseña.
+        /// No modifica la contraseña del usuario.
         /// </summary>
-        /// <param name="usuarioActualizado">Entidad con los datos modificados</param>
+        /// <param name="usuarioActualizado">Entidad con los datos de perfil modificados</param>
         /// <param name="usuarioAutenticado">Usuario que ejecuta la acción (debe ser Gerente)</param>
         /// <returns>True si la actualización fue exitosa</returns>
         /// <exception cref="AutorizacionException">Si el usuario ejecutor no es Gerente</exception>
@@ -447,15 +441,9 @@ namespace SistemaVentas.BLL
                 throw new ValidacionException("Los datos del usuario a actualizar no pueden ser nulos.");
             }
 
-            // Validación y Hashing seguro de contraseña en edición
-            if (!string.IsNullOrWhiteSpace(usuarioActualizado.Password))
+            if (!ValidarDatosEdicionUsuario(usuarioActualizado, out string mensajeError))
             {
-                // Si la contraseña no es un hash BCrypt previo (es decir, fue editada con texto plano):
-                if (!EsBCryptHash(usuarioActualizado.Password))
-                {
-                    ValidarPassword(usuarioActualizado.Password);
-                    usuarioActualizado.Password = HashearPassword(usuarioActualizado.Password);
-                }
+                throw new ValidacionException(mensajeError);
             }
 
             bool exito = usuarioDAL.ActualizarUsuario(usuarioActualizado);
@@ -463,6 +451,44 @@ namespace SistemaVentas.BLL
             if (!exito)
             {
                 throw new Exception("No se pudo actualizar el usuario en la base de datos.");
+            }
+            return exito;
+        }
+
+        /// <summary>
+        /// Cambia la contraseña de un usuario en el sistema.
+        /// Valida la contraseña en texto plano y aplica hashing determinista con BCrypt.
+        /// </summary>
+        /// <param name="idUsuario">ID del usuario a modificar</param>
+        /// <param name="passwordPlano">Nueva contraseña en texto plano</param>
+        /// <param name="usuarioAutenticado">Usuario que ejecuta la acción (Gerente o el propio usuario)</param>
+        /// <returns>True si el cambio fue exitoso</returns>
+        /// <exception cref="AutorizacionException">Si el usuario no tiene permisos</exception>
+        /// <exception cref="ValidacionException">Si la contraseña no cumple con los requisitos</exception>
+        public bool CambiarPassword(int idUsuario, string passwordPlano, Usuario usuarioAutenticado)
+        {
+            if (usuarioAutenticado == null ||
+                (usuarioAutenticado.IdRol != (int)Roles.Gerente && usuarioAutenticado.IdUsuario != idUsuario))
+            {
+                throw new AutorizacionException("No tiene permisos para cambiar la contraseña de este usuario.");
+            }
+
+            if (idUsuario <= 0)
+            {
+                throw new ValidacionException("ID de usuario no válido.");
+            }
+
+            // Validar la contraseña en texto plano
+            ValidarPassword(passwordPlano);
+
+            // Hashear siempre con BCrypt (workFactor: 12)
+            string passwordHasheada = HashearPassword(passwordPlano);
+
+            // Persistir en base de datos
+            bool exito = usuarioDAL.ActualizarPassword(idUsuario, passwordHasheada);
+            if (!exito)
+            {
+                throw new Exception("No se pudo actualizar la contraseña en la base de datos.");
             }
             return exito;
         }
