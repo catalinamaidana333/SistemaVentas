@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System;
+using System.Windows;
 using System.Windows.Controls;
 using SistemaVentas.BLL;
 using SistemaVentas.Entities;
@@ -12,26 +13,42 @@ namespace SistemaVentas.GUI
         public ProductoControl()
         {
             InitializeComponent();
-
             CargarCategorias();
             CargarProductos();
         }
 
-        // 🔹 Nuevo: llena el ComboBox con las categorías de la BD
-        private void CargarCategorias()
-        {
-            cmbCategoria.ItemsSource = objCN_Producto.ListarCategorias();
-        }
-
-        // 🔹 Nuevo: centraliza la carga de la grilla (lo llamas también al guardar)
         private void CargarProductos()
         {
-            dgvProductos.ItemsSource = objCN_Producto.Listar();
+            try
+            {
+                dgvProductos.ItemsSource = objCN_Producto.Listar();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ocurrió un error al cargar la lista de productos:\n{ex.Message}",
+                                "Error de Conexión",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Error);
+            }
+        }
+
+        private void CargarCategorias()
+        {
+            try
+            {
+                cmbCategoria.ItemsSource = objCN_Producto.ListarCategorias();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ocurrió un error al cargar las categorías:\n{ex.Message}",
+                                "Error de Conexión",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Error);
+            }
         }
 
         private void btnGuardar_Click(object sender, RoutedEventArgs e)
         {
-            // 🔹 Nuevo: validar que se haya elegido categoría
             if (cmbCategoria.SelectedValue == null)
             {
                 MessageBox.Show("Debe seleccionar una categoría.",
@@ -39,7 +56,6 @@ namespace SistemaVentas.GUI
                 return;
             }
 
-            // 🔹 Nuevo: validar parseo antes de convertir (evita FormatException)
             if (!decimal.TryParse(txtPrecioCosto.Text, out decimal precioCosto) ||
                 !decimal.TryParse(txtPrecioVenta.Text, out decimal precioVenta) ||
                 !int.TryParse(txtStock.Text, out int stock))
@@ -51,41 +67,113 @@ namespace SistemaVentas.GUI
 
             Producto objProducto = new Producto()
             {
+                IdProducto = Convert.ToInt32(txtIdProducto.Text),
                 Nombre = txtNombre.Text.Trim(),
                 PrecioCosto = precioCosto,
                 PrecioVenta = precioVenta,
                 StockActual = stock,
                 CodigoBarras = null,
+                Activo = true,
                 oCategoria = new Categoria()
                 {
-                    // 🔹 Cambio clave: usa la categoría elegida, ya no el "1" fijo
                     IdCategoria = (int)cmbCategoria.SelectedValue
                 }
             };
 
             string mensaje = string.Empty;
-            bool resultado = objCN_Producto.Registrar(objProducto, out mensaje);
+            bool resultado = false;
+
+            // Si IdProducto es 0 REGISTRA, si es distinto de 0 EDITA
+            if (objProducto.IdProducto == 0)
+            {
+                resultado = objCN_Producto.Registrar(objProducto, out mensaje);
+            }
+            else
+            {
+                resultado = objCN_Producto.Editar(objProducto, out mensaje);
+            }
 
             if (resultado)
             {
-                MessageBox.Show("Producto guardado con éxito", "Atención",
+                MessageBox.Show("Operación realizada con éxito", "Atención",
                     MessageBoxButton.OK, MessageBoxImage.Information);
 
-                // 🔹 Refresca la grilla usando el mismo método
                 CargarProductos();
-
-                // 🔹 Limpia los campos (opcional, pero cómodo)
-                txtNombre.Clear();
-                txtPrecioCosto.Clear();
-                txtPrecioVenta.Clear();
-                txtStock.Clear();
-                cmbCategoria.SelectedIndex = -1;
+                LimpiarFormulario();
             }
             else
             {
                 MessageBox.Show(mensaje, "Atención",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
             }
+        }
+
+        private void btnEditar_Click(object sender, RoutedEventArgs e)
+        {
+            Button btn = sender as Button;
+            Producto seleccionado = btn.DataContext as Producto;
+
+            if (seleccionado != null)
+            {
+                txtIdProducto.Text = seleccionado.IdProducto.ToString();
+                txtNombre.Text = seleccionado.Nombre;
+                txtPrecioCosto.Text = seleccionado.PrecioCosto.ToString();
+                txtPrecioVenta.Text = seleccionado.PrecioVenta.ToString();
+                txtStock.Text = seleccionado.StockActual.ToString();
+                cmbCategoria.SelectedValue = seleccionado.oCategoria.IdCategoria;
+
+                btnGuardar.Content = "Actualizar Producto";
+            }
+        }
+
+        private void btnEliminar_Click(object sender, RoutedEventArgs e)
+        {
+            Button btn = sender as Button;
+            Producto seleccionado = btn.DataContext as Producto;
+
+            if (seleccionado != null)
+            {
+                MessageBoxResult result = MessageBox.Show(
+                    $"¿Está seguro de eliminar el producto '{seleccionado.Nombre}'?",
+                    "Confirmar Eliminación",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    string mensaje = string.Empty;
+                    bool respuesta = objCN_Producto.Eliminar(seleccionado, out mensaje);
+
+                    if (respuesta)
+                    {
+                        MessageBox.Show("Producto eliminado correctamente.", "Éxito",
+                            MessageBoxButton.OK, MessageBoxImage.Information);
+                        CargarProductos();
+                        LimpiarFormulario();
+                    }
+                    else
+                    {
+                        MessageBox.Show(mensaje, "Error",
+                            MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+            }
+        }
+
+        private void btnLimpiar_Click(object sender, RoutedEventArgs e)
+        {
+            LimpiarFormulario();
+        }
+
+        private void LimpiarFormulario()
+        {
+            txtIdProducto.Text = "0";
+            txtNombre.Clear();
+            txtPrecioCosto.Clear();
+            txtPrecioVenta.Clear();
+            txtStock.Clear();
+            cmbCategoria.SelectedIndex = -1;
+            btnGuardar.Content = "Guardar Producto";
         }
     }
 }

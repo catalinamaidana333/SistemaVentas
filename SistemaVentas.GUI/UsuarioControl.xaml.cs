@@ -222,7 +222,7 @@ namespace SistemaVentas.GUI
         private void btnDarDeBaja_Click(object sender, RoutedEventArgs e)
         {
             // Validar seguridad (Preguntar primero)
-            var respuesta = MessageBox.Show($"¿Estás seguro de que deseas dar de baja al usuario '{_usuarioSeleccionado.Nombre}'?",
+            var respuesta = MessageBox.Show($"¿Estás seguro de que deseas dar de baja al usuario '{_usuarioSeleccionado.Nombree}'?",
                                             "Confirmar Baja",
                                             MessageBoxButton.YesNo,
                                             MessageBoxImage.Warning);

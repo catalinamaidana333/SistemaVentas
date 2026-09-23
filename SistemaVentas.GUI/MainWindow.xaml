@@ -40,21 +40,26 @@
                     <Button x:Name="btnCompra" Content="Compras"
                             Style="{StaticResource BotonMenuLateral}"
                             Click="btnCompra_Click"/>
-                    
+                    <Button x:Name="btnCaja" Content="Cajas"
+                            Style="{StaticResource BotonMenuLateral}"
+                            Click="btnCaja_Click"/>
                     <!-- Botón Principal de Reportes -->
                     <Button x:Name="btnReportes" Content="Reportes" 
                             Style="{StaticResource BotonMenuLateral}" 
                             Click="btnReportes_Click"/>
 
                     <!-- Subbotones Gerente -->
-                    <Button x:Name="btnSubRentabilidad" Content="  • Rentabilidad" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubRentabilidad_Click"/>
-                    <Button x:Name="btnSubAuditoria" Content="  • Auditoría" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubAuditoria_Click"/>
-                    <Button x:Name="btnSubRendimiento" Content="  • Rendimiento" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubRendimiento_Click"/>
+                    <Button x:Name="btnSubRentabilidad" Content="  Rentabilidad" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubRentabilidad_Click"/>
+                    <Button x:Name="btnSubAuditoria" Content="  Auditoría" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubAuditoria_Click"/>
+                    <Button x:Name="btnSubRendimiento" Content="  Rendimiento" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubRendimiento_Click"/>
 
                     <!-- Subbotones Supervisor -->
-                    <Button x:Name="btnSubStockCritico" Content="  • Stock Crítico" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubStockCritico_Click"/>
-                    <Button x:Name="btnSubVentasCanceladas" Content="  • Ventas Canceladas" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubVentasCanceladas_Click"/>
-                    <Button x:Name="btnSubVentasVendedor" Content="  • Ventas por Vendedor" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubVentasVendedor_Click"/>
+                    <Button x:Name="btnSubStockCritico" Content="  Stock Crítico" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubStockCritico_Click"/>
+                    <Button x:Name="btnSubVentasCanceladas" Content="  Ventas Canceladas" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubVentasCanceladas_Click"/>
+                    <Button x:Name="btnSubVentasVendedor" Content="  Ventas por Vendedor" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubVentasVendedor_Click"/>
+
+                    <!-- Subbotones Vendedor -->
+                    <Button x:Name="btnSubArqueoDiario" Content="   Arqueo Diario" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubArqueoDiario_Click"/>
                 </StackPanel>
             </Grid>
         </Border>
