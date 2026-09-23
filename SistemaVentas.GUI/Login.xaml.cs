@@ -11,7 +11,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
 using SistemaVentas.BLL;
-using SistemaVentas.DAL;
+
 using SistemaVentas.Entities;
 using SistemaVentas.GUI.Contexto;
 
