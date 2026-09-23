@@ -37,7 +37,7 @@ namespace SistemaVentas.GUI
             // Le preguntamos a la BLL si tiene acceso
             if (!_usuarioLogica.PuedeAccederPantallaUsuarios(idRolActual))
             {
-
+          
                 btnUsuarios.IsEnabled = false;
             }
 
@@ -55,6 +55,7 @@ namespace SistemaVentas.GUI
             {
                 txtNombreUsuario.Text = "Usuario no identificado";
             }
+            CargarMenuSegunRol();
         }
 
         private void btnVentas_Click(object sender, RoutedEventArgs e)
@@ -116,6 +117,11 @@ namespace SistemaVentas.GUI
         private void btnSubVentasVendedor_Click(object sender, RoutedEventArgs e)
             => ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Supervisor.VentasVendedorView();
 
+        // Evento Vendedor
+        private void btnSubArqueoDiario_Click(object sender, RoutedEventArgs e)
+             => ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Vendedor.ArqueoDiarioView(1);
+        
+
         private void OcultarSubmenus()
         {
             btnSubRentabilidad.Visibility = Visibility.Collapsed;
@@ -141,7 +147,7 @@ namespace SistemaVentas.GUI
 
                 ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Gerente.RentabilidadView();
             }
-            else if (idRol == 2) // Supervisor
+            else if (idRol == 3) // Supervisor
             {
                 btnSubStockCritico.Visibility = Visibility.Visible;
                 btnSubVentasCanceladas.Visibility = Visibility.Visible;
@@ -149,9 +155,32 @@ namespace SistemaVentas.GUI
 
                 ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Supervisor.StockCriticoView();
             }
-            else if (idRol == 3) // Vendedor
+            else if (idRol == 2) // Vendedor
+
+                btnSubArqueoDiario.Visibility = Visibility.Visible;
             {
                 ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Vendedor.ArqueoDiarioView(1);
+            }
+        }
+
+        private void btnCaja_Click(object sender, RoutedEventArgs e)
+        {
+       
+            // Reemplaza 'ContenedorPrincipal' por el x:Name del ContentControl/Grid de tu MainWindow
+            ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.CajaView();
+        }
+        private void CargarMenuSegunRol()
+        {
+            int idRol = SesionGlobal.UsuarioActual.IdRol;
+
+            // Solo habilitar el botón de Cajas si idRol es 1 (Gerente)
+            if (idRol == 1)
+            {
+                btnCaja.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                btnCaja.Visibility = Visibility.Collapsed;
             }
         }
     }
