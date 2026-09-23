@@ -16,12 +16,15 @@
                        FontSize="20" FontWeight="Bold" 
                        VerticalAlignment="Center" Margin="20,0,0,0"/>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,20,0">
-                <TextBlock Text="⚙️ USERNAME" Foreground="{StaticResource TextoClaro}" FontSize="14"/>
+                <Button x:Name="btnAbrirCerrarCaja" Content="📂 ABRIR CAJA" 
+                        Style="{StaticResource BotonPrimario}" Height="40" Width="150" 
+                        Click="btnAbrirCerrarCaja_Click" Margin="0,0,15,0"/>
+                <TextBlock Text="⚙️ USERNAME" Foreground="{StaticResource TextoClaro}" FontSize="14" VerticalAlignment="Center"/>
             </StackPanel>
         </Grid>
 
         <!-- Contenedor Principal Dividido (Izquierda 65% / Derecha 35%) -->
-        <Grid Grid.Row="1" Margin="30">
+        <Grid Grid.Row="1" Margin="15">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="6.5*"/>
                 <ColumnDefinition Width="3.5*"/>
@@ -35,6 +38,7 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
@@ -84,6 +88,18 @@
                     <Button Grid.Column="2" Content="▼" Style="{StaticResource BotonPrimario}" Width="50" Height="40" Margin="0,0,15,0"/>
                     <TextBox Grid.Column="3" Style="{StaticResource InputTexto}" Height="40" Text="Notes..."/>
                 </Grid>
+
+                <!-- Panel de Ingreso y Egreso (Efectivo) -->
+                <Grid Grid.Row="4" Margin="0,15,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="15"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Button Grid.Column="0" Content="💰 Ingreso (Efectivo)" Style="{StaticResource BotonPrimario}" Height="40"/>
+                    <Button Grid.Column="2" Content="💸 Egreso (Efectivo)" Style="{StaticResource BotonPrimario}" Height="40"/>
+                </Grid>
             </Grid>
 
             <!-- ========================================== -->
@@ -126,8 +142,8 @@
                         </Grid.ColumnDefinitions>
 
                         <!-- Fila 1 -->
-                        <Button Grid.Row="0" Grid.Column="0" Content="⊗ VOID" Style="{StaticResource BotonPrimario}"/>
-                        <Button Grid.Row="0" Grid.Column="2" Content="⏸ HOLD" Style="{StaticResource BotonPrimario}"/>
+                        <Button Grid.Row="0" Grid.Column="0" Content="Yerba Mate PROMO" Style="{StaticResource BotonPrimario}" Click="btnAgregarPrueba_Click"/>
+                        <Button Grid.Row="0" Grid.Column="2" Content="Coca Cola 1.5L" Style="{StaticResource BotonPrimario}"/>
 
                         <!-- Fila 2 -->
                         <Button Grid.Row="2" Grid.Column="0" Content="📄 RECEIPT" Style="{StaticResource BotonPrimario}"/>

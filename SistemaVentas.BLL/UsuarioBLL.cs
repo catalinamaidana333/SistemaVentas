@@ -23,10 +23,8 @@ namespace SistemaVentas.BLL
             usuarioDAL = new UsuarioDAL();
         }
 
-        // Constante del IdRol hardcodeada en desarrollo (debe configurarse según la BD)
-        private const int ID_ROL_GERENTE = 1;
+       
 
-     
 
         /// <summary>
         /// Crea un nuevo usuario con validaciones completas de seguridad y reglas de negocio.
@@ -45,19 +43,29 @@ namespace SistemaVentas.BLL
         /// <exception cref="UsuarioException">Para otros errores de usuario</exception>
         public int CrearUsuario(Usuario nuevoUsuario, Usuario usuarioAutenticado)
         {
-                // 1. Verificamos que el correo no exista ya en la base de datos
-                if (usuarioDAL.ExisteUsuarioPorCorreo(nuevoUsuario.Correo))
-                {
-                    throw new Exception("Ya existe un usuario registrado con este correo electrónico.");
-                }
-                // Paso 12: Hashear la contraseña (transformación de seguridad)
-                string passwordHasheada = HashearPassword(nuevoUsuario.Password);
-                nuevoUsuario.Password = passwordHasheada;
+            // 1. Verificación de autorización: solo Gerente puede crear usuarios
+            if (usuarioAutenticado == null || usuarioAutenticado.IdRol != (int)Roles.Gerente)
+            {
+                throw new AutorizacionException("No tiene permisos para crear usuarios. Solo los usuarios con rol Gerente pueden realizar esta acción.");
+            }
 
-            // 3. Mandamos a guardar a la Capa de Datos (DAL)
+            if (nuevoUsuario == null)
+            {
+                throw new ValidacionException("Los datos del nuevo usuario no pueden ser nulos.");
+            }
+
+            // 2. Verificamos que el correo no exista ya en la base de datos
+            if (usuarioDAL.ExisteUsuarioPorCorreo(nuevoUsuario.Correo))
+            {
+                throw new UsuarioException("Ya existe un usuario registrado con este correo electrónico.");
+            }
+
+            // 3. Hashear la contraseña (transformación de seguridad)
+            string passwordHasheada = HashearPassword(nuevoUsuario.Password);
+            nuevoUsuario.Password = passwordHasheada;
+
+            // 4. Mandamos a guardar a la Capa de Datos (DAL)
             return usuarioDAL.GuardarUsuario(nuevoUsuario);
-
-
         }
         public bool ValidarDatosNuevoUsuario(Usuario usuario, out string mensajeError)
         {
@@ -76,13 +84,12 @@ namespace SistemaVentas.BLL
                 // Opcional: Si en el formulario de creación también validamos correo y pass:
                 ValidarCorreo(usuario.Correo);
 
-                // Si el usuario es nuevo, validamos la contraseña. 
-                // (En la edición a veces la contraseña viaja vacía si no la quieren cambiar, 
-                // pero para la creación es obligatoria).
-                if (!string.IsNullOrWhiteSpace(usuario.Password))
+                // Si el usuario es nuevo, validamos la contraseña obligatoriamente.
+                if (string.IsNullOrWhiteSpace(usuario.Password))
                 {
-                    ValidarPassword(usuario.Password);
+                    throw new ValidacionException("La contraseña es obligatoria para un nuevo usuario.");
                 }
+                ValidarPassword(usuario.Password);
 
                 // Si todas las líneas de arriba se ejecutaron sin lanzar un "throw", 
                 // significa que los datos están perfectos.
@@ -98,6 +105,38 @@ namespace SistemaVentas.BLL
             catch (Exception ex)
             {
                 // Por si ocurre algún otro error inesperado
+                mensajeError = "Error inesperado al validar: " + ex.Message;
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Valida los datos de un usuario en edición. Permite omitir la contraseña si no fue modificada,
+        /// y excluye el propio ID al comprobar duplicidad de DNI y Correo.
+        /// </summary>
+        public bool ValidarDatosEdicionUsuario(Usuario usuario, out string mensajeError)
+        {
+            mensajeError = string.Empty;
+
+            try
+            {
+                ValidarNombreUsuario(usuario.NombreUsuario);
+                ValidarNombre(usuario.Nombree);
+                ValidarAppellido(usuario.Apellido);
+                ValidarDNI(usuario.DNI, usuario.IdUsuario);
+                ValidarFechaNacimiento(usuario.FechaNacimiento);
+                ValidarDireccion(usuario.Direccion);
+                ValidarCorreo(usuario.Correo, usuario.IdUsuario);
+
+                return true;
+            }
+            catch (ValidacionException ex)
+            {
+                mensajeError = ex.Message;
+                return false;
+            }
+            catch (Exception ex)
+            {
                 mensajeError = "Error inesperado al validar: " + ex.Message;
                 return false;
             }
@@ -172,9 +211,14 @@ namespace SistemaVentas.BLL
         /// - No debe ser nulo o vacío
         /// - Debe contener solo números
         /// - Debe tener entre 7 y 8 dígitos
-        /// - No puede estar duplicado (solo un usuario por DNI)
+        /// <summary>
+        /// Valida que el DNI tenga un formato válido.
+        /// - No debe ser nulo o vacío
+        /// - Debe contener solo números
+        /// - Debe tener entre 7 y 8 dígitos
+        /// - No puede estar duplicado (solo un usuario por DNI, excluyendo el usuario actual en edición)
         /// </summary>
-        private void ValidarDNI(string dni)
+        private void ValidarDNI(string dni, int? excluirIdUsuario = null)
         {
             if (string.IsNullOrWhiteSpace(dni))
                 throw new ValidacionException("El DNI no puede estar vacío.");
@@ -188,7 +232,7 @@ namespace SistemaVentas.BLL
                     "El DNI debe contener solo números y tener entre 7 y 8 dígitos.");
 
             // Verifica que el DNI no esté duplicado en la base de datos
-            if (usuarioDAL.ExisteUsuarioPorDNI(dni))
+            if (usuarioDAL.ExisteUsuarioPorDNI(dni, excluirIdUsuario))
             {
                 throw new UsuarioException(
                     $"El DNI '{dni}' ya está registrado en el sistema. El DNI debe ser único para cada usuario.");
@@ -255,7 +299,7 @@ namespace SistemaVentas.BLL
         /// Valida que el correo tenga un formato válido.
         /// Utiliza una expresión regular para verificar estructura de email estándar.
         /// </summary>
-        private void ValidarCorreo(string correo)
+        private void ValidarCorreo(string correo, int? excluirIdUsuario = null)
         {
             if (string.IsNullOrWhiteSpace(correo))
                 throw new ValidacionException("El correo no puede estar vacío.");
@@ -273,6 +317,12 @@ namespace SistemaVentas.BLL
             if (correo.Length > 254)
                 throw new ValidacionException(
                     "El correo no puede exceder 254 caracteres.");
+
+            if (usuarioDAL.ExisteUsuarioPorCorreo(correo, excluirIdUsuario))
+            {
+                throw new UsuarioException(
+                    $"El correo '{correo}' ya está registrado en el sistema.");
+            }
         }
 
         /// <summary>
@@ -292,6 +342,17 @@ namespace SistemaVentas.BLL
             if (password.Length > 128)
                 throw new ValidacionException(
                     "La contraseña no puede exceder 128 caracteres.");
+        }
+
+        /// <summary>
+        /// Determina si una cadena ya representa un hash de BCrypt válido.
+        /// </summary>
+        public bool EsBCryptHash(string password)
+        {
+            if (string.IsNullOrWhiteSpace(password) || password.Length != 60)
+                return false;
+
+            return Regex.IsMatch(password, @"^\$2[abxy]\$\d{2}\$[./0-9A-Za-z]{53}$");
         }
 
         /// <summary>
@@ -358,13 +419,76 @@ namespace SistemaVentas.BLL
             return usuarioDAL.ObtenerTodos();
         }
 
-        public bool ActualizarUsuario(Usuario usuarioActualizado)
+        /// <summary>
+        /// Actualiza la información de perfil de un usuario en el sistema.
+        /// Solo permitido para usuarios con rol Gerente.
+        /// No modifica la contraseña del usuario.
+        /// </summary>
+        /// <param name="usuarioActualizado">Entidad con los datos de perfil modificados</param>
+        /// <param name="usuarioAutenticado">Usuario que ejecuta la acción (debe ser Gerente)</param>
+        /// <returns>True si la actualización fue exitosa</returns>
+        /// <exception cref="AutorizacionException">Si el usuario ejecutor no es Gerente</exception>
+        /// <exception cref="ValidacionException">Si los datos a actualizar son inválidos</exception>
+        public bool ActualizarUsuario(Usuario usuarioActualizado, Usuario usuarioAutenticado)
         {
-            bool exito = usuarioDAL.ActualizarUsuario(usuarioActualizado); // Asegurate de usar tu instancia de DAL
+            if (usuarioAutenticado == null || usuarioAutenticado.IdRol != (int)Roles.Gerente)
+            {
+                throw new AutorizacionException("No tiene permisos para modificar usuarios. Solo los usuarios con rol Gerente pueden realizar esta acción.");
+            }
+
+            if (usuarioActualizado == null)
+            {
+                throw new ValidacionException("Los datos del usuario a actualizar no pueden ser nulos.");
+            }
+
+            if (!ValidarDatosEdicionUsuario(usuarioActualizado, out string mensajeError))
+            {
+                throw new ValidacionException(mensajeError);
+            }
+
+            bool exito = usuarioDAL.ActualizarUsuario(usuarioActualizado);
 
             if (!exito)
             {
                 throw new Exception("No se pudo actualizar el usuario en la base de datos.");
+            }
+            return exito;
+        }
+
+        /// <summary>
+        /// Cambia la contraseña de un usuario en el sistema.
+        /// Valida la contraseña en texto plano y aplica hashing determinista con BCrypt.
+        /// </summary>
+        /// <param name="idUsuario">ID del usuario a modificar</param>
+        /// <param name="passwordPlano">Nueva contraseña en texto plano</param>
+        /// <param name="usuarioAutenticado">Usuario que ejecuta la acción (Gerente o el propio usuario)</param>
+        /// <returns>True si el cambio fue exitoso</returns>
+        /// <exception cref="AutorizacionException">Si el usuario no tiene permisos</exception>
+        /// <exception cref="ValidacionException">Si la contraseña no cumple con los requisitos</exception>
+        public bool CambiarPassword(int idUsuario, string passwordPlano, Usuario usuarioAutenticado)
+        {
+            if (usuarioAutenticado == null ||
+                (usuarioAutenticado.IdRol != (int)Roles.Gerente && usuarioAutenticado.IdUsuario != idUsuario))
+            {
+                throw new AutorizacionException("No tiene permisos para cambiar la contraseña de este usuario.");
+            }
+
+            if (idUsuario <= 0)
+            {
+                throw new ValidacionException("ID de usuario no válido.");
+            }
+
+            // Validar la contraseña en texto plano
+            ValidarPassword(passwordPlano);
+
+            // Hashear siempre con BCrypt (workFactor: 12)
+            string passwordHasheada = HashearPassword(passwordPlano);
+
+            // Persistir en base de datos
+            bool exito = usuarioDAL.ActualizarPassword(idUsuario, passwordHasheada);
+            if (!exito)
+            {
+                throw new Exception("No se pudo actualizar la contraseña en la base de datos.");
             }
             return exito;
         }
@@ -387,16 +511,59 @@ namespace SistemaVentas.BLL
             return usuario; // Si pasa todo, devolvemos el usuario autenticado
         }
 
-        public bool DarDeBajaUsuario(int idUsuarioObjetivo)
+        /// <summary>
+        /// Realiza la baja lógica de un usuario.
+        /// Solo permitido para usuarios con rol Gerente.
+        /// </summary>
+        /// <param name="idUsuarioObjetivo">ID del usuario a dar de baja</param>
+        /// <param name="usuarioAutenticado">Usuario que ejecuta la acción (debe ser Gerente)</param>
+        /// <returns>True si la baja lógica fue exitosa</returns>
+        /// <exception cref="AutorizacionException">Si el usuario ejecutor no es Gerente</exception>
+        /// <exception cref="ValidacionException">Si el ID es inválido o se intenta dar de baja a sí mismo</exception>
+        public bool DarDeBajaUsuario(int idUsuarioObjetivo, Usuario usuarioAutenticado)
         {
-            // Opcional: Validación de negocio adicional
+            if (usuarioAutenticado == null || usuarioAutenticado.IdRol != (int)Roles.Gerente)
+            {
+                throw new AutorizacionException("No tiene permisos para dar de baja usuarios. Solo los usuarios con rol Gerente pueden realizar esta acción.");
+            }
+
             if (idUsuarioObjetivo <= 0)
             {
-                throw new Exception("ID de usuario no válido.");
+                throw new ValidacionException("ID de usuario no válido.");
+            }
+
+            if (usuarioAutenticado.IdUsuario == idUsuarioObjetivo)
+            {
+                throw new ValidacionException("No puede dar de baja su propia cuenta de usuario.");
             }
 
             // Llamamos a la DAL para el borrado lógico
             return usuarioDAL.DarDeBajaUsuario(idUsuarioObjetivo);
+        }
+
+        /// <summary>
+        /// Realiza el alta lógica de un usuario previamente desactivado.
+        /// Solo permitido para usuarios con rol Gerente.
+        /// </summary>
+        /// <param name="idUsuarioObjetivo">ID del usuario a dar de alta</param>
+        /// <param name="usuarioAutenticado">Usuario que ejecuta la acción (debe ser Gerente)</param>
+        /// <returns>True si el alta lógica fue exitosa</returns>
+        /// <exception cref="AutorizacionException">Si el usuario ejecutor no es Gerente</exception>
+        /// <exception cref="ValidacionException">Si el ID es inválido</exception>
+        public bool DarDeAltaUsuario(int idUsuarioObjetivo, Usuario usuarioAutenticado)
+        {
+            if (usuarioAutenticado == null || usuarioAutenticado.IdRol != (int)Roles.Gerente)
+            {
+                throw new AutorizacionException("No tiene permisos para dar de alta usuarios. Solo los usuarios con rol Gerente pueden realizar esta acción.");
+            }
+
+            if (idUsuarioObjetivo <= 0)
+            {
+                throw new ValidacionException("ID de usuario no válido.");
+            }
+
+            // Llamamos a la DAL para el borrado lógico
+            return usuarioDAL.DarDeAltaUsuario(idUsuarioObjetivo);
         }
 
         public bool PuedeAccederPantallaUsuarios(int idRol)
@@ -409,6 +576,44 @@ namespace SistemaVentas.BLL
         {
             // Solo el gerente puede editar/crear
             return idRol == (int)Roles.Gerente;
+        }
+
+        /// <summary>
+        /// Obtiene usuarios filtrados por rol y/o estado
+        /// </summary>
+        /// <param name="idRol">ID del rol (null para no filtrar por rol)</param>
+        /// <param name="estado">estado activo/inactivo (null para ambos)</param>
+        /// <returns>Lista de usuarios filtrada</returns>
+        public List<Usuario> ObtenerUsuariosFiltrados(int? idRol, bool? estado, int idRolUsuarioActual)
+        {
+            try
+            {
+                // 1. Regla: El vendedor no puede filtrar usuarios
+                if (idRolUsuarioActual == (int)Roles.Vendedor)
+                {
+                    throw new UnauthorizedAccessException("No tienes permisos para filtrar usuarios.");
+                }
+
+                // 2. Regla: El supervisor solo puede filtrar vendedores
+                if (idRolUsuarioActual == (int)Roles.Supervisor)
+                {
+                    // Si intenta filtrar por un rol diferente a vendedor, denegar acceso
+                    if (idRol.HasValue && idRol.Value != (int)Roles.Vendedor)
+                    {
+                        throw new UnauthorizedAccessException("Los supervisores solo pueden ver vendedores.");
+                    }
+                    // Forzar que siempre filtre por vendedores
+                    idRol = (int)Roles.Vendedor;
+                }
+
+                // 3. Regla: El gerente puede ver todos los roles (no hay restricción)
+
+                return usuarioDAL.ObtenerUsuariosConFiltros(idRol, estado);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error al obtener usuarios filtrados: {ex.Message}", ex);
+            }
         }
     }
 }

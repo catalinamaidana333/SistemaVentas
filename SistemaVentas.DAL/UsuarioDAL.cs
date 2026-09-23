@@ -24,7 +24,7 @@ namespace SistemaVentas.DAL
         /// <summary>
         /// Verifica si ya existe un usuario con el correo especificado
         /// </summary>
-        public bool ExisteUsuarioPorCorreo(string correo)
+        public bool ExisteUsuarioPorCorreo(string correo, int? excluirIdUsuario = null)
         {
             if (string.IsNullOrWhiteSpace(correo))
                 return false;
@@ -35,10 +35,17 @@ namespace SistemaVentas.DAL
                 {
                     conexion.Open();
 
-                    string consulta = "SELECT COUNT(*) FROM Usuario WHERE Correo = @correo";
+                    string consulta = excluirIdUsuario.HasValue
+                        ? "SELECT COUNT(*) FROM Usuario WHERE Correo = @correo AND id_usuario != @excluirIdUsuario"
+                        : "SELECT COUNT(*) FROM Usuario WHERE Correo = @correo";
+
                     using (SqlCommand comando = new SqlCommand(consulta, conexion))
                     {
                         comando.Parameters.AddWithValue("@correo", correo);
+                        if (excluirIdUsuario.HasValue)
+                        {
+                            comando.Parameters.AddWithValue("@excluirIdUsuario", excluirIdUsuario.Value);
+                        }
                         int cantidad = (int)comando.ExecuteScalar();
                         return cantidad > 0;
                     }
@@ -53,7 +60,7 @@ namespace SistemaVentas.DAL
         /// <summary>
         /// Verifica si ya existe un usuario con el DNI especificado
         /// </summary>
-        public bool ExisteUsuarioPorDNI(string dni)
+        public bool ExisteUsuarioPorDNI(string dni, int? excluirIdUsuario = null)
         {
             if (string.IsNullOrWhiteSpace(dni))
                 return false;
@@ -64,10 +71,17 @@ namespace SistemaVentas.DAL
                 {
                     conexion.Open();
 
-                    string consulta = "SELECT COUNT(*) FROM Usuario WHERE dni = @dni";
+                    string consulta = excluirIdUsuario.HasValue
+                        ? "SELECT COUNT(*) FROM Usuario WHERE dni = @dni AND id_usuario != @excluirIdUsuario"
+                        : "SELECT COUNT(*) FROM Usuario WHERE dni = @dni";
+
                     using (SqlCommand comando = new SqlCommand(consulta, conexion))
                     {
                         comando.Parameters.AddWithValue("@dni", dni);
+                        if (excluirIdUsuario.HasValue)
+                        {
+                            comando.Parameters.AddWithValue("@excluirIdUsuario", excluirIdUsuario.Value);
+                        }
                         int cantidad = (int)comando.ExecuteScalar();
                         return cantidad > 0;
                     }
@@ -211,7 +225,7 @@ namespace SistemaVentas.DAL
         }
 
         /// <summary>
-        /// Actualiza un usuario existente en la base de datos
+        /// Actualiza un usuario existente en la base de datos (solo datos de perfil, no modifica la contraseña)
         /// </summary>
         public bool ActualizarUsuario(Usuario usuario)
         {
@@ -224,18 +238,16 @@ namespace SistemaVentas.DAL
                 {
                     conexion.Open();
 
-                    // ACTUALIZADO: UPDATE con todos los campos
                     string consulta = @"UPDATE Usuario 
-                                       SET nombre_usuario = @nombreUsuario, 
-                                           nombre = @nombre, 
-                                           apellido = @apellido, 
-                                           dni = @dni, 
-                                           fecha_nacimiento = @fechaNacimiento, 
-                                           direccion = @direccion, 
-                                           correo = @correo, 
-                                           password = @password, 
-                                           id_rol = @idRol
-                                       WHERE id_usuario = @idUsuario";
+                            SET nombre_usuario = @nombreUsuario, 
+                                nombre = @nombre, 
+                                apellido = @apellido, 
+                                dni = @dni, 
+                                fecha_nacimiento = @fechaNacimiento, 
+                                direccion = @direccion, 
+                                correo = @correo, 
+                                id_rol = @idRol
+                            WHERE id_usuario = @idUsuario";
 
                     using (SqlCommand comando = new SqlCommand(consulta, conexion))
                     {
@@ -245,9 +257,7 @@ namespace SistemaVentas.DAL
                         comando.Parameters.AddWithValue("@dni", string.IsNullOrEmpty(usuario.DNI) ? (object)DBNull.Value : usuario.DNI);
                         comando.Parameters.AddWithValue("@fechaNacimiento", usuario.FechaNacimiento);
                         comando.Parameters.AddWithValue("@direccion", string.IsNullOrEmpty(usuario.Direccion) ? (object)DBNull.Value : usuario.Direccion);
-
                         comando.Parameters.AddWithValue("@correo", usuario.Correo);
-                        comando.Parameters.AddWithValue("@password", usuario.Password);
                         comando.Parameters.AddWithValue("@idRol", usuario.IdRol);
                         comando.Parameters.AddWithValue("@idUsuario", usuario.IdUsuario);
 
@@ -259,6 +269,37 @@ namespace SistemaVentas.DAL
             catch (Exception ex)
             {
                 throw new UsuarioException($"Error al actualizar usuario: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Actualiza exclusivamente el hash de la contraseña de un usuario en la base de datos.
+        /// </summary>
+        public bool ActualizarPassword(int idUsuario, string passwordHasheada)
+        {
+            try
+            {
+                using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
+                {
+                    conexion.Open();
+
+                    string consulta = @"UPDATE Usuario 
+                            SET password = @password 
+                            WHERE id_usuario = @idUsuario";
+
+                    using (SqlCommand comando = new SqlCommand(consulta, conexion))
+                    {
+                        comando.Parameters.AddWithValue("@password", passwordHasheada);
+                        comando.Parameters.AddWithValue("@idUsuario", idUsuario);
+
+                        int filasAfectadas = comando.ExecuteNonQuery();
+                        return filasAfectadas > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new UsuarioException($"Error al actualizar contraseña del usuario: {ex.Message}", ex);
             }
         }
 
@@ -275,7 +316,7 @@ namespace SistemaVentas.DAL
                 {
                     conexion.Open();
 
-                    string consulta = "SELECT id_usuario, nombre_usuario, nombre, apellido, dni, fecha_nacimiento, direccion, correo, password, id_rol FROM Usuario";
+                    string consulta = "SELECT id_usuario, nombre_usuario, nombre, apellido, dni, fecha_nacimiento, direccion, correo, password, id_rol, activo FROM Usuario";
                     using (SqlCommand comando = new SqlCommand(consulta, conexion))
                     {
                         using (SqlDataReader lector = comando.ExecuteReader())
@@ -293,7 +334,8 @@ namespace SistemaVentas.DAL
                                     Direccion = lector["direccion"].ToString(),
                                     Correo = lector["correo"].ToString(),
                                     Password = lector["password"].ToString(),
-                                    IdRol = (int)lector["id_rol"]
+                                    IdRol = (int)lector["id_rol"],
+                                    Estado = lector["activo"] != DBNull.Value ? Convert.ToBoolean(lector["activo"]) : true
                                 });
                             }
                         }
@@ -317,7 +359,7 @@ namespace SistemaVentas.DAL
                 using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
                 {
                     conexion.Open();
-                    string consulta = "SELECT id_usuario, nombre_usuario, nombre, apellido, dni, fecha_nacimiento, direccion, correo, password, id_rol FROM Usuario WHERE id_rol = @IdRol";
+                    string consulta = "SELECT id_usuario, nombre_usuario, nombre, apellido, dni, fecha_nacimiento, direccion, correo, password, id_rol, activo FROM Usuario WHERE id_rol = @IdRol";
 
                     using (SqlCommand comando = new SqlCommand(consulta, conexion))
                     {
@@ -338,7 +380,8 @@ namespace SistemaVentas.DAL
                                     Direccion = lector["direccion"].ToString(),
                                     Correo = lector["correo"].ToString(),
                                     Password = lector["password"].ToString(),
-                                    IdRol = (int)lector["id_rol"]
+                                    IdRol = (int)lector["id_rol"],
+                                    Estado = lector["activo"] != DBNull.Value ? Convert.ToBoolean(lector["activo"]) : true
                                 });
                             }
                         }
@@ -377,6 +420,104 @@ namespace SistemaVentas.DAL
             }
             return respuesta;
         }
+        public bool DarDeAltaUsuario(int idUsuario)
+        {
+            bool respuesta = false;
+            using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
+            {
+                try
+                {
+                    string query = "UPDATE Usuario SET activo = 1 WHERE id_usuario = @IdUsuario";
+
+                    SqlCommand cmd = new SqlCommand(query, conexion);
+                    cmd.Parameters.AddWithValue("@IdUsuario", idUsuario);
+
+                    conexion.Open();
+                    int filasAfectadas = cmd.ExecuteNonQuery();
+
+                    respuesta = filasAfectadas > 0;
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("Error en la base de datos al dar de alta: " + ex.Message);
+                }
+            }
+            return respuesta;
+        }
+        /// <summary>
+        /// Obtiene usuarios con filtros opcionales por rol y estado
+        /// </summary>
+        /// <param name="idRol">ID del rol a filtrar (null = sin filtro de rol)</param>
+        /// <param name="estado">Estado activo/inactivo (null = ambos estados)</param>
+        /// <returns>Lista de usuarios que coinciden con los filtros</returns>
+        public List<Usuario> ObtenerUsuariosConFiltros(int? idRol, bool? estado)
+        {
+            List<Usuario> usuarios = new List<Usuario>();
+
+            try
+            {
+                using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
+                {
+                    conexion.Open();
+
+                    // Consulta base - siempre incluye el campo activo
+                    string consulta = "SELECT id_usuario, nombre_usuario, nombre, apellido, dni, fecha_nacimiento, direccion, correo, password, id_rol, activo FROM Usuario WHERE 1=1";
+
+                    // Agregamos filtros según lo que se haya especificado
+                    if (idRol.HasValue)
+                    {
+                        consulta += " AND id_rol = @IdRol";
+                    }
+
+                    if (estado.HasValue)
+                    {
+                        consulta += " AND activo = @Estado";
+                    }
+
+                    using (SqlCommand comando = new SqlCommand(consulta, conexion))
+                    {
+                        // Agregamos parámetros solo si tienen valor
+                        if (idRol.HasValue)
+                        {
+                            comando.Parameters.AddWithValue("@IdRol", idRol.Value);
+                        }
+
+                        if (estado.HasValue)
+                        {
+                            comando.Parameters.AddWithValue("@Estado", estado.Value);
+                        }
+
+                        using (SqlDataReader lector = comando.ExecuteReader())
+                        {
+                            while (lector.Read())
+                            {
+                                usuarios.Add(new Usuario
+                                {
+                                    IdUsuario = (int)lector["id_usuario"],
+                                    NombreUsuario = lector["nombre_usuario"].ToString(),
+                                    Nombree = lector["nombre"].ToString(),
+                                    Apellido = lector["apellido"].ToString(),
+                                    DNI = lector["dni"].ToString(),
+                                    FechaNacimiento = lector["fecha_nacimiento"] != DBNull.Value ? Convert.ToDateTime(lector["fecha_nacimiento"]) : DateTime.MinValue,
+                                    Direccion = lector["direccion"].ToString(),
+                                    Correo = lector["correo"].ToString(),
+                                    Password = lector["password"].ToString(),
+                                    IdRol = (int)lector["id_rol"],
+                                    Estado = lector["activo"] != DBNull.Value ? Convert.ToBoolean(lector["activo"]) : true
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new UsuarioException($"Error al obtener usuarios con filtros: {ex.Message}", ex);
+            }
+
+            return usuarios;
+        }
+
     }
 }
 

@@ -1,4 +1,5 @@
 ﻿using SistemaVentas.Entities;
+using SistemaVentas.GUI.Dialogs;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
@@ -9,6 +10,9 @@ namespace SistemaVentas.GUI
     {
         // 1. Declaramos nuestro carrito simulado
         private ObservableCollection<DetalleVentaSimulada> _carrito;
+
+        // Estado de la caja
+        private bool _cajaAbierta = false;
 
         public Ventas()
         {
@@ -91,6 +95,38 @@ namespace SistemaVentas.GUI
                 // Limpiamos el carrito después de generar la venta
                 _carrito.Clear();
                 ActualizarTotal();
+            }
+        }
+
+        private void btnAbrirCerrarCaja_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_cajaAbierta)
+            {
+                // Abrir caja
+                var dialog = new AbrirCajaDialog();
+
+                // Obtenemos la ventana padre para que el diálogo sea modal
+                Window parentWindow = Window.GetWindow(this);
+
+                if (dialog.ShowDialog() == true)
+                {
+                    decimal montoIngresado = dialog.MontoIngresado;
+
+                    _cajaAbierta = true;
+                    btnAbrirCerrarCaja.Content = "📁 CERRAR CAJA";
+
+                    MessageBox.Show($"Caja abierta simulada con éxito.\nMonto inicial: ${montoIngresado:N2}", 
+                                  "Caja Abierta", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            else
+            {
+                // Cerrar caja
+                _cajaAbierta = false;
+                btnAbrirCerrarCaja.Content = "📂 ABRIR CAJA";
+
+                MessageBox.Show("Caja cerrada simulada con éxito.", 
+                              "Caja Cerrada", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
     }

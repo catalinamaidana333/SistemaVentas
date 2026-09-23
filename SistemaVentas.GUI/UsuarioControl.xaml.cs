@@ -1,4 +1,4 @@
-﻿using SistemaVentas.BLL;
+using SistemaVentas.BLL;
 using SistemaVentas.Entities;
 using SistemaVentas.GUI.Contexto;
 using System;
@@ -13,6 +13,8 @@ namespace SistemaVentas.GUI
     {
         private UsuarioBLL _usuarioLogica;
 
+        private bool _controlsInitialized = false;
+
         public UsuarioControl()
         {
             InitializeComponent();
@@ -24,6 +26,9 @@ namespace SistemaVentas.GUI
 
         private void UsuarioControl_Loaded(object sender, RoutedEventArgs e)
         {
+            // Marcar que los controles están listos
+            _controlsInitialized = true;
+
             ConfigurarAccesos();
             CargarUsuarios();
         }
@@ -142,6 +147,7 @@ namespace SistemaVentas.GUI
         private Usuario _usuarioSeleccionado;
 
         // Método que se ejecuta al hacer clic en "Editar" en cualquier fila
+        // Método que se ejecuta al hacer clic en "Editar" en cualquier fila
         private void BtnEditar_Click(object sender, RoutedEventArgs e)
         {
             Button btn = sender as Button;
@@ -158,7 +164,12 @@ namespace SistemaVentas.GUI
                 txtEditDireccion.Text = _usuarioSeleccionado.Direccion;
                 txtEditCorreo.Text = _usuarioSeleccionado.Correo;
 
-                // La lógica del ComboBox queda igual
+                // Limpiar campo de contraseña (se visualiza enmascarado por el PasswordBox)
+                txtEditPassword.Password = string.Empty;
+                txtEditPassword.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeNormalAzul");
+                txtEditPassword.BorderThickness = new Thickness(1);
+                txtEditPassword.ToolTip = null;
+
                 foreach (ComboBoxItem item in cmbEditRol.Items)
                 {
                     if (Convert.ToInt32(item.Tag) == _usuarioSeleccionado.IdRol)
@@ -168,62 +179,96 @@ namespace SistemaVentas.GUI
                     }
                 }
 
+                // --- NUEVA LÓGICA PARA EL BOTÓN DE ESTADO ---
+                if (_usuarioSeleccionado.Estado == true)
+                {
+                    btnCambiarEstado.Content = "Dar de Baja";
+                    btnCambiarEstado.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#dc3545")); // Rojo
+                }
+                else
+                {
+                    btnCambiarEstado.Content = "Dar de Alta";
+                    btnCambiarEstado.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#28a745")); // Verde
+                }
+
                 ModalEditarUsuario.Visibility = Visibility.Visible;
             }
         }
 
         private void btnGuardarEdicion_Click(object sender, RoutedEventArgs e)
-{
-    try
-    {
-        if (_usuarioSeleccionado == null) return;
-        
-        // Validar fecha en edición también
-        if (!dpEditFechaNacimiento.SelectedDate.HasValue)
         {
-            MessageBox.Show("La fecha de nacimiento no puede estar vacía.", "Atención", MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
-        }
+            try
+            {
+                if (_usuarioSeleccionado == null) return;
+                
+                // Validar fecha en edición también
+                if (!dpEditFechaNacimiento.SelectedDate.HasValue)
+                {
+                    MessageBox.Show("La fecha de nacimiento no puede estar vacía.", "Atención", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
 
-        ComboBoxItem rolSeleccionado = (ComboBoxItem)cmbEditRol.SelectedItem;
+                ComboBoxItem rolSeleccionado = (ComboBoxItem)cmbEditRol.SelectedItem;
 
-        // Actualizamos TODOS los campos
-        _usuarioSeleccionado.NombreUsuario = txtEditNombreUsuario.Text.Trim();
-        _usuarioSeleccionado.Nombree = txtEditNombree.Text.Trim();
-        _usuarioSeleccionado.Apellido = txtEditApellido.Text.Trim();
-        _usuarioSeleccionado.DNI = txtEditDNI.Text.Trim();
-        _usuarioSeleccionado.FechaNacimiento = dpEditFechaNacimiento.SelectedDate.Value;
-        _usuarioSeleccionado.Direccion = txtEditDireccion.Text.Trim();
-        _usuarioSeleccionado.Correo = txtEditCorreo.Text.Trim();
-        _usuarioSeleccionado.IdRol = Convert.ToInt32(rolSeleccionado.Tag);
+                // Actualizamos campos de la entidad
+                _usuarioSeleccionado.NombreUsuario = txtEditNombreUsuario.Text.Trim();
+                _usuarioSeleccionado.Nombree = txtEditNombree.Text.Trim();
+                _usuarioSeleccionado.Apellido = txtEditApellido.Text.Trim();
+                _usuarioSeleccionado.DNI = txtEditDNI.Text.Trim();
+                _usuarioSeleccionado.FechaNacimiento = dpEditFechaNacimiento.SelectedDate.Value;
+                _usuarioSeleccionado.Direccion = txtEditDireccion.Text.Trim();
+                _usuarioSeleccionado.Correo = txtEditCorreo.Text.Trim();
+                _usuarioSeleccionado.IdRol = Convert.ToInt32(rolSeleccionado.Tag);
 
-        if (!_usuarioLogica.ValidarDatosNuevoUsuario(_usuarioSeleccionado, out string error))
+                // Si se escribió una nueva contraseña en el PasswordBox, validar formato antes de continuar
+                bool cambiarPassword = !string.IsNullOrWhiteSpace(txtEditPassword.Password);
+                if (cambiarPassword)
+                {
+                    if (!ValidadorGUI.EsPasswordValido(txtEditPassword.Password, out string errorPass))
+                    {
+                        MessageBox.Show(errorPass, "Error de Validación de Contraseña", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return;
+                    }
+                }
+
+                if (!_usuarioLogica.ValidarDatosEdicionUsuario(_usuarioSeleccionado, out string error))
                 {
                     // Si falta un dato o la fecha está mal, mostramos el cartel de advertencia amarillo y cortamos
                     MessageBox.Show(error, "Error de Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
-                // Si pasa la validación, recién ahí mandamos a actualizar
-                _usuarioLogica.ActualizarUsuario(_usuarioSeleccionado);
+                // 1. Actualizar los datos de perfil
+                _usuarioLogica.ActualizarUsuario(_usuarioSeleccionado, SesionGlobal.UsuarioActual);
 
-               
-        MessageBox.Show("Usuario actualizado con éxito", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                // 2. Si se solicitó cambio de clave, ejecutar el flujo explícito e independiente de contraseña
+                if (cambiarPassword)
+                {
+                    _usuarioLogica.CambiarPassword(_usuarioSeleccionado.IdUsuario, txtEditPassword.Password, SesionGlobal.UsuarioActual);
+                }
 
-        ModalEditarUsuario.Visibility = Visibility.Collapsed;
-        CargarUsuarios();
-    }
-    catch (Exception ex)
-    {
-        MessageBox.Show($"Error al actualizar: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-    }
-}
+                MessageBox.Show("Usuario actualizado con éxito", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
 
-        private void btnDarDeBaja_Click(object sender, RoutedEventArgs e)
+                txtEditPassword.Password = string.Empty;
+                ModalEditarUsuario.Visibility = Visibility.Collapsed;
+                CargarUsuarios();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al actualizar: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        
+        private void btnCambiarEstado_Click(object sender, RoutedEventArgs e)
         {
-            // Validar seguridad (Preguntar primero)
-            var respuesta = MessageBox.Show($"¿Estás seguro de que deseas dar de baja al usuario '{_usuarioSeleccionado.Nombre}'?",
-                                            "Confirmar Baja",
+            if (_usuarioSeleccionado == null) return;
+
+            // Determinamos qué texto mostrar en las alertas según el estado
+            string accion = _usuarioSeleccionado.Estado ? "dar de baja" : "dar de alta";
+
+            var respuesta = MessageBox.Show($"¿Estás seguro de que deseas {accion} al usuario '{_usuarioSeleccionado.Nombree}'?",
+                                            $"Confirmar {accion.ToUpper()}",
                                             MessageBoxButton.YesNo,
                                             MessageBoxImage.Warning);
 
@@ -231,26 +276,34 @@ namespace SistemaVentas.GUI
             {
                 try
                 {
-                    // Mandar solo el ID a la BLL para el borrado lógico
-                    // (Ajusta el nombre del método según cómo lo hayas llamado en UsuarioBLL)
-                    _usuarioLogica.DarDeBajaUsuario(_usuarioSeleccionado.IdUsuario);
-
-                    MessageBox.Show("Usuario dado de baja exitosamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                    // Verificamos el estado y llamamos a la BLL correspondiente
+                    if (_usuarioSeleccionado.Estado == true)
+                    {
+                        _usuarioLogica.DarDeBajaUsuario(_usuarioSeleccionado.IdUsuario, SesionGlobal.UsuarioActual);
+                        MessageBox.Show("Usuario dado de baja exitosamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    else
+                    {
+                        _usuarioLogica.DarDeAltaUsuario(_usuarioSeleccionado.IdUsuario, SesionGlobal.UsuarioActual);
+                        MessageBox.Show("Usuario dado de alta exitosamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
 
                     // Ocultar modal y recargar grilla
+                    txtEditPassword.Password = string.Empty;
                     ModalEditarUsuario.Visibility = Visibility.Collapsed;
                     CargarUsuarios();
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error al dar de baja: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"Error al {accion}: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
 
         private void btnCerrarModalEdicion_Click(object sender, RoutedEventArgs e)
         {
-            // Simplemente ocultamos el modal de edición
+            // Limpiamos el PasswordBox y ocultamos el modal de edición
+            txtEditPassword.Password = string.Empty;
             ModalEditarUsuario.Visibility = Visibility.Collapsed;
         }
 
@@ -307,6 +360,207 @@ namespace SistemaVentas.GUI
                 txtPassword.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeNormalAzul");
                 txtPassword.BorderThickness = new Thickness(1);
                 txtPassword.ToolTip = null;
+            }
+        }
+
+        private void txtDNI_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (!ValidadorGUI.EsDNIValido(txtDNI.Text, out string error))
+            {
+                txtDNI.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeError");
+                txtDNI.BorderThickness = new Thickness(2);
+                txtDNI.ToolTip = error;
+            }
+            else
+            {
+                txtDNI.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeNormalAzul");
+                txtDNI.BorderThickness = new Thickness(1);
+                txtDNI.ToolTip = null;
+            }
+        }
+
+        private void dpFechaNacimiento_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (!ValidadorGUI.EsFechaNacimientoValida(dpFechaNacimiento.SelectedDate, out string error))
+            {
+                dpFechaNacimiento.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeError");
+                dpFechaNacimiento.BorderThickness = new Thickness(2);
+                dpFechaNacimiento.ToolTip = error;
+            }
+            else
+            {
+                dpFechaNacimiento.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeNormalAzul");
+                dpFechaNacimiento.BorderThickness = new Thickness(1);
+                dpFechaNacimiento.ToolTip = null;
+            }
+        }
+
+        private void txtNombreUsuario_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (!ValidadorGUI.EsNombreUsuarioValido(txtNombreUsuario.Text, out string error))
+            {
+                txtNombreUsuario.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeError");
+                txtNombreUsuario.BorderThickness = new Thickness(2);
+                txtNombreUsuario.ToolTip = error;
+            }
+            else
+            {
+                txtNombreUsuario.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeNormalAzul");
+                txtNombreUsuario.BorderThickness = new Thickness(1);
+                txtNombreUsuario.ToolTip = null;
+            }
+        }
+
+        private void txtEditDNI_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (!ValidadorGUI.EsDNIValido(txtEditDNI.Text, out string error))
+            {
+                txtEditDNI.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeError");
+                txtEditDNI.BorderThickness = new Thickness(2);
+                txtEditDNI.ToolTip = error;
+            }
+            else
+            {
+                txtEditDNI.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeNormalAzul");
+                txtEditDNI.BorderThickness = new Thickness(1);
+                txtEditDNI.ToolTip = null;
+            }
+        }
+
+        private void dpEditFechaNacimiento_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (!ValidadorGUI.EsFechaNacimientoValida(dpEditFechaNacimiento.SelectedDate, out string error))
+            {
+                dpEditFechaNacimiento.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeError");
+                dpEditFechaNacimiento.BorderThickness = new Thickness(2);
+                dpEditFechaNacimiento.ToolTip = error;
+            }
+            else
+            {
+                dpEditFechaNacimiento.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeNormalAzul");
+                dpEditFechaNacimiento.BorderThickness = new Thickness(1);
+                dpEditFechaNacimiento.ToolTip = null;
+            }
+        }
+
+        private void txtEditNombreUsuario_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (!ValidadorGUI.EsNombreUsuarioValido(txtEditNombreUsuario.Text, out string error))
+            {
+                txtEditNombreUsuario.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeError");
+                txtEditNombreUsuario.BorderThickness = new Thickness(2);
+                txtEditNombreUsuario.ToolTip = error;
+            }
+            else
+            {
+                txtEditNombreUsuario.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeNormalAzul");
+                txtEditNombreUsuario.BorderThickness = new Thickness(1);
+                txtEditNombreUsuario.ToolTip = null;
+            }
+        }
+
+        private void txtEditPassword_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (!string.IsNullOrWhiteSpace(txtEditPassword.Password))
+            {
+                if (!ValidadorGUI.EsPasswordValido(txtEditPassword.Password, out string error))
+                {
+                    txtEditPassword.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeError");
+                    txtEditPassword.BorderThickness = new Thickness(2);
+                    txtEditPassword.ToolTip = error;
+                }
+                else
+                {
+                    txtEditPassword.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeNormalAzul");
+                    txtEditPassword.BorderThickness = new Thickness(1);
+                    txtEditPassword.ToolTip = null;
+                }
+            }
+            else
+            {
+                txtEditPassword.BorderBrush = (Brush)Application.Current.FindResource("ColorBordeNormalAzul");
+                txtEditPassword.BorderThickness = new Thickness(1);
+                txtEditPassword.ToolTip = null;
+            }
+        }
+        
+        /// <summary>
+        /// Manejador para cambios en el filtro de rol
+        /// </summary>
+        private void cmbFiltroRol_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            AplicarFiltros();
+        }
+
+        /// <summary>
+        /// Manejador para cambios en el filtro de estado
+        /// </summary>
+        private void cmbFiltroEstado_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            AplicarFiltros();
+        }
+
+        /// <summary>
+        /// Aplica los filtros seleccionados a la grilla de usuarios
+        /// Solo se ejecuta después de que todos los controles han sido inicializados
+        /// </summary>
+        private void AplicarFiltros()
+        {
+            try
+            {
+                // Evitar ejecutarse durante la inicialización del control
+                if (!_controlsInitialized)
+                {
+                    return;
+                }
+
+                // Validar que los controles existan
+                if (cmbFiltroEstado == null || cmbFiltroRol == null)
+                {
+                    return;
+                }
+
+                // Obtener valores seleccionados de los filtros
+                int? idRolSeleccionado = null;
+                bool? estadoSeleccionado = null;
+
+                // Leer filtro de rol
+                if (cmbFiltroRol.SelectedItem is ComboBoxItem itemRol)
+                {
+                    string tagRol = itemRol.Tag?.ToString();
+                    if (!string.IsNullOrEmpty(tagRol) && tagRol != "0")
+                    {
+                        idRolSeleccionado = int.Parse(tagRol);
+                    }
+                }
+
+                // Leer filtro de estado
+                if (cmbFiltroEstado.SelectedItem is ComboBoxItem itemEstado)
+                {
+                    string tagEstado = itemEstado.Tag?.ToString();
+                    if (tagEstado == "1") // Solo Activos
+                    {
+                        estadoSeleccionado = true;
+                    }
+                    else if (tagEstado == "2") // Solo Inactivos
+                    {
+                        estadoSeleccionado = false;
+                    }
+                    // Si tagEstado es "0", significa ambos, así que estadoSeleccionado permanece null
+                }
+
+                // Obtener usuarios filtrados desde BLL
+                List<Usuario> usuariosFiltrados = _usuarioLogica.ObtenerUsuariosFiltrados(idRolSeleccionado, estadoSeleccionado, SesionGlobal.UsuarioActual.IdRol);
+
+                // Asignar la lista filtrada al DataGrid
+                if (dgListaUsuarios != null)
+                {
+                    dgListaUsuarios.ItemsSource = usuariosFiltrados;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al aplicar filtros: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }

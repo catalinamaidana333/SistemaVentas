@@ -40,6 +40,21 @@ namespace SistemaVentas.GUI
 
                 btnUsuarios.IsEnabled = false;
             }
+
+            // Configurar acceso al módulo de Backups (solo Gerente)
+            if (idRolActual != 1) // idRol == 1 es Gerente
+            {
+                btnBackup.IsEnabled = false;
+            }
+
+            if (SesionGlobal.HayUsuarioLogueado)
+            {
+                txtNombreUsuario.Text = $"Hola, {SesionGlobal.NombreUsuarioActual}";
+            }
+            else
+            {
+                txtNombreUsuario.Text = "Usuario no identificado";
+            }
         }
 
         private void btnVentas_Click(object sender, RoutedEventArgs e)
@@ -60,6 +75,25 @@ namespace SistemaVentas.GUI
         private void btnCompra_Click(object sender, RoutedEventArgs e)
         {
             ContenedorPrincipal.Content = new Compra();
+        }
+
+        private void btnBackup_Click(object sender, RoutedEventArgs e)
+        {
+            ContenedorPrincipal.Content = new BackUpControl();
+        }
+
+        // Nuevo método para Cerrar Sesión
+        private void btnLogout_Click(object sender, RoutedEventArgs e)
+        {
+            // 1. Limpiamos la variable global
+            SesionGlobal.CerrarSesion();
+
+            // 2. Abrimos la ventana de Login (Asegúrate de poner el nombre correcto de tu ventana de Login)
+            Login ventanaLogin = new Login();
+            ventanaLogin.Show();
+
+            // 3. Cerramos el MainWindow actual
+            this.Close();
         }
 
         // Eventos Gerente

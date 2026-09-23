@@ -1,8 +1,12 @@
 <Application x:Class="SistemaVentas.GUI.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:SistemaVentas.GUI.Converters"
              StartupUri="Login.xaml">
     <Application.Resources>
+        <!-- Namespace para Converters -->
+        <local:BoolToEstadoConverter x:Key="BoolToEstadoConverter" />
+
         <!-- Pincel para cuando hay un error -->
         <SolidColorBrush x:Key="ColorBordeError" Color="#FF3333" />
         <!-- Rojo -->

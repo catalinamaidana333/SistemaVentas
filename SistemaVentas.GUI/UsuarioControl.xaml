@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="SistemaVentas.GUI.UsuarioControl"
+<UserControl x:Class="SistemaVentas.GUI.UsuarioControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
@@ -10,6 +10,7 @@
     <!-- Contenedor principal con margen general -->
     <Grid Margin="30">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
@@ -37,9 +38,37 @@
                     VerticalAlignment="Center"/>
         </Grid>
 
+        <!-- FILTROS: Fila con controles de filtrado -->
+        <Grid Grid.Row="1" Margin="0,0,0,15">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Filtro por Rol -->
+            <TextBlock Grid.Column="0" Text="Filtrar por Rol:" VerticalAlignment="Center" Margin="0,0,10,0" FontWeight="SemiBold"/>
+            <ComboBox x:Name="cmbFiltroRol" Grid.Column="1" Height="30" SelectedIndex="0" SelectionChanged="cmbFiltroRol_SelectionChanged">
+                <ComboBoxItem Content="Todos los roles" Tag="0"/>
+                <ComboBoxItem Content="Gerente" Tag="1"/>
+                <ComboBoxItem Content="Vendedor" Tag="2"/>
+                <ComboBoxItem Content="Supervisor" Tag="3"/>
+            </ComboBox>
+
+            <!-- Filtro por Estado -->
+            <TextBlock Grid.Column="2" Text="Estado:" VerticalAlignment="Center" Margin="20,0,10,0" FontWeight="SemiBold"/>
+            <ComboBox x:Name="cmbFiltroEstado" Grid.Column="3" Width="150" Height="30" SelectedIndex="0" SelectionChanged="cmbFiltroEstado_SelectionChanged">
+                <ComboBoxItem Content="Activos e Inactivos" Tag="0"/>
+                <ComboBoxItem Content="Solo Activos" Tag="1"/>
+                <ComboBoxItem Content="Solo Inactivos" Tag="2"/>
+            </ComboBox>
+        </Grid>
+
         <!-- DATAGRID: Tabla de usuarios -->
         <DataGrid x:Name="dgListaUsuarios" 
-                  Grid.Row="1" 
+                  Grid.Row="2" 
                   Margin="0,10,0,0"
                   AutoGenerateColumns="False"
                   IsReadOnly="True">
@@ -55,6 +84,7 @@
                 <DataGridTextColumn Header="Dirección" Width="*" Binding="{Binding Direccion}"/>
                 <DataGridTextColumn Header="Correo" Width="*" Binding="{Binding Correo}"/>
                 <DataGridTextColumn Header="Rol" Width="Auto" Binding="{Binding IdRol}"/>
+                <DataGridTextColumn Header="Estado" Width="Auto" Binding="{Binding Estado, Converter={StaticResource BoolToEstadoConverter}, FallbackValue='Activo'}"/>
 
                 <DataGridTemplateColumn Header="Acciones" x:Name="colAcciones">
                     <DataGridTemplateColumn.CellTemplate>
@@ -70,7 +100,7 @@
         </DataGrid>
 
         <!-- MODAL CREAR USUARIO -->
-        <Grid x:Name="ModalCrearUsuario" Visibility="Collapsed" Background="#80000000" Grid.RowSpan="2">
+        <Grid x:Name="ModalCrearUsuario" Visibility="Collapsed" Background="#80000000" Grid.RowSpan="3">
             <Border Width="380" Background="White" CornerRadius="10" 
                     VerticalAlignment="Center" HorizontalAlignment="Center" Padding="25">
                 <!-- ScrollViewer para evitar que se corte si la pantalla es chica -->
@@ -80,7 +110,7 @@
                                    HorizontalAlignment="Center" Margin="0,0,0,20"/>
 
                         <TextBlock Text="Nombre de Usuario (User)" FontWeight="SemiBold"/>
-                        <TextBox x:Name="txtNombreUsuario" Height="30" Margin="0,0,0,10" Padding="5"/>
+                        <TextBox x:Name="txtNombreUsuario" LostFocus="txtNombreUsuario_LostFocus" Height="30" Margin="0,0,0,10" Padding="5"/>
 
                         <TextBlock Text="Nombre" FontWeight="SemiBold"/>
                         <TextBox x:Name="txtNombree" LostFocus="txtNombre_LostFocus" Height="30" Margin="0,0,0,10" Padding="5"/>
@@ -89,10 +119,10 @@
                         <TextBox x:Name="txtApellido" Height="30" Margin="0,0,0,10" Padding="5"/>
 
                         <TextBlock Text="DNI" FontWeight="SemiBold"/>
-                        <TextBox x:Name="txtDNI" Height="30" Margin="0,0,0,10" Padding="5"/>
+                        <TextBox x:Name="txtDNI" LostFocus="txtDNI_LostFocus" Height="30" Margin="0,0,0,10" Padding="5"/>
 
                         <TextBlock Text="Fecha de Nacimiento" FontWeight="SemiBold"/>
-                        <DatePicker x:Name="dpFechaNacimiento" Height="30" Margin="0,0,0,10"/>
+                        <DatePicker x:Name="dpFechaNacimiento" LostFocus="dpFechaNacimiento_LostFocus" Height="30" Margin="0,0,0,10"/>
 
                         <TextBlock Text="Dirección (Calle y Nro)" FontWeight="SemiBold"/>
                         <TextBox x:Name="txtDireccion" Height="30" Margin="0,0,0,10" Padding="5"/>
@@ -107,6 +137,7 @@
                         <ComboBox x:Name="cmbRol" Height="30" Margin="0,0,0,25" Padding="5">
                             <ComboBoxItem Content="Vendedor" Tag="2" IsSelected="True"/>
                             <ComboBoxItem Content="Supervisor" Tag="3"/>
+                            <ComboBoxItem Content="Gerente" Tag="1"/>
                         </ComboBox>
 
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
@@ -132,7 +163,7 @@
                                    HorizontalAlignment="Center" Margin="0,0,0,20"/>
 
                         <TextBlock Text="Nombre de Usuario (User)" FontWeight="SemiBold"/>
-                        <TextBox x:Name="txtEditNombreUsuario" Height="30" Margin="0,0,0,10" Padding="5"/>
+                        <TextBox x:Name="txtEditNombreUsuario" LostFocus="txtEditNombreUsuario_LostFocus" Height="30" Margin="0,0,0,10" Padding="5"/>
 
                         <TextBlock Text="Nombre" FontWeight="SemiBold"/>
                         <TextBox x:Name="txtEditNombree" Height="30" Margin="0,0,0,10" Padding="5"/>
@@ -141,16 +172,19 @@
                         <TextBox x:Name="txtEditApellido" Height="30" Margin="0,0,0,10" Padding="5"/>
 
                         <TextBlock Text="DNI" FontWeight="SemiBold"/>
-                        <TextBox x:Name="txtEditDNI" Height="30" Margin="0,0,0,10" Padding="5"/>
+                        <TextBox x:Name="txtEditDNI" LostFocus="txtEditDNI_LostFocus" Height="30" Margin="0,0,0,10" Padding="5"/>
 
                         <TextBlock Text="Fecha de Nacimiento" FontWeight="SemiBold"/>
-                        <DatePicker x:Name="dpEditFechaNacimiento" Height="30" Margin="0,0,0,10"/>
+                        <DatePicker x:Name="dpEditFechaNacimiento" LostFocus="dpEditFechaNacimiento_LostFocus" Height="30" Margin="0,0,0,10"/>
 
                         <TextBlock Text="Dirección" FontWeight="SemiBold"/>
                         <TextBox x:Name="txtEditDireccion" Height="30" Margin="0,0,0,10" Padding="5"/>
 
                         <TextBlock Text="Email" FontWeight="SemiBold"/>
                         <TextBox x:Name="txtEditCorreo" Height="30" Margin="0,0,0,10" Padding="5"/>
+
+                        <TextBlock Text="Contraseña (dejar en blanco para mantener la actual)" FontWeight="SemiBold"/>
+                        <PasswordBox x:Name="txtEditPassword" LostFocus="txtEditPassword_LostFocus" Height="30" Margin="0,0,0,10" Padding="5"/>
 
                         <TextBlock Text="Rol Asignado" FontWeight="SemiBold"/>
                         <ComboBox x:Name="cmbEditRol" Height="30" Margin="0,0,0,25" Padding="5">
@@ -163,9 +197,10 @@
                             <Button Content="Guardar Cambios" Click="btnGuardarEdicion_Click" 
                                     Width="130" Height="35" Margin="0,0,10,0" 
                                     Background="#28a745" Foreground="White"/>
-                            <Button Content="Dar de Baja" Click="btnDarDeBaja_Click" 
-                                    Width="130" Height="35" 
-                                    Background="#dc3545" Foreground="White"/>
+                            <Button x:Name="btnCambiarEstado" 
+        Click="btnCambiarEstado_Click" 
+        Width="130" Height="35" 
+        Foreground="White"/>
                         </StackPanel>
 
                         <Button Content="Cancelar" Click="btnCerrarModalEdicion_Click" 
