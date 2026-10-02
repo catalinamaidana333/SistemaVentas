@@ -53,5 +53,12 @@ namespace SistemaVentas.GUI.Contexto
         {
             UsuarioActual = null;
         }
+        // Almacenará el ID de la sesión de caja (CajaUsuario) que está abierta.
+        // Si es 0, significa que la caja está cerrada.
+        public static int IdCajaUsuarioActual { get; set; } = 0;
+
+        // Simulación: Aquí deberías guardar el ID del usuario que hizo login.
+        public static int IdUsuarioLogueado { get; set; } = 1; // Asumiendo 1 por ahora
+        public static int IdRolUsuarioLogueado { get; set; } = 2; // Rol 2 = Vendedor
     }
 }

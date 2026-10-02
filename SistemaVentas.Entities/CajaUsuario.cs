@@ -13,7 +13,7 @@ namespace SistemaVentas.Entities
         public DateTime FechaApertura { get; set; }
         public DateTime FechaCierre { get; set; }
         //conviene ponerlo como int y despues calcularlo en la logica de negocio?
-        public decimal MontoApertura { get; set; }
+        public decimal MontoInicial { get; set; }
         public decimal MontoCierre { get; set; }
         public decimal MontoTotalVentasEfectivo { get; set; }
         public decimal MontoTotalVentasMp { get; set; }

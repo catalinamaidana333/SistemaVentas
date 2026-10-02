@@ -1,5 +1,7 @@
 ﻿using SistemaVentas.Entities;
+using SistemaVentas.GUI.Contexto;
 using SistemaVentas.GUI.Dialogs;
+
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
@@ -8,23 +10,31 @@ namespace SistemaVentas.GUI
 {
     public partial class Ventas : UserControl
     {
-        // 1. Declaramos nuestro carrito simulado
         private ObservableCollection<DetalleVentaSimulada> _carrito;
 
-        // Estado de la caja
-        private bool _cajaAbierta = false;
+        // ELIMINADO: private bool _cajaAbierta = false;
 
         public Ventas()
         {
             InitializeComponent();
-
-            // 2. Inicializamos el carrito vacio
             _carrito = new ObservableCollection<DetalleVentaSimulada>();
-
-            // 3. Enlazamos la grilla al carrito
             dgVentas.ItemsSource = _carrito;
+
+            // Validar estado visual del botón al cargar el control
+            ActualizarBotonCaja();
         }
 
+        private void ActualizarBotonCaja()
+        {
+            if (SesionGlobal.IdCajaUsuarioActual > 0)
+            {
+                btnAbrirCerrarCaja.Content = "📁 CERRAR CAJA";
+            }
+            else
+            {
+                btnAbrirCerrarCaja.Content = "📂 ABRIR CAJA";
+            }
+        }
         // 4. Evento del botón para simular una carga
         private void btnAgregarPrueba_Click(object sender, RoutedEventArgs e)
             {
@@ -83,7 +93,14 @@ namespace SistemaVentas.GUI
 
         private void Button_Click_2(object sender, RoutedEventArgs e)
         {
-            if(_carrito.Count == 0)
+            // NUEVO: Validar que la caja esté abierta antes de intentar vender
+            if (SesionGlobal.IdCajaUsuarioActual == 0)
+            {
+                MessageBox.Show("Debe abrir un turno de caja antes de procesar una venta.", "Caja Cerrada", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (_carrito.Count == 0)
             {
                 MessageBox.Show("El carrito está vacío. No se puede generar la venta.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
@@ -100,34 +117,38 @@ namespace SistemaVentas.GUI
 
         private void btnAbrirCerrarCaja_Click(object sender, RoutedEventArgs e)
         {
-            if (!_cajaAbierta)
+            if (SesionGlobal.IdCajaUsuarioActual == 0)
             {
                 // Abrir caja
                 var dialog = new AbrirCajaDialog();
 
                 // Obtenemos la ventana padre para que el diálogo sea modal
                 Window parentWindow = Window.GetWindow(this);
+                dialog.Owner = parentWindow; // Buena práctica
 
                 if (dialog.ShowDialog() == true)
                 {
-                    decimal montoIngresado = dialog.MontoIngresado;
+                    
+                    
+                    ActualizarBotonCaja();
 
-                    _cajaAbierta = true;
-                    btnAbrirCerrarCaja.Content = "📁 CERRAR CAJA";
-
-                    MessageBox.Show($"Caja abierta simulada con éxito.\nMonto inicial: ${montoIngresado:N2}", 
+                    MessageBox.Show($"Caja abierta con éxito.\nMonto inicial: ${dialog.MontoIngresado:N2}",
                                   "Caja Abierta", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
             else
             {
                 // Cerrar caja
-                _cajaAbierta = false;
-                btnAbrirCerrarCaja.Content = "📂 ABRIR CAJA";
+                var dialog = new CerrarCajaDialog();
+                dialog.Owner = Window.GetWindow(this);
 
-                MessageBox.Show("Caja cerrada simulada con éxito.", 
-                              "Caja Cerrada", MessageBoxButton.OK, MessageBoxImage.Information);
+                if (dialog.ShowDialog() == true)
+                {
+                    // El diálogo ya se encargó de poner SesionGlobal.IdCajaUsuarioActual en 0
+                    ActualizarBotonCaja();
+                }
             }
         }
+
     }
 }

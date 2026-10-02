@@ -1,161 +1,130 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using SistemaVentas.Entities;
+using System;
 using System.Configuration;
-using Microsoft.Data.SqlClient; 
-using SistemaVentas.Entities; // Para poder usar la entidad CajaUsuario
+using System.Data;
+using Microsoft.Data.SqlClient;
 
 namespace SistemaVentas.DAL
 {
-    public class CajaUsuarioDAL // Cambiamos internal por public para que la BLL pueda acceder
+    public class CajaUsuarioDAL
     {
         private string _cadenaConexion;
 
         public CajaUsuarioDAL()
         {
-            // segun App.config 
             _cadenaConexion = ConfigurationManager.ConnectionStrings["ConexionBD"].ConnectionString;
         }
 
-        // 1. Método para ABRIR la caja
-        public int AbrirCaja(CajaUsuario caja)
+        public int AbrirCaja(CajaUsuario cajaUsuario)
         {
             int idGenerado = 0;
-            // Usamos el estado 'Abierta' (o el booleano 'true'/'1' en SQL Server, asegúrate de cómo lo tienes en la base)
-            string consulta = @"INSERT INTO CajaUsuario (IdCaja, IdUsuario, FechaApertura, MontoApertura, Estado) 
-                                VALUES (@IdCaja, @IdUsuario, @FechaApertura, @MontoApertura, @Estado);
-                                SELECT SCOPE_IDENTITY();"; // Para obtener el ID recién creado
+            // Nombres de columna en snake_case. Estado = 1 (True/Abierta)
+            string query = @"INSERT INTO CajaUsuario 
+                             (id_caja, id_usuario, fecha_apertura, monto_inicial, estado) 
+                             VALUES (@id_caja, @id_usuario, GETDATE(), @monto_inicial, 1);
+                             SELECT SCOPE_IDENTITY();";
 
-            using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
+            using (SqlConnection con = new SqlConnection(_cadenaConexion))
             {
-                using (SqlCommand comando = new SqlCommand(consulta, conexion))
+                using (SqlCommand cmd = new SqlCommand(query, con))
                 {
-                    comando.Parameters.AddWithValue("@IdCaja", caja.IdCaja);
-                    comando.Parameters.AddWithValue("@IdUsuario", caja.IdUsuario);
-                    comando.Parameters.AddWithValue("@FechaApertura", caja.FechaApertura);
-                    comando.Parameters.AddWithValue("@MontoApertura", caja.MontoApertura);
-                    comando.Parameters.AddWithValue("@Estado", caja.Estado); // true para abierta
+                    cmd.Parameters.AddWithValue("@id_caja", cajaUsuario.IdCaja);
+                    cmd.Parameters.AddWithValue("@id_usuario", cajaUsuario.IdUsuario);
+                    cmd.Parameters.AddWithValue("@monto_inicial", cajaUsuario.MontoInicial);
 
-                    conexion.Open();
-                    // Ejecutamos y capturamos el ID insertado
-                    idGenerado = Convert.ToInt32(comando.ExecuteScalar());
+                    con.Open();
+                    idGenerado = Convert.ToInt32(cmd.ExecuteScalar());
                 }
             }
             return idGenerado;
         }
 
-        // 2. Método para consultar si hay una caja abierta (y obtener su ID)
-        public CajaUsuario ObtenerCajaAbiertaActiva()
+        public void CerrarCaja(CajaUsuario cajaUsuario)
         {
-            CajaUsuario cajaActiva = null;
-            // Busca la sesión que siga 'Abierta'
-            string consulta = "SELECT TOP 1 IdCajaUsuario, IdCaja, IdUsuario, FechaApertura, MontoApertura, Estado FROM CajaUsuario WHERE Estado = @Estado ORDER BY IdCajaUsuario DESC";
+            // Estado = 0 (False/Cerrada)
+            string query = @"UPDATE CajaUsuario 
+                             SET fecha_cierre = GETDATE(), 
+                                 monto_cierre = @monto_cierre,
+                                 monto_total_ventas_efectivo = @monto_total_ventas_efectivo,
+                                 monto_total_ventas_mp = @monto_total_ventas_mp,
+                                 monto_total_gastos_efec = @monto_total_gastos_efec,
+                                 monto_sistema = @monto_sistema, 
+                                 diferencia = @diferencia, 
+                                 estado = 0 
+                             WHERE id_caja_usuario = @id_caja_usuario";
 
-            using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
+            using (SqlConnection con = new SqlConnection(_cadenaConexion))
             {
-                using (SqlCommand comando = new SqlCommand(consulta, conexion))
+                using (SqlCommand cmd = new SqlCommand(query, con))
                 {
-                    comando.Parameters.AddWithValue("@Estado", true); // true asumiendo que es bit en SQL para 'Abierta'
+                    cmd.Parameters.AddWithValue("@monto_cierre", cajaUsuario.MontoCierre);
+                    cmd.Parameters.AddWithValue("@monto_total_ventas_efectivo", cajaUsuario.MontoTotalVentasEfectivo);
+                    cmd.Parameters.AddWithValue("@monto_total_ventas_mp", cajaUsuario.MontoTotalVentasMp);
+                    cmd.Parameters.AddWithValue("@monto_total_gastos_efec", cajaUsuario.MontoTotalGastosEfec);
+                    cmd.Parameters.AddWithValue("@monto_sistema", cajaUsuario.MontoSistema);
+                    cmd.Parameters.AddWithValue("@diferencia", cajaUsuario.Diferencia);
+                    cmd.Parameters.AddWithValue("@id_caja_usuario", cajaUsuario.IdCajaUsuario);
 
-                    conexion.Open();
-                    using (SqlDataReader lector = comando.ExecuteReader())
+                    con.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public CajaUsuario ObtenerSesionAbiertaPorUsuario(int idUsuario)
+        {
+            CajaUsuario sesion = null;
+            // Filtramos por estado = 1 (Abierta)
+            string query = @"SELECT id_caja_usuario, id_caja, id_usuario, fecha_apertura, monto_apertura, estado 
+                             FROM caja_usuario 
+                             WHERE id_usuario = @id_usuario AND estado = 1";
+
+            using (SqlConnection con = new SqlConnection(_cadenaConexion))
+            {
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@id_usuario", idUsuario);
+                    con.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
                     {
-                        if (lector.Read())
+                        if (reader.Read())
                         {
-                            cajaActiva = new CajaUsuario
+                            sesion = new CajaUsuario
                             {
-                                IdCajaUsuario = Convert.ToInt32(lector["IdCajaUsuario"]),
-                                IdCaja = Convert.ToInt32(lector["IdCaja"]),
-                                IdUsuario = Convert.ToInt32(lector["IdUsuario"]),
-                                FechaApertura = Convert.ToDateTime(lector["FechaApertura"]),
-                                MontoApertura = Convert.ToDecimal(lector["MontoApertura"]),
-                                Estado = Convert.ToBoolean(lector["Estado"])
+                                // El DataReader lee snake_case y lo mapeamos al PascalCase de la Entidad
+                                IdCajaUsuario = Convert.ToInt32(reader["id_caja_usuario"]),
+                                IdCaja = Convert.ToInt32(reader["id_caja"]),
+                                IdUsuario = Convert.ToInt32(reader["id_usuario"]),
+                                FechaApertura = Convert.ToDateTime(reader["fecha_apertura"]),
+                                MontoInicial = Convert.ToDecimal(reader["monto_inicial"]),
+                                Estado = Convert.ToBoolean(reader["estado"])
                             };
                         }
                     }
                 }
             }
-            return cajaActiva;
+            return sesion;
         }
 
-        // 3. Método para CERRAR la caja y guardar los totales
-        public bool CerrarCaja(CajaUsuario caja)
+        public bool VerificarCajaFisicaEnUso(int idCaja)
         {
-            bool respuesta = false;
-            string consulta = @"UPDATE CajaUsuario 
-                                SET FechaCierre = @FechaCierre, 
-                                    MontoCierre = @MontoCierre, 
-                                    MontoTotalVentasEfectivo = @VentasEfectivo, 
-                                    MontoTotalVentasMp = @VentasMp, 
-                                    MontoTotalGastosEfec = @Gastos,
-                                    MontoSistema = @MontoSistema,
-                                    Diferencia = @Diferencia,
-                                    Estado = @Estado
-                                WHERE IdCajaUsuario = @IdCajaUsuario";
+            bool enUso = false;
+            string query = @"SELECT COUNT(1) FROM CajaUsuario 
+                             WHERE id_caja = @id_caja AND estado = 1";
 
-            using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
+            using (SqlConnection con = new SqlConnection(_cadenaConexion))
             {
-                using (SqlCommand comando = new SqlCommand(consulta, conexion))
+                using (SqlCommand cmd = new SqlCommand(query, con))
                 {
-                    comando.Parameters.AddWithValue("@FechaCierre", caja.FechaCierre);
-                    comando.Parameters.AddWithValue("@MontoCierre", caja.MontoCierre);
-                    comando.Parameters.AddWithValue("@VentasEfectivo", caja.MontoTotalVentasEfectivo);
-                    comando.Parameters.AddWithValue("@VentasMp", caja.MontoTotalVentasMp);
-                    comando.Parameters.AddWithValue("@Gastos", caja.MontoTotalGastosEfec);
-                    comando.Parameters.AddWithValue("@MontoSistema", caja.MontoSistema);
-                    comando.Parameters.AddWithValue("@Diferencia", caja.Diferencia);
-                    comando.Parameters.AddWithValue("@Estado", caja.Estado); // false para cerrada
-                    comando.Parameters.AddWithValue("@IdCajaUsuario", caja.IdCajaUsuario);
+                    cmd.Parameters.AddWithValue("@id_caja", idCaja);
+                    con.Open();
 
-                    conexion.Open();
-                    respuesta = comando.ExecuteNonQuery() > 0;
+                    int count = Convert.ToInt32(cmd.ExecuteScalar());
+                    enUso = count > 0;
                 }
             }
-            return respuesta;
-        }
-        // 4. Método para obtener los totales de ventas y compras en efectivo de una sesión
-        // NO SE SI ESTA BIEN HECHO, REVISAR SI FUNCIONA
-        public void ObtenerTotalesSistema(int idCajaUsuario, out decimal totalVentasEfectivo, out decimal totalComprasEfectivo)
-        {
-            totalVentasEfectivo = 0;
-            totalComprasEfectivo = 0;
-
-            // IMPORTANTE: Revisa que los nombres de las tablas (Venta, Compra) 
-            // y columnas (Total, FormaPago) coincidan con los de tu base de datos.
-            string consulta = @"
-        DECLARE @Ventas DECIMAL(18,2) = 0;
-        DECLARE @Compras DECIMAL(18,2) = 0;
-
-        -- Sumar ventas en efectivo
-        SELECT @Ventas = ISNULL(SUM(Total), 0) 
-        FROM Venta 
-        WHERE IdCajaUsuario = @IdCajaUsuario AND FormaPago = 'Efectivo';
-
-        -- Sumar compras/gastos en efectivo
-        SELECT @Compras = ISNULL(SUM(Total), 0) 
-        FROM Compra 
-        WHERE IdCajaUsuario = @IdCajaUsuario AND FormaPago = 'Efectivo';
-
-        -- Devolver ambos resultados
-        SELECT @Ventas AS TotalVentas, @Compras AS TotalCompras;";
-
-            using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
-            {
-                using (SqlCommand comando = new SqlCommand(consulta, conexion))
-                {
-                    comando.Parameters.AddWithValue("@IdCajaUsuario", idCajaUsuario);
-
-                    conexion.Open();
-                    using (SqlDataReader lector = comando.ExecuteReader())
-                    {
-                        if (lector.Read())
-                        {
-                            totalVentasEfectivo = Convert.ToDecimal(lector["TotalVentas"]);
-                            totalComprasEfectivo = Convert.ToDecimal(lector["TotalCompras"]);
-                        }
-                    }
-                }
-            }
+            return enUso;
         }
     }
 }
