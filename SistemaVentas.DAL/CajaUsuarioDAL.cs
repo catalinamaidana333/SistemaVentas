@@ -75,8 +75,8 @@ namespace SistemaVentas.DAL
         {
             CajaUsuario sesion = null;
             // Filtramos por estado = 1 (Abierta)
-            string query = @"SELECT id_caja_usuario, id_caja, id_usuario, fecha_apertura, monto_apertura, estado 
-                             FROM caja_usuario 
+            string query = @"SELECT id_caja_usuario, id_caja, id_usuario, fecha_apertura, monto_inicial, estado 
+                             FROM CajaUsuario 
                              WHERE id_usuario = @id_usuario AND estado = 1";
 
             using (SqlConnection con = new SqlConnection(_cadenaConexion))

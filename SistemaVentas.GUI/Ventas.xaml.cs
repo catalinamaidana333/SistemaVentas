@@ -1,8 +1,10 @@
-﻿using SistemaVentas.Entities;
+﻿using SistemaVentas.BLL;
+using SistemaVentas.Entities;
 using SistemaVentas.GUI.Contexto;
 using SistemaVentas.GUI.Dialogs;
 
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -10,15 +12,28 @@ namespace SistemaVentas.GUI
 {
     public partial class Ventas : UserControl
     {
-        private ObservableCollection<DetalleVentaSimulada> _carrito;
+        private readonly ObservableCollection<DetalleVenta> _carrito;
+        private readonly ObservableCollection<Producto> _productos;
+        private readonly CN_Producto _productoBLL;
+        private readonly VentaBLL _ventaBLL;
+        private ComboBox _cmbProductos = null!;
+        
 
         // ELIMINADO: private bool _cajaAbierta = false;
 
         public Ventas()
         {
             InitializeComponent();
-            _carrito = new ObservableCollection<DetalleVentaSimulada>();
+            
+            
+            _carrito = new ObservableCollection<DetalleVenta>();
+            _productos = new ObservableCollection<Producto>();
+            _productoBLL = new CN_Producto();
+            _ventaBLL = new VentaBLL();
             dgVentas.ItemsSource = _carrito;
+            cmbProductos.ItemsSource = _productos;
+
+            CargarProductos();
 
             // Validar estado visual del botón al cargar el control
             ActualizarBotonCaja();
@@ -35,48 +50,54 @@ namespace SistemaVentas.GUI
                 btnAbrirCerrarCaja.Content = "📂 ABRIR CAJA";
             }
         }
-        // 4. Evento del botón para simular una carga
-        private void btnAgregarPrueba_Click(object sender, RoutedEventArgs e)
+        private void CargarProductos()
+        {
+            try
             {
-                // Creamos un producto hardcodeado (simulando que lo leemos de unos TextBox)
-                var nuevoItem = new DetalleVentaSimulada
-                {
-                    IdProducto = 101,
-                    NombreProducto = "Yerba Mate 1kg (Simulado)",
-                    Cantidad = 2,
-                    PrecioUnitario = 1500m
-                };
+                foreach (Producto producto in _productoBLL.Listar().Where(producto => producto.Activo))
+                    _productos.Add(producto);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"No se pudo cargar el catálogo de productos.\n{ex.Message}",
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
 
-                // Al agregarlo, la grilla dgCarrito se actualiza sola
-                _carrito.Add(nuevoItem);
-
-                // Recalculamos el total
-                ActualizarTotal();
+        private void btnAgregarProducto_Click(object sender, RoutedEventArgs e)
+        {
+            if (cmbProductos.SelectedItem is not Producto producto)
+            {
+                MessageBox.Show("Seleccione un producto del catálogo.", "Producto requerido",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
             }
 
-            // 5. Método para sumar todo
-            private void ActualizarTotal()
+            _carrito.Add(new DetalleVenta
             {
-                decimal total = 0;
-                foreach (var item in _carrito)
-                {
-                    total += item.Subtotal;
-                }
+                IdProducto = producto.IdProducto,
+                
+                Cantidad = 1,
+                PrecioUnitario = producto.PrecioVenta,
+                Subtotal = producto.PrecioVenta
+            });
 
-                txtTotal.Text = $"$ {total:N2}";
-                txtCantidadItems.Text = $"{_carrito.Count} items";
-            }
+            cmbProductos.SelectedIndex = -1;
+            cmbProductos.Text = string.Empty;
+            ActualizarTotal();
+        }
+
+        private void ActualizarTotal()
+        {
+            decimal total = _carrito.Sum(item => item.Subtotal);
+
+            txtTotal.Text = $"$ {total:N2}";
+            txtCantidadItems.Text = $"{_carrito.Sum(item => item.Cantidad)} items";
+        }
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            //esto funcionaria si el btn delete se encontrara dentro del datagrid
-            //al estar físicamente fuera de la tabla, ese botón no hereda el contexto de una fila individual
-            //dgVentas.SelectedItem = (DetalleVentaSimulada)((Button)sender).DataContext;
-            //var itemSeleccionado = (DetalleVentaSimulada)dgVentas.SelectedItem;
-            //_carrito.Remove(itemSeleccionado);
-            //ActualizarTotal();
-
-            var itemSeleccionado = dgVentas.SelectedItem as DetalleVentaSimulada;
+            var itemSeleccionado = dgVentas.SelectedItem as DetalleVenta;
 
             if (itemSeleccionado != null)
             {
@@ -93,7 +114,7 @@ namespace SistemaVentas.GUI
 
         private void Button_Click_2(object sender, RoutedEventArgs e)
         {
-            // NUEVO: Validar que la caja esté abierta antes de intentar vender
+            // 1. Validar que la caja esté abierta y el carrito tenga items (lo que ya tenías)
             if (SesionGlobal.IdCajaUsuarioActual == 0)
             {
                 MessageBox.Show("Debe abrir un turno de caja antes de procesar una venta.", "Caja Cerrada", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -105,14 +126,23 @@ namespace SistemaVentas.GUI
                 MessageBox.Show("El carrito está vacío. No se puede generar la venta.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
-            else
+
+            // 2. Extraer el método de pago seleccionado
+            var metodoSeleccionado = _cmbMetodoPago.SelectedItem as ComboBoxItem;
+
+            if (metodoSeleccionado == null || metodoSeleccionado.Content == null)
             {
-                // solo mostramos un mensaje
-                MessageBox.Show("Venta generada con éxito (simulado).");
-                // Limpiamos el carrito después de generar la venta
-                _carrito.Clear();
-                ActualizarTotal();
+                MessageBox.Show("Por favor, seleccione un método de pago válido.", "Atención", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
             }
+
+            // Aquí extraemos el string que será exactamente "Efectivo" o "Mercado Pago"
+            string metodoPagoStr = metodoSeleccionado.Content.ToString();
+
+            // 3. Continuar con la venta (Simulada por ahora)
+            MessageBox.Show($"Venta generada con éxito (simulado).\nMétodo de pago: {metodoPagoStr}");
+            _carrito.Clear();
+            ActualizarTotal();
         }
 
         private void btnAbrirCerrarCaja_Click(object sender, RoutedEventArgs e)

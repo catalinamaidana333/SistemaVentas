@@ -27,13 +27,13 @@ namespace SistemaVentas.GUI.Dialogs
                     // 1. Preparamos la entidad
                     var nuevaCaja = new CajaUsuario
                     {
-                        IdUsuario = SesionGlobal.IdUsuarioLogueado,
+                        IdUsuario = SesionGlobal.IdUsuarioActual,
                         IdCaja = 1, // Asumiendo que el vendedor usa la "Caja Física 1". Esto podría ser un ComboBox en el futuro.
                         MontoInicial = monto
                     };
 
                     // 2. Llamamos a la BLL
-                    int idGenerado = _cajaBLL.AbrirCaja(nuevaCaja, SesionGlobal.IdRolUsuarioLogueado);
+                    int idGenerado = _cajaBLL.AbrirCaja(nuevaCaja, SesionGlobal.IdRolActual);
 
                     // 3. Guardamos el ID real en la sesión global
                     SesionGlobal.IdCajaUsuarioActual = idGenerado;

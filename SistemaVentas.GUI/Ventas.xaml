@@ -45,20 +45,21 @@
                 <!-- Título -->
                 <TextBlock Grid.Row="0" Text="POINT OF SALE" Style="{StaticResource TituloPrincipal}" Margin="0,0,0,20"/>
 
-                <!-- Buscador y Botón Simular -->
+                <!-- Búsqueda y selección de productos del catálogo -->
                 <Grid Grid.Row="1" Margin="0,0,0,15">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <TextBox Grid.Column="0" Style="{StaticResource InputTexto}" Height="40" 
-             Margin="0,0,10,0" Text="🔍 Search Item..."/>
+                    <ComboBox x:Name="cmbProductos" Grid.Column="0" Height="40" IsEditable="True"
+                              IsTextSearchEnabled="True" DisplayMemberPath="Nombre"
+                              Margin="0,0,10,0"
+                              ToolTip="Buscar un producto del catálogo"/>
 
-                    <!-- ACÁ ESTÁ EL BOTÓN QUE LLAMA AL CÓDIGO C# -->
-                    <Button Grid.Column="1" x:Name="btnAgregarPrueba" Content="+ AGREGAR" 
+                    <Button Grid.Column="1" x:Name="btnAgregarProducto" Content="+ AGREGAR" 
             Style="{StaticResource BotonPrimario}" Width="100" Height="40" 
-            Click="btnAgregarPrueba_Click"/>
+            Click="btnAgregarProducto_Click"/>
                 </Grid>
 
                 <!-- Tabla de Ventas (DataGrid) -->
@@ -122,7 +123,7 @@
                     <Button Content="PROCESS SALE" Style="{StaticResource BotonPrimario}" Height="50" Margin="0,0,0,15" FontSize="18" Click="Button_Click_2"/>
 
                     <!-- Selector de Método de Pago -->
-                    <ComboBox Height="40" Margin="0,0,0,20" SelectedIndex="0" 
+                    <ComboBox x:Name="_cmbMetodoPago" Height="40" Margin="0,0,0,20" SelectedIndex="0" 
                               FontFamily="{StaticResource FuentePrimaria}" FontSize="14">
                         <ComboBoxItem Content="💳 Efectivo"/>
                         <ComboBoxItem Content="💳 Mercado Pago"/>
@@ -142,8 +143,8 @@
                         </Grid.ColumnDefinitions>
 
                         <!-- Fila 1 -->
-                        <Button Grid.Row="0" Grid.Column="0" Content="Yerba Mate PROMO" Style="{StaticResource BotonPrimario}" Click="btnAgregarPrueba_Click"/>
-                        <Button Grid.Row="0" Grid.Column="2" Content="Coca Cola 1.5L" Style="{StaticResource BotonPrimario}"/>
+                        <Button Grid.Row="0" Grid.Column="0" Content="AGREGAR SELECCIONADO" Style="{StaticResource BotonPrimario}" Click="btnAgregarProducto_Click"/>
+                        <Button Grid.Row="0" Grid.Column="2" Content="LIMPIAR CARRITO" Style="{StaticResource BotonPrimario}" Click="Button_Click_1"/>
 
                         <!-- Fila 2 -->
                         <Button Grid.Row="2" Grid.Column="0" Content="📄 RECEIPT" Style="{StaticResource BotonPrimario}"/>
