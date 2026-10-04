@@ -136,7 +136,7 @@ namespace SistemaVentas.GUI
 
         private void Button_Click_2(object sender, RoutedEventArgs e)
         {
-            // 1. Validar que la caja esté abierta y el carrito tenga items (lo que ya tenías)
+            // 1. Validaciones iniciales
             if (SesionGlobal.IdCajaUsuarioActual == 0)
             {
                 MessageBox.Show("Debe abrir un turno de caja antes de procesar una venta.", "Caja Cerrada", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -149,22 +149,81 @@ namespace SistemaVentas.GUI
                 return;
             }
 
-            // 2. Extraer el método de pago seleccionado
             var metodoSeleccionado = _cmbMetodoPago.SelectedItem as ComboBoxItem;
-
             if (metodoSeleccionado == null || metodoSeleccionado.Content == null)
             {
                 MessageBox.Show("Por favor, seleccione un método de pago válido.", "Atención", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            // Aquí extraemos el string que será exactamente "Efectivo" o "Mercado Pago"
-            string metodoPagoStr = metodoSeleccionado.Content.ToString();
+            string metodoPagoTag = metodoSeleccionado.Tag?.ToString() ?? string.Empty;
 
-            // 3. Continuar con la venta (Simulada por ahora)
-            MessageBox.Show($"Venta generada con éxito (simulado).\nMétodo de pago: {metodoPagoStr}");
-            _carrito.Clear();
-            ActualizarTotal();
+            // 2. Calcular montos
+            decimal totalVenta = _carrito.Sum(item => item.Subtotal);
+            decimal montoAbonado = 0;
+            decimal vuelto = 0;
+
+            // 3. Lógica según el método de pago
+            if (metodoPagoTag == "Efectivo")
+            {
+                
+                var dialogCobro = new CobroDialog(totalVenta);
+                dialogCobro.Owner = Window.GetWindow(this);
+
+                if (dialogCobro.ShowDialog() == true)
+                {
+                    montoAbonado = dialogCobro.MontoIngresado;
+                    vuelto = montoAbonado - totalVenta;
+                }
+                else
+                {
+                    // Si el cajero cierra la ventana de cobro, cancelamos la operación
+                    return; 
+                }
+                
+
+               
+            }
+            else // Mercado Pago o Transferencia
+            {
+                montoAbonado = totalVenta;
+                vuelto = 0; // En pago digital no hay vuelto físico
+            }
+
+            // 4. Armar la entidad Venta
+            Venta nuevaVenta = new Venta
+            {
+                IdCajaUsuario = SesionGlobal.IdCajaUsuarioActual,
+                MetodoPago = metodoPagoTag,
+                Total = totalVenta,
+                MontoAbonado = montoAbonado,
+                Vuelto = vuelto,
+                // Convertimos la ObservableCollection a List para la entidad
+                Detalles = _carrito.ToList()
+            };
+
+            // 5. Enviar a la base de datos a través de la BLL
+            try
+            {
+                // Llamamos al método Insertar (que a su vez llama a tu DAL transaccional)
+                int idVentaGenerada = _ventaBLL.RegistrarVenta(nuevaVenta);
+
+                // Si llegó hasta aquí, la transacción fue exitosa
+                MessageBox.Show($"Venta #{idVentaGenerada} generada con éxito.\nTotal: ${totalVenta:N2}\nVuelto: ${vuelto:N2}",
+                                "Venta Exitosa", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                // 6. Limpiar la UI para el próximo cliente
+                _carrito.Clear();
+                ActualizarTotal();
+
+                // Opcional: resetear el método de pago por defecto
+                _cmbMetodoPago.SelectedIndex = 0;
+            }
+            catch (Exception ex)
+            {
+                // Si falló algo en la BD (ej. se cortó la conexión), el Rollback ya se hizo en la DAL
+                MessageBox.Show($"Ocurrió un error al guardar la venta:\n{ex.Message}", "Error BD", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void btnAbrirCerrarCaja_Click(object sender, RoutedEventArgs e)
