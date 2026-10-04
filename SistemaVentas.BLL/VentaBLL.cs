@@ -37,7 +37,7 @@ namespace SistemaVentas.BLL
 
                
                 detalle.PrecioUnitario = producto.PrecioVenta;
-                detalle.Subtotal = detalle.Cantidad * producto.PrecioVenta;
+                
             }
 
             venta.Total = venta.Detalles.Sum(detalle => detalle.Subtotal);

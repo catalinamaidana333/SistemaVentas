@@ -7,6 +7,9 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
+
+
 
 namespace SistemaVentas.GUI
 {
@@ -73,15 +76,34 @@ namespace SistemaVentas.GUI
                 return;
             }
 
-            _carrito.Add(new DetalleVenta
-            {
-                IdProducto = producto.IdProducto,
-                
-                Cantidad = 1,
-                PrecioUnitario = producto.PrecioVenta,
-                Subtotal = producto.PrecioVenta
-            });
+            // 1. Buscamos si el producto ya existe en el carrito
+            var itemExistente = _carrito.FirstOrDefault(d => d.IdProducto == producto.IdProducto);
 
+            if (itemExistente != null)
+            {
+                // 2. Si existe, incrementamos la cantidad
+                itemExistente.Cantidad += 1;
+
+                
+
+                // 3. Forzamos a la grilla a redibujarse para mostrar la nueva cantidad y subtotal
+                // Esto es necesario porque una ObservableCollection detecta cuando se agrega/quita una fila, 
+                // pero NO detecta cuando cambia una propiedad interna de una fila existente.
+                dgVentas.Items.Refresh();
+            }
+            else
+            {
+                // 4. Si no existe, lo agregamos como un nuevo registro
+                _carrito.Add(new DetalleVenta
+                {
+                    IdProducto = producto.IdProducto,
+                    Cantidad = 1,
+                    PrecioUnitario = producto.PrecioVenta,
+                    // Subtotal se calcula automáticamente en la entidad DetalleVenta
+                });
+            }
+
+            // Limpiamos el combo y actualizamos el total general
             cmbProductos.SelectedIndex = -1;
             cmbProductos.Text = string.Empty;
             ActualizarTotal();
@@ -180,5 +202,88 @@ namespace SistemaVentas.GUI
             }
         }
 
+        
+
+// --- 1. Eventos de los botones visuales (+ y -) ---
+private void btnSumar_Click(object sender, RoutedEventArgs e)
+    {
+        var button = sender as Button;
+        if (button?.Tag is DetalleVenta item)
+        {
+            ModificarCantidad(item, 1); // Suma 1
+        }
     }
+
+    private void btnRestar_Click(object sender, RoutedEventArgs e)
+    {
+        var button = sender as Button;
+        if (button?.Tag is DetalleVenta item)
+        {
+            ModificarCantidad(item, -1); // Resta 1
+        }
+    }
+
+    // --- 2. Evento que captura el teclado físico sobre la grilla ---
+    private void dgVentas_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        // Obtenemos la fila que está seleccionada actualmente
+        var itemSeleccionado = dgVentas.SelectedItem as DetalleVenta;
+
+        // Si no hay nada seleccionado (o el carrito está vacío), no hacemos nada
+        if (itemSeleccionado == null) return;
+
+        // A. Si presiona la tecla '+' (en el teclado normal o en el numérico)
+        if (e.Key == Key.Add || e.Key == Key.OemPlus)
+        {
+            ModificarCantidad(itemSeleccionado, 1);
+            e.Handled = true; // Evita que la tecla haga otra acción no deseada
+        }
+        // B. Si presiona la tecla '-' 
+        else if (e.Key == Key.Subtract || e.Key == Key.OemMinus)
+        {
+            ModificarCantidad(itemSeleccionado, -1);
+            e.Handled = true;
+        }
+        // C. Si presiona un número del 1 al 9 (Teclado superior)
+        else if (e.Key >= Key.D1 && e.Key <= Key.D9)
+        {
+            int numeroPresionado = e.Key - Key.D0;
+            FijarCantidadExacta(itemSeleccionado, numeroPresionado);
+            e.Handled = true;
+        }
+        // D. Si presiona un número del 1 al 9 (Teclado numérico lateral)
+        else if (e.Key >= Key.NumPad1 && e.Key <= Key.NumPad9)
+        {
+            int numeroPresionado = e.Key - Key.NumPad0;
+            FijarCantidadExacta(itemSeleccionado, numeroPresionado);
+            e.Handled = true;
+        }
+    }
+
+    // --- 3. Métodos centralizados para actualizar la fila ---
+    private void ModificarCantidad(DetalleVenta item, int variacion)
+    {
+        // Si al restar llega a 0, lo quitamos del carrito
+        if (item.Cantidad + variacion <= 0)
+        {
+            _carrito.Remove(item);
+        }
+        else
+        {
+            item.Cantidad += variacion;
+           
+            dgVentas.Items.Refresh(); // Obliga a la grilla a actualizar los textos
+        }
+        ActualizarTotal(); // Tu método existente
+    }
+
+    private void FijarCantidadExacta(DetalleVenta item, int cantidadExacta)
+    {
+        item.Cantidad = cantidadExacta;
+        
+        dgVentas.Items.Refresh();
+        ActualizarTotal();
+    }
+
+}
 }

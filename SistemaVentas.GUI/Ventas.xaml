@@ -64,13 +64,28 @@
 
                 <!-- Tabla de Ventas (DataGrid) -->
                 <!-- Tabla de Ventas (DataGrid) -->
-                <DataGrid Grid.Row="2" x:Name="dgVentas" HeadersVisibility="Column" 
-          AutoGenerateColumns="False" IsReadOnly="True">
+                <DataGrid Grid.Row="2" x:Name="dgVentas" AutoGenerateColumns="False" PreviewKeyDown="dgVentas_PreviewKeyDown">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="#" Width="50" Binding="{Binding IdProducto}"/>
                         <DataGridTextColumn Header="ITEM" Width="*" Binding="{Binding NombreProducto}"/>
                         <DataGridTextColumn Header="QUANTITY" Width="100" Binding="{Binding Cantidad}"/>
                         <DataGridTextColumn Header="PRICE" Width="80" Binding="{Binding PrecioUnitario}"/>
+                        <DataGridTemplateColumn Header="Cant.">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <!-- Botón Menos -->
+                                        <Button Content=" - " Width="25" Click="btnRestar_Click" Tag="{Binding}"/>
+
+                                        <!-- Texto de la Cantidad -->
+                                        <TextBlock Text="{Binding Cantidad}" Width="30" TextAlignment="Center" VerticalAlignment="Center"/>
+
+                                        <!-- Botón Más -->
+                                        <Button Content=" + " Width="25" Click="btnSumar_Click" Tag="{Binding}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                         <DataGridTextColumn Header="AMOUNT" Width="120" Binding="{Binding Subtotal}"/>
                     </DataGrid.Columns>
                 </DataGrid>
