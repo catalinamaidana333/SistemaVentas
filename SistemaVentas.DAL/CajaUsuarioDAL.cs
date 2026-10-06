@@ -41,27 +41,28 @@ namespace SistemaVentas.DAL
 
         public void CerrarCaja(CajaUsuario cajaUsuario)
         {
-            // Estado = 0 (False/Cerrada)
+            // Corregimos los nombres de las columnas a la izquierda del '=' 
+            // para que coincidan exactamente con tu tabla SQL Server.
             string query = @"UPDATE CajaUsuario 
-                             SET fecha_cierre = GETDATE(), 
-                                 monto_cierre = @monto_cierre,
-                                 monto_total_ventas_efectivo = @monto_total_ventas_efectivo,
-                                 monto_total_ventas_mp = @monto_total_ventas_mp,
-                                 monto_total_gastos_efec = @monto_total_gastos_efec,
-                                 monto_sistema = @monto_sistema, 
-                                 diferencia = @diferencia, 
-                                 estado = 0 
-                             WHERE id_caja_usuario = @id_caja_usuario";
+                     SET fecha_cierre = GETDATE(), 
+                         monto_declarado = @monto_declarado,
+                         total_ventas_efectivo = @total_ventas_efectivo,
+                         total_ventas_mp = @total_ventas_mp,
+                         total_compras_efectivo = @monto_compras_efectivo,
+                         monto_sys = @monto_sys, 
+                         diferencia = @diferencia, 
+                         estado = 0 
+                     WHERE id_caja_usuario = @id_caja_usuario";
 
             using (SqlConnection con = new SqlConnection(_cadenaConexion))
             {
                 using (SqlCommand cmd = new SqlCommand(query, con))
                 {
-                    cmd.Parameters.AddWithValue("@monto_cierre", cajaUsuario.MontoCierre);
-                    cmd.Parameters.AddWithValue("@monto_total_ventas_efectivo", cajaUsuario.MontoTotalVentasEfectivo);
-                    cmd.Parameters.AddWithValue("@monto_total_ventas_mp", cajaUsuario.MontoTotalVentasMp);
-                    cmd.Parameters.AddWithValue("@monto_total_gastos_efec", cajaUsuario.MontoTotalGastosEfec);
-                    cmd.Parameters.AddWithValue("@monto_sistema", cajaUsuario.MontoSistema);
+                    cmd.Parameters.AddWithValue("@monto_declarado", cajaUsuario.MontoCierre);
+                    cmd.Parameters.AddWithValue("@total_ventas_efectivo", cajaUsuario.MontoTotalVentasEfectivo);
+                    cmd.Parameters.AddWithValue("@total_ventas_mp", cajaUsuario.MontoTotalVentasMp);
+                    cmd.Parameters.AddWithValue("@monto_compras_efectivo", cajaUsuario.MontoTotalGastosEfec);
+                    cmd.Parameters.AddWithValue("@monto_sys", cajaUsuario.MontoSistema);
                     cmd.Parameters.AddWithValue("@diferencia", cajaUsuario.Diferencia);
                     cmd.Parameters.AddWithValue("@id_caja_usuario", cajaUsuario.IdCajaUsuario);
 
