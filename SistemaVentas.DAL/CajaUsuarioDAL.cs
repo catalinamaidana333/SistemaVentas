@@ -108,6 +108,39 @@ namespace SistemaVentas.DAL
             return sesion;
         }
 
+        public CajaUsuario ObtenerSesionAbiertaPorId(int idCajaUsuario)
+        {
+            CajaUsuario sesion = null;
+            const string query = @"SELECT id_caja_usuario, id_caja, id_usuario, fecha_apertura, monto_inicial, estado
+                                   FROM CajaUsuario
+                                   WHERE id_caja_usuario = @id_caja_usuario AND estado = 1";
+
+            using (SqlConnection con = new SqlConnection(_cadenaConexion))
+            using (SqlCommand cmd = new SqlCommand(query, con))
+            {
+                cmd.Parameters.AddWithValue("@id_caja_usuario", idCajaUsuario);
+                con.Open();
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        sesion = new CajaUsuario
+                        {
+                            IdCajaUsuario = Convert.ToInt32(reader["id_caja_usuario"]),
+                            IdCaja = Convert.ToInt32(reader["id_caja"]),
+                            IdUsuario = Convert.ToInt32(reader["id_usuario"]),
+                            FechaApertura = Convert.ToDateTime(reader["fecha_apertura"]),
+                            MontoInicial = Convert.ToDecimal(reader["monto_inicial"]),
+                            Estado = Convert.ToBoolean(reader["estado"])
+                        };
+                    }
+                }
+            }
+
+            return sesion;
+        }
+
         public CajaUsuario ObtenerSesionAbiertaPorCaja(int idCaja)
         {
             CajaUsuario sesion = null;

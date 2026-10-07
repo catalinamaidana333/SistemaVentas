@@ -87,6 +87,14 @@ namespace SistemaVentas.BLL
                 throw new ArgumentException("Identificador de sesión de caja inválido.");
             }
 
+            CajaUsuario sesionAbierta = _cajaUsuarioDAL.ObtenerSesionAbiertaPorId(cajaCierre.IdCajaUsuario);
+            if (sesionAbierta == null)
+            {
+                throw new InvalidOperationException("La sesión de caja no existe o ya está cerrada.");
+            }
+
+            cajaCierre.MontoInicial = sesionAbierta.MontoInicial;
+
             // 2. Obtener los totales desde la Base de Datos filtrando por ESTA sesión de caja (IdCajaUsuario).
             // NOTA: Deberás implementar estos métodos en VentaDAL y CompraDAL si aún no existen.
             decimal totalVentasEfectivo = _ventaDAL.ObtenerTotalVentasEfectivoPorSesion(cajaCierre.IdCajaUsuario);
