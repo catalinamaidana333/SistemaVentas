@@ -10,17 +10,27 @@ namespace SistemaVentas.BLL
     /// </summary>
     public class CajaUsuarioBLL
     {
-        private CajaUsuarioDAL _cajaUsuarioDAL;
+        private readonly CajaUsuarioDAL _cajaUsuarioDAL;
         // Asumimos la existencia de estos DALs para calcular los totales.
         // Si no existen exactamente así, deberás crearlos o adaptar los nombres.
-        private VentaDAL _ventaDAL;
-        private CompraDAL _compraDAL;
+        private readonly VentaDAL _ventaDAL;
+        private readonly CompraDAL _compraDAL;
+        private readonly MovimientosCajaDAL _movimientosCajaDAL;
 
         public CajaUsuarioBLL()
         {
             _cajaUsuarioDAL = new CajaUsuarioDAL();
             _ventaDAL = new VentaDAL();
             _compraDAL = new CompraDAL();
+            _movimientosCajaDAL = new MovimientosCajaDAL();
+        }
+
+        public decimal? ObtenerSaldoEsperadoApertura(int idCaja)
+        {
+            if (idCaja <= 0)
+                throw new ArgumentException("Identificador de caja inválido.", nameof(idCaja));
+
+            return _cajaUsuarioDAL.ObtenerSaldoEsperadoApertura(idCaja);
         }
 
         /// <summary>
@@ -82,6 +92,7 @@ namespace SistemaVentas.BLL
             decimal totalVentasEfectivo = _ventaDAL.ObtenerTotalVentasEfectivoPorSesion(cajaCierre.IdCajaUsuario);
             decimal totalVentasMp = _ventaDAL.ObtenerTotalVentasMercadoPagoPorSesion(cajaCierre.IdCajaUsuario);
             decimal totalGastosEfectivo = _compraDAL.ObtenerTotalComprasEfectivoPorSesion(cajaCierre.IdCajaUsuario);
+            decimal saldoMovimientosManuales = _movimientosCajaDAL.ObtenerSaldoNetoPorSesion(cajaCierre.IdCajaUsuario);
 
             // 3. Poblar la entidad con los subtotales para guardarlos en el historial
             cajaCierre.MontoTotalVentasEfectivo = totalVentasEfectivo;
@@ -91,7 +102,7 @@ namespace SistemaVentas.BLL
             // 4. EL CÁLCULO CRÍTICO: Monto Sistema
             // Fórmula: Monto Inicial + Ventas en Efectivo - Gastos/Compras en Efectivo
             // Omitimos MercadoPago del MontoSistema porque ese dinero no está físicamente en la caja registradora.
-            decimal montoSistema = cajaCierre.MontoInicial + totalVentasEfectivo - totalGastosEfectivo;
+            decimal montoSistema = cajaCierre.MontoInicial + totalVentasEfectivo - totalGastosEfectivo + saldoMovimientosManuales;
             cajaCierre.MontoSistema = montoSistema;
 
             // 5. Calcular la Diferencia

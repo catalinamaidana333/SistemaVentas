@@ -113,8 +113,10 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <Button Grid.Column="0" Content="💰 Ingreso (Efectivo)" Style="{StaticResource BotonPrimario}" Height="40"/>
-                    <Button Grid.Column="2" Content="💸 Egreso (Efectivo)" Style="{StaticResource BotonPrimario}" Height="40"/>
+                    <Button Grid.Column="0" x:Name="btnIngresoManual" Content="💰 Ingreso (Efectivo)"
+                            Style="{StaticResource BotonPrimario}" Height="40" Click="btnIngresoManual_Click"/>
+                    <Button Grid.Column="2" x:Name="btnEgresoManual" Content="💸 Egreso (Efectivo)"
+                            Style="{StaticResource BotonPrimario}" Height="40" Click="btnEgresoManual_Click"/>
                 </Grid>
             </Grid>
 

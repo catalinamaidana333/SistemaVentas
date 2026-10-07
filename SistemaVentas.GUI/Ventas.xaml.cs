@@ -134,6 +134,31 @@ namespace SistemaVentas.GUI
             ActualizarTotal();
         }
 
+        private void btnIngresoManual_Click(object sender, RoutedEventArgs e)
+        {
+            AbrirDialogoMovimientoManual("INGRESO");
+        }
+
+        private void btnEgresoManual_Click(object sender, RoutedEventArgs e)
+        {
+            AbrirDialogoMovimientoManual("EGRESO");
+        }
+
+        private void AbrirDialogoMovimientoManual(string tipo)
+        {
+            var dialog = new DialogIngresoEgreso(tipo)
+            {
+                Owner = Window.GetWindow(this)
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                string operacion = tipo == "INGRESO" ? "Ingreso" : "Egreso";
+                MessageBox.Show($"{operacion} registrado correctamente.", "Movimiento de caja",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
         private void Button_Click_2(object sender, RoutedEventArgs e)
         {
             // 1. Validaciones iniciales
