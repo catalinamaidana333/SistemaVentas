@@ -108,6 +108,73 @@ namespace SistemaVentas.DAL
             return sesion;
         }
 
+        public CajaUsuario ObtenerSesionAbiertaPorCaja(int idCaja)
+        {
+            CajaUsuario sesion = null;
+            string query = @"SELECT id_caja_usuario, id_caja, id_usuario, fecha_apertura, monto_inicial, estado
+                             FROM CajaUsuario
+                             WHERE id_caja = @id_caja AND estado = 1";
+
+            using (SqlConnection con = new SqlConnection(_cadenaConexion))
+            using (SqlCommand cmd = new SqlCommand(query, con))
+            {
+                cmd.Parameters.AddWithValue("@id_caja", idCaja);
+                con.Open();
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        sesion = new CajaUsuario
+                        {
+                            IdCajaUsuario = Convert.ToInt32(reader["id_caja_usuario"]),
+                            IdCaja = Convert.ToInt32(reader["id_caja"]),
+                            IdUsuario = Convert.ToInt32(reader["id_usuario"]),
+                            FechaApertura = Convert.ToDateTime(reader["fecha_apertura"]),
+                            MontoInicial = Convert.ToDecimal(reader["monto_inicial"]),
+                            Estado = Convert.ToBoolean(reader["estado"])
+                        };
+                    }
+                }
+            }
+
+            return sesion;
+        }
+
+        public decimal? ObtenerSaldoEsperadoApertura(int idCaja)
+        {
+            string query = @"SELECT TOP (1)
+                                cierre.monto_declarado + ISNULL((
+                                    SELECT SUM(CASE
+                                        WHEN movimiento.tipo = 'INGRESO' THEN movimiento.monto
+                                        WHEN movimiento.tipo = 'EGRESO' THEN -movimiento.monto
+                                        ELSE 0
+                                    END)
+                                    FROM MovimientosCaja movimiento
+                                    WHERE movimiento.id_caja = cierre.id_caja
+                                      AND movimiento.fecha_hora > cierre.fecha_cierre
+                                      AND movimiento.fecha_hora <= GETDATE()
+                                ), 0)
+                             FROM CajaUsuario cierre
+                             WHERE cierre.id_caja = @id_caja
+                               AND cierre.estado = 0
+                               AND cierre.fecha_cierre IS NOT NULL
+                               AND cierre.monto_declarado IS NOT NULL
+                             ORDER BY cierre.fecha_cierre DESC, cierre.id_caja_usuario DESC";
+
+            using (SqlConnection con = new SqlConnection(_cadenaConexion))
+            using (SqlCommand cmd = new SqlCommand(query, con))
+            {
+                cmd.Parameters.AddWithValue("@id_caja", idCaja);
+                con.Open();
+
+                object resultado = cmd.ExecuteScalar();
+                return resultado == null || resultado == DBNull.Value
+                    ? null
+                    : Convert.ToDecimal(resultado);
+            }
+        }
+
         public bool VerificarCajaFisicaEnUso(int idCaja)
         {
             bool enUso = false;
