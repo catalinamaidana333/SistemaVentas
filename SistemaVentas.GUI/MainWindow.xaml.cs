@@ -60,6 +60,22 @@ namespace SistemaVentas.GUI
                     btnReportes.Visibility = Visibility.Visible;
                     break;
             }
+
+            // Configurar acceso al módulo de Backups (solo Gerente)
+            if (idRolActual != 1) // idRol == 1 es Gerente
+            {
+                btnBackup.IsEnabled = false;
+            }
+
+            if (SesionGlobal.HayUsuarioLogueado)
+            {
+                txtNombreUsuario.Text = $"Hola, {SesionGlobal.NombreUsuarioActual}";
+            }
+            else
+            {
+                txtNombreUsuario.Text = "Usuario no identificado";
+            }
+            CargarMenuSegunRol();
         }
 
         private void OcultarSubmenus()

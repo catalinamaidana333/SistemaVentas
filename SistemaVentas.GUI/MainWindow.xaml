@@ -20,13 +20,18 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="80"/>
                     <RowDefinition Height="*"/>
+                    <!-- Aquí van los botones de navegación -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- Nueva fila para el usuario y logout -->
                 </Grid.RowDefinitions>
 
+                <!-- Título -->
                 <TextBlock Grid.Row="0" Text="MINIMARKET"
                            Foreground="{StaticResource OroTexto}"
                            FontSize="22" FontWeight="Bold"
                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
+                <!-- Botones de navegación -->
                 <StackPanel Grid.Row="1" Margin="15,10">
                     <Button x:Name="btnVentas" Content="Punto de Venta"
                             Style="{StaticResource BotonMenuLateral}"
@@ -40,7 +45,10 @@
                     <Button x:Name="btnCompra" Content="Compras"
                             Style="{StaticResource BotonMenuLateral}"
                             Click="btnCompra_Click"/>
-                    
+                    <Button x:Name="btnCaja" Content="Cajas"
+                            Style="{StaticResource BotonMenuLateral}"
+                            Click="btnCaja_Click"/>
+                <Button x:Name="btnBackup" Content="Gestión de Backups" Style="{StaticResource BotonMenuLateral}" Click="btnBackup_Click"/>
                     <!-- Botón Principal de Reportes -->
                     <Button x:Name="btnReportes" Content="Reportes" 
             Style="{StaticResource BotonMenuLateral}" 
@@ -53,8 +61,27 @@
                     <Button x:Name="btnSubStockCritico" Content="  • Stock Crítico" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubStockCritico_Click"/>
                     <Button x:Name="btnSubVentasCanceladas" Content="  • Ventas Canceladas" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubVentasCanceladas_Click"/>
                     <Button x:Name="btnSubVentasVendedor" Content="  • Ventas por Vendedor" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubVentasVendedor_Click"/>
+                    <!-- Subbotones Gerente -->
+                    <Button x:Name="btnSubRentabilidad" Content="  Rentabilidad" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubRentabilidad_Click"/>
+                    <Button x:Name="btnSubAuditoria" Content="  Auditoría" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubAuditoria_Click"/>
+                    <Button x:Name="btnSubRendimiento" Content="  Rendimiento" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubRendimiento_Click"/>
+
+                    <!-- Subbotones Supervisor -->
+                    <Button x:Name="btnSubStockCritico" Content="  Stock Crítico" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubStockCritico_Click"/>
+                    <Button x:Name="btnSubVentasCanceladas" Content="  Ventas Canceladas" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubVentasCanceladas_Click"/>
+                    <Button x:Name="btnSubVentasVendedor" Content="  Ventas por Vendedor" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubVentasVendedor_Click"/>
+
+                    <!-- Subbotones Vendedor -->
+                    <Button x:Name="btnSubArqueoDiario" Content="   Arqueo Diario" Style="{StaticResource BotonMenuLateral}" Visibility="Collapsed" Click="btnSubArqueoDiario_Click"/>
                 </StackPanel>
-            </Grid>
+
+                <!-- SECCIÓN NUEVA: Información del Usuario y Logout (Tu código) -->
+                <StackPanel Grid.Row="2" Margin="15,20,15,20">
+                    <Separator Margin="0,0,0,15" Background="LightGray" Opacity="0.3"/>
+                    <TextBlock x:Name="txtNombreUsuario" Text="Usuario: Invitado" Foreground="White" FontSize="14" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+                    <Button x:Name="btnLogout" Content="Cerrar Sesión" Style="{StaticResource BotonMenuLateral}" Click="btnLogout_Click"/>
+                </StackPanel>
+                            </Grid>
         </Border>
 
         <!-- Área de Contenido Dinámico (columna 1, único elemento) -->

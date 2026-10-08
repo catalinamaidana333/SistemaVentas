@@ -167,6 +167,7 @@ namespace SistemaVentas.DAL.Reportes
                 {
                     conexion.Open();
                     using (SqlCommand comando = new SqlCommand(consulta, conexion))
+                    using (SqlDataReader lector = comando.ExecuteReader())
                     {
                         if (fechaInicio.HasValue)
                             comando.Parameters.AddWithValue("@fechaInicio", fechaInicio.Value);
@@ -176,7 +177,7 @@ namespace SistemaVentas.DAL.Reportes
 
                         using (SqlDataReader lector = comando.ExecuteReader())
                         {
-                            while (lector.Read())
+                            lista.Add(new VentaVendedor
                             {
                                 lista.Add(new VentaVendedor()
                                 {

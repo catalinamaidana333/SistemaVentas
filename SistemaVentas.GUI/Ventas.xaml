@@ -16,12 +16,15 @@
                        FontSize="20" FontWeight="Bold" 
                        VerticalAlignment="Center" Margin="20,0,0,0"/>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,20,0">
-                <TextBlock Text="⚙️ USERNAME" Foreground="{StaticResource TextoClaro}" FontSize="14"/>
+                <Button x:Name="btnAbrirCerrarCaja" Content="📂 ABRIR CAJA" 
+                        Style="{StaticResource BotonPrimario}" Height="40" Width="150" 
+                        Click="btnAbrirCerrarCaja_Click" Margin="0,0,15,0"/>
+                <TextBlock Text="⚙️ USERNAME" Foreground="{StaticResource TextoClaro}" FontSize="14" VerticalAlignment="Center"/>
             </StackPanel>
         </Grid>
 
         <!-- Contenedor Principal Dividido (Izquierda 65% / Derecha 35%) -->
-        <Grid Grid.Row="1" Margin="30">
+        <Grid Grid.Row="1" Margin="15">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="6.5*"/>
                 <ColumnDefinition Width="3.5*"/>
@@ -36,36 +39,53 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <!-- Título -->
                 <TextBlock Grid.Row="0" Text="POINT OF SALE" Style="{StaticResource TituloPrincipal}" Margin="0,0,0,20"/>
 
-                <!-- Buscador y Botón Simular -->
+                <!-- Búsqueda y selección de productos del catálogo -->
                 <Grid Grid.Row="1" Margin="0,0,0,15">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <TextBox Grid.Column="0" Style="{StaticResource InputTexto}" Height="40" 
-             Margin="0,0,10,0" Text="🔍 Search Item..."/>
+                    <ComboBox x:Name="cmbProductos" Grid.Column="0" Height="40" IsEditable="True"
+                              IsTextSearchEnabled="True" DisplayMemberPath="Nombre"
+                              Margin="0,0,10,0"
+                              ToolTip="Buscar un producto del catálogo"/>
 
-                    <!-- ACÁ ESTÁ EL BOTÓN QUE LLAMA AL CÓDIGO C# -->
-                    <Button Grid.Column="1" x:Name="btnAgregarPrueba" Content="+ AGREGAR" 
+                    <Button Grid.Column="1" x:Name="btnAgregarProducto" Content="+ AGREGAR" 
             Style="{StaticResource BotonPrimario}" Width="100" Height="40" 
-            Click="btnAgregarPrueba_Click"/>
+            Click="btnAgregarProducto_Click"/>
                 </Grid>
 
                 <!-- Tabla de Ventas (DataGrid) -->
                 <!-- Tabla de Ventas (DataGrid) -->
-                <DataGrid Grid.Row="2" x:Name="dgVentas" HeadersVisibility="Column" 
-          AutoGenerateColumns="False" IsReadOnly="True">
+                <DataGrid Grid.Row="2" x:Name="dgVentas" AutoGenerateColumns="False" PreviewKeyDown="dgVentas_PreviewKeyDown">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="#" Width="50" Binding="{Binding IdProducto}"/>
                         <DataGridTextColumn Header="ITEM" Width="*" Binding="{Binding NombreProducto}"/>
                         <DataGridTextColumn Header="QUANTITY" Width="100" Binding="{Binding Cantidad}"/>
                         <DataGridTextColumn Header="PRICE" Width="80" Binding="{Binding PrecioUnitario}"/>
+                        <DataGridTemplateColumn Header="Cant.">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <!-- Botón Menos -->
+                                        <Button Content=" - " Width="25" Click="btnRestar_Click" Tag="{Binding}"/>
+
+                                        <!-- Texto de la Cantidad -->
+                                        <TextBlock Text="{Binding Cantidad}" Width="30" TextAlignment="Center" VerticalAlignment="Center"/>
+
+                                        <!-- Botón Más -->
+                                        <Button Content=" + " Width="25" Click="btnSumar_Click" Tag="{Binding}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                         <DataGridTextColumn Header="AMOUNT" Width="120" Binding="{Binding Subtotal}"/>
                     </DataGrid.Columns>
                 </DataGrid>
@@ -83,6 +103,20 @@
                     <Button Grid.Column="1" Content="▲" Style="{StaticResource BotonPrimario}" Width="50" Height="40" Margin="0,0,5,0"/>
                     <Button Grid.Column="2" Content="▼" Style="{StaticResource BotonPrimario}" Width="50" Height="40" Margin="0,0,15,0"/>
                     <TextBox Grid.Column="3" Style="{StaticResource InputTexto}" Height="40" Text="Notes..."/>
+                </Grid>
+
+                <!-- Panel de Ingreso y Egreso (Efectivo) -->
+                <Grid Grid.Row="4" Margin="0,15,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="15"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Button Grid.Column="0" x:Name="btnIngresoManual" Content="💰 Ingreso (Efectivo)"
+                            Style="{StaticResource BotonPrimario}" Height="40" Click="btnIngresoManual_Click"/>
+                    <Button Grid.Column="2" x:Name="btnEgresoManual" Content="💸 Egreso (Efectivo)"
+                            Style="{StaticResource BotonPrimario}" Height="40" Click="btnEgresoManual_Click"/>
                 </Grid>
             </Grid>
 
@@ -106,10 +140,10 @@
                     <Button Content="PROCESS SALE" Style="{StaticResource BotonPrimario}" Height="50" Margin="0,0,0,15" FontSize="18" Click="Button_Click_2"/>
 
                     <!-- Selector de Método de Pago -->
-                    <ComboBox Height="40" Margin="0,0,0,20" SelectedIndex="0" 
+                    <ComboBox x:Name="_cmbMetodoPago" Height="40" Margin="0,0,0,20" SelectedIndex="0" 
                               FontFamily="{StaticResource FuentePrimaria}" FontSize="14">
-                        <ComboBoxItem Content="💳 Efectivo"/>
-                        <ComboBoxItem Content="💳 Mercado Pago"/>
+                        <ComboBoxItem Content="💳 Efectivo" Tag="Efectivo"/>
+                        <ComboBoxItem Content="💳 Mercado Pago" Tag="Mercado Pago"/>
                     </ComboBox>
 
                     <!-- Grilla de Botones Secundarios (2x2) -->
@@ -126,8 +160,8 @@
                         </Grid.ColumnDefinitions>
 
                         <!-- Fila 1 -->
-                        <Button Grid.Row="0" Grid.Column="0" Content="⊗ VOID" Style="{StaticResource BotonPrimario}"/>
-                        <Button Grid.Row="0" Grid.Column="2" Content="⏸ HOLD" Style="{StaticResource BotonPrimario}"/>
+                        <Button Grid.Row="0" Grid.Column="0" Content="AGREGAR SELECCIONADO" Style="{StaticResource BotonPrimario}" Click="btnAgregarProducto_Click"/>
+                        <Button Grid.Row="0" Grid.Column="2" Content="LIMPIAR CARRITO" Style="{StaticResource BotonPrimario}" Click="Button_Click_1"/>
 
                         <!-- Fila 2 -->
                         <Button Grid.Row="2" Grid.Column="0" Content="📄 RECEIPT" Style="{StaticResource BotonPrimario}"/>

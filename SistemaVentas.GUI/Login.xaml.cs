@@ -11,7 +11,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
 using SistemaVentas.BLL;
-using SistemaVentas.DAL;
+
 using SistemaVentas.Entities;
 using SistemaVentas.GUI.Contexto;
 
@@ -67,10 +67,22 @@ namespace SistemaVentas.GUI
                 // PASO 4: Obtener usuario de BD por correo
                 Usuario usuarioEnBD = usuarioBLL.AutenticarUsuario(correoIngresado, passwordIngresada);
 
-                
+
                 // ✅ PASO 6: LOGIN EXITOSO
-                // Guardar usuario en contexto global (accesible desde toda la app)
                 SesionGlobal.UsuarioActual = usuarioEnBD;
+
+                // --- NUEVO: RECUPERAR CAJA HUÉRFANA ---
+                var cajaBLL = new SistemaVentas.BLL.CajaUsuarioBLL();
+                var sesionAbierta = cajaBLL.RecuperarSesionAbierta(usuarioEnBD.IdUsuario);
+
+                if (sesionAbierta != null)
+                {
+                    SesionGlobal.IdCajaUsuarioActual = sesionAbierta.IdCajaUsuario;
+                }
+                else
+                {
+                    SesionGlobal.IdCajaUsuarioActual = 0;
+                }
 
                 // PASO 7: Abrir ventana principal
                 MainWindow ventanaPrincipal = new MainWindow();

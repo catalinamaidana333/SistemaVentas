@@ -9,6 +9,7 @@
         </Grid.ColumnDefinitions>
 
         <StackPanel Grid.Column="0" Margin="0,0,15,0">
+            <TextBox x:Name="txtIdProducto" Text="0" Visibility="Collapsed"/>
             <TextBlock Text="Nombre del Producto:" FontWeight="Bold" Margin="0,5,0,2"/>
             <TextBox x:Name="txtNombre" Padding="3"/>
             <TextBlock Text="Precio Costo:" FontWeight="Bold" Margin="0,5,0,2"/>
@@ -21,10 +22,16 @@
             <ComboBox x:Name="cmbCategoria" Padding="3"
           DisplayMemberPath="Nombre"
           SelectedValuePath="IdCategoria"/>
+            
             <Button x:Name="btnGuardar" Content="Guardar Producto"
                     Margin="0,15,0,0" Height="32"
                     Background="#021056" Foreground="#F2C832"
                     FontWeight="Bold" Click="btnGuardar_Click"/>
+
+            <Button x:Name="btnLimpiar" Content="Limpiar / Cancelar"
+                    Margin="0,8,0,0" Height="28"
+                    Background="#6B7280" Foreground="White"
+                    FontWeight="Bold" Click="btnLimpiar_Click"/>
         </StackPanel>
 
         <DataGrid x:Name="dgvProductos" Grid.Column="1"
@@ -36,6 +43,7 @@
                 <DataGridTextColumn Header="P. COSTO" Binding="{Binding PrecioCosto}" Width="120"/>
                 <DataGridTextColumn Header="P. VENTA" Binding="{Binding PrecioVenta}" Width="120"/>
                 <DataGridTextColumn Header="STOCK" Binding="{Binding StockActual}" Width="120"/>
+    
             </DataGrid.Columns>
         </DataGrid>
     </Grid>

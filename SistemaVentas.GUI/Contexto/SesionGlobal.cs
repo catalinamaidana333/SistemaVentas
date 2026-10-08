@@ -37,7 +37,7 @@ namespace SistemaVentas.GUI.Contexto
         /// Obtiene el nombre del usuario actualmente logueado.
         /// Retorna "Invitado" si no hay usuario logueado.
         /// </summary>
-        public static string NombreUsuarioActual => UsuarioActual?.Nombre ?? "Invitado";
+        public static string NombreUsuarioActual => UsuarioActual?.Nombree ?? "Invitado";
 
         /// <summary>
         /// Obtiene el rol del usuario actualmente logueado.
@@ -52,6 +52,12 @@ namespace SistemaVentas.GUI.Contexto
         public static void CerrarSesion()
         {
             UsuarioActual = null;
+            IdCajaUsuarioActual = 0;
         }
+        // Almacenará el ID de la sesión de caja (CajaUsuario) que está abierta.
+        // Si es 0, significa que la caja está cerrada.
+        public static int IdCajaUsuarioActual { get; set; } = 0;
+
+       
     }
 }
