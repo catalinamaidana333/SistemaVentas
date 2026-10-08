@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using SistemaVentas.BLL.Reportes;
+using SistemaVentas.DAL.Reportes;
 
 namespace SistemaVentas.GUI.Views.Reportes.Vendedor
 {
@@ -28,16 +30,16 @@ namespace SistemaVentas.GUI.Views.Reportes.Vendedor
             TxtFecha.Text = $"Apertura: {resumen.FechaApertura:dd/MM/yyyy HH:mm}" +
                              (resumen.FechaCierre.HasValue ? $"  |  Cierre: {resumen.FechaCierre:dd/MM/yyyy HH:mm}" : "  |  Caja abierta");
 
-            TxtMontoInicial.Text = $"MK {resumen.MontoInicial:N2}";
-            TxtVentasEfectivo.Text = $"MK {resumen.TotalVentasEfectivo:N2}";
-            TxtVentasMp.Text = $"MK {resumen.TotalVentasMp:N2}";
-            TxtComprasEfectivo.Text = $"MK {resumen.TotalComprasEfectivo:N2}";
-            TxtMontoSistema.Text = $"MK {resumen.MontoSistema:N2}";
-            TxtMontoDeclarado.Text = resumen.MontoDeclarado.HasValue ? $"MK {resumen.MontoDeclarado:N2}" : "Sin declarar aún";
+            TxtMontoInicial.Text = $"$ {resumen.MontoInicial:N2}";
+            TxtVentasEfectivo.Text = $"$ {resumen.TotalVentasEfectivo:N2}";
+            TxtVentasMp.Text = $"$ {resumen.TotalVentasMp:N2}";
+            TxtComprasEfectivo.Text = $"$ {resumen.TotalComprasEfectivo:N2}";
+            TxtMontoSistema.Text = $"$ {resumen.MontoSistema:N2}";
+            TxtMontoDeclarado.Text = resumen.MontoDeclarado.HasValue ? $"$ {resumen.MontoDeclarado:N2}" : "Sin declarar aún";
 
             if (resumen.Diferencia.HasValue)
             {
-                TxtDiferencia.Text = $"MK {resumen.Diferencia:N2}";
+                TxtDiferencia.Text = $"$ {resumen.Diferencia:N2}";
                 TxtDiferencia.Foreground = resumen.Diferencia == 0
                     ? new SolidColorBrush(Colors.LightGreen)
                     : new SolidColorBrush(Colors.OrangeRed);

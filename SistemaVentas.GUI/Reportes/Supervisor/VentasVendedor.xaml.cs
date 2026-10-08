@@ -21,7 +21,22 @@ namespace SistemaVentas.GUI.Views.Reportes.Supervisor
         public VentasVendedorView()
         {
             InitializeComponent();
-            DgVentasVendedor.ItemsSource = _service.ObtenerVentasPorVendedor();
+            this.Loaded += VentasVendedorView_Loaded;
+        }
+
+        private void VentasVendedorView_Loaded(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (DgVentasVendedor != null)
+                {
+                    DgVentasVendedor.ItemsSource = _service.ObtenerVentasPorVendedor();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar Ventas por Vendedor: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 }

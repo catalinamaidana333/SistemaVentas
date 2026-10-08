@@ -68,75 +68,126 @@ namespace SistemaVentas.DAL.Reportes
         }
 
         // 2. Ventas Canceladas del Día
-        public List<VentaCancelada> ObtenerVentasCanceladas()
-        {
-            var lista = new List<VentaCancelada>();
-            try
-            {
-                using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
-                {
-                    conexion.Open();
-                    string consulta = @"
-                        SELECT id_venta, fecha_hora, metodo_pago, total
-                        FROM dbo.Venta
-                        WHERE CAST(fecha_hora AS DATE) = CAST(GETDATE() AS DATE)
-                          AND total <= 0
-                        ORDER BY fecha_hora DESC;";
+        public List<VentaCancelada> ObtenerVentasCanceladas(DateTime? fechaInicio = null, DateTime? fechaFin = null)
+{
+    var lista = new List<VentaCancelada>();
 
-                    using (SqlCommand comando = new SqlCommand(consulta, conexion))
-                    using (SqlDataReader lector = comando.ExecuteReader())
+    try
+    {
+        string consulta = @"
+            SELECT 
+                v.id_venta,
+                v.fecha_hora,
+                v.total,
+                (RTRIM(ISNULL(u.nombre, '')) + ' ' + ISNULL(u.apellido, '')) AS vendedor
+            FROM dbo.Venta v
+            INNER JOIN dbo.CajaUsuario cu ON v.id_caja_usuario = cu.id_caja_usuario
+            INNER JOIN dbo.Usuario u ON cu.id_usuario = u.id_usuario
+            WHERE v.total <= 0"; // Ajustar a v.estado = 'CANCELADA' si usas columna de estado
+
+        if (fechaInicio.HasValue)
+        {
+            consulta += " AND v.fecha_hora >= @fechaInicio";
+        }
+        if (fechaFin.HasValue)
+        {
+            consulta += " AND v.fecha_hora <= @fechaFin";
+        }
+
+        using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
+        {
+            conexion.Open();
+            using (SqlCommand comando = new SqlCommand(consulta, conexion))
+            {
+                if (fechaInicio.HasValue)
+                    comando.Parameters.AddWithValue("@fechaInicio", fechaInicio.Value);
+
+                if (fechaFin.HasValue)
+                    comando.Parameters.AddWithValue("@fechaFin", fechaFin.Value);
+
+                using (SqlDataReader lector = comando.ExecuteReader())
+                {
+                    while (lector.Read())
                     {
-                        while (lector.Read())
+                        lista.Add(new VentaCancelada()
                         {
-                            lista.Add(new VentaCancelada
-                            {
-                                IdVenta = Convert.ToInt32(lector["id_venta"]),
-                                FechaHora = Convert.ToDateTime(lector["fecha_hora"]),
-                                MetodoPago = lector["metodo_pago"].ToString(),
-                                Total = Convert.ToDecimal(lector["total"])
-                            });
-                        }
+                            IdVenta = Convert.ToInt32(lector["id_venta"]),
+                            FechaHora = Convert.ToDateTime(lector["fecha_hora"]),
+                            Total = Convert.ToDecimal(lector["total"]),
+                            Vendedor = lector["vendedor"].ToString().Trim()
+                        });
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                throw new Exception($"Error al obtener ventas canceladas: {ex.Message}", ex);
-            }
-            return lista;
         }
+    }
+    catch (Exception ex)
+    {
+        System.Diagnostics.Debug.WriteLine($"Error al obtener ventas canceladas: {ex.Message}");
+    }
+
+    return lista;
+}
 
         // 3. Ventas por Vendedor
-        public List<VentaVendedor> ObtenerVentasPorVendedor()
+        public List<VentaVendedor> ObtenerVentasPorVendedor(DateTime? fechaInicio = null, DateTime? fechaFin = null)
         {
             var lista = new List<VentaVendedor>();
 
             try
             {
                 string consulta = @"
-                    SELECT 
-                        u.nombre_completo AS NombreVendedor,
-                        COUNT(v.id_venta) AS CantidadVentas
-                    FROM Usuario u
-                    INNER JOIN Rol r ON u.id_rol = r.id_rol
-                    LEFT JOIN CajaUsuario cu ON u.id_usuario = cu.id_usuario
-                    LEFT JOIN Venta v ON cu.id_caja_usuario = v.id_caja_usuario
-                    WHERE r.nombre = 'Vendedor'
-                    GROUP BY u.nombre_completo";
+            SELECT 
+                (RTRIM(ISNULL(u.nombre, '')) + ' ' + ISNULL(u.apellido, '')) AS nombre_completo,
+                u.correo,
+                r.nombre AS nombre_rol,
+                COUNT(v.id_venta) AS total_ventas,
+                ISNULL(SUM(v.total), 0) AS total_monto,
+                MAX(v.fecha_hora) AS ultima_venta
+            FROM dbo.Usuario u
+            INNER JOIN dbo.Rol r ON u.id_rol = r.id_rol
+            LEFT JOIN dbo.CajaUsuario cu ON u.id_usuario = cu.id_usuario
+            LEFT JOIN dbo.Venta v ON cu.id_caja_usuario = v.id_caja_usuario
+            WHERE r.nombre = 'Vendedor'";
+
+                if (fechaInicio.HasValue)
+                {
+                    consulta += " AND v.fecha_hora >= @fechaInicio";
+                }
+                if (fechaFin.HasValue)
+                {
+                    consulta += " AND v.fecha_hora <= @fechaFin";
+                }
+
+                consulta += @" 
+            GROUP BY u.nombre, u.apellido, u.correo, r.nombre
+            ORDER BY total_monto DESC";
 
                 using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
                 {
                     conexion.Open();
                     using (SqlCommand comando = new SqlCommand(consulta, conexion))
                     {
+                        if (fechaInicio.HasValue)
+                            comando.Parameters.AddWithValue("@fechaInicio", fechaInicio.Value);
+
+                        if (fechaFin.HasValue)
+                            comando.Parameters.AddWithValue("@fechaFin", fechaFin.Value);
+
                         using (SqlDataReader lector = comando.ExecuteReader())
                         {
                             while (lector.Read())
                             {
-                                lista.Add(new VentaVendedor
+                                lista.Add(new VentaVendedor()
                                 {
-                                    NombreVendedor = lector["NombreVendedor"].ToString(),
-                                    CantidadVentas = Convert.ToInt32(lector["CantidadVentas"])
+                                    NombreCompleto = lector["nombre_completo"].ToString().Trim(),
+                                    Correo = lector["correo"].ToString(),
+                                    NombreRol = lector["nombre_rol"].ToString(),
+                                    TotalVentas = Convert.ToInt32(lector["total_ventas"]),
+                                    TotalMonto = Convert.ToDecimal(lector["total_monto"]),
+                                    UltimaVenta = lector["ultima_venta"] != DBNull.Value
+                                        ? Convert.ToDateTime(lector["ultima_venta"])
+                                        : (DateTime?)null
                                 });
                             }
                         }
@@ -145,7 +196,7 @@ namespace SistemaVentas.DAL.Reportes
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error al obtener ventas por vendedor: {ex.Message}", ex);
+                System.Diagnostics.Debug.WriteLine($"Error al obtener ventas por vendedor: {ex.Message}");
             }
 
             return lista;

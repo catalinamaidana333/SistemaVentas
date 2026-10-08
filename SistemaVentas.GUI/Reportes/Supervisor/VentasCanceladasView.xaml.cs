@@ -21,7 +21,22 @@ namespace SistemaVentas.GUI.Views.Reportes.Supervisor
         public VentasCanceladasView()
         {
             InitializeComponent();
-            DgVentasCanceladas.ItemsSource = _service.ObtenerVentasCanceladas();
+            this.Loaded += VentasCanceladasView_Loaded;
+        }
+
+        private void VentasCanceladasView_Loaded(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (DgVentasCanceladas != null)
+                {
+                    DgVentasCanceladas.ItemsSource = _service.ObtenerVentasCanceladas();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar Ventas Canceladas: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 }

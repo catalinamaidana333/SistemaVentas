@@ -62,7 +62,7 @@ namespace SistemaVentas.DAL
                 {
                     conexion.Open();
 
-                    string consulta = "SELECT id_usuario, nombre_completo, correo, password, id_rol FROM Usuario WHERE id_usuario = @idUsuario";
+                    string consulta = "SELECT id_usuario, (RTRIM(ISNULL(nombre, '')) + ' ' + ISNULL(apellido, '')) AS nombre_completo, correo, password, id_rol FROM Usuario WHERE id_usuario = @idUsuario";
                     using (SqlCommand comando = new SqlCommand(consulta, conexion))
                     {
                         comando.Parameters.AddWithValue("@idUsuario", idUsuario);
@@ -73,7 +73,7 @@ namespace SistemaVentas.DAL
                                 return new Usuario
                                 {
                                     IdUsuario = (int)lector["id_usuario"],
-                                    Nombre = lector["nombre_completo"].ToString(),
+                                    Nombre = lector["nombre_completo"].ToString().Trim(),
                                     Correo = lector["correo"].ToString(),
                                     Password = lector["password"].ToString(),
                                     IdRol = (int)lector["id_rol"]
@@ -101,7 +101,7 @@ namespace SistemaVentas.DAL
             using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
             {
                 // 1. El string SQL usa estrictamente los nombres de la base de datos
-                string query = "SELECT id_usuario, nombre_completo, correo, password, id_rol, activo FROM Usuario WHERE correo = @correo";
+                string query = "SELECT id_usuario, (RTRIM(ISNULL(nombre, '')) + ' ' + ISNULL(apellido, '')) AS nombre_completo, correo, password, id_rol, activo FROM Usuario WHERE correo = @correo";
 
                 SqlCommand cmd = new SqlCommand(query, conexion);
                 cmd.Parameters.AddWithValue("@correo", correo);
@@ -114,9 +114,8 @@ namespace SistemaVentas.DAL
                     {
                         usuario = new Usuario();
 
-                        // 2. Las propiedades de C# (izquierda) reciben los datos de las columnas SQL (derecha)
                         usuario.IdUsuario = Convert.ToInt32(reader["id_usuario"]);
-                        usuario.Nombre = reader["nombre_completo"].ToString();
+                        usuario.Nombre = reader["nombre_completo"].ToString().Trim();
                         usuario.Correo = reader["correo"].ToString();
                         usuario.Password = reader["password"].ToString();
                         usuario.IdRol = Convert.ToInt32(reader["id_rol"]);
@@ -141,7 +140,7 @@ namespace SistemaVentas.DAL
                 {
                     conexion.Open();
 
-                    string consulta = @"INSERT INTO Usuario (nombre_completo, correo, password, id_rol) 
+                    string consulta = @"INSERT INTO Usuario (nombre, correo, password, id_rol) 
                                        VALUES (@nombre, @correo, @password, @idRol);
                                        SELECT SCOPE_IDENTITY();";
 
@@ -178,7 +177,10 @@ namespace SistemaVentas.DAL
                     conexion.Open();
 
                     string consulta = @"UPDATE Usuario 
-                                       SET nombre_completo = @nombre, correo = @correo, password = @password, id_rol = @idRol
+                                       SET nombre_completo = @nombre, 
+                                           correo = @correo, 
+                                           password = @password, 
+                                           id_rol = @idRol
                                        WHERE id_usuario = @idUsuario";
 
                     using (SqlCommand comando = new SqlCommand(consulta, conexion))
@@ -213,7 +215,7 @@ namespace SistemaVentas.DAL
                 {
                     conexion.Open();
 
-                    string consulta = "SELECT id_usuario, nombre_completo, correo, password, id_rol FROM Usuario";
+                    string consulta = "SELECT id_usuario, (RTRIM(ISNULL(nombre, '')) + ' ' + ISNULL(apellido, '')) AS nombre_completo, correo, password, id_rol FROM Usuario";
                     using (SqlCommand comando = new SqlCommand(consulta, conexion))
                     {
                         using (SqlDataReader lector = comando.ExecuteReader())
@@ -223,7 +225,7 @@ namespace SistemaVentas.DAL
                                 usuarios.Add(new Usuario
                                 {
                                     IdUsuario = (int)lector["id_usuario"],
-                                    Nombre = lector["nombre_completo"].ToString(),
+                                    Nombre = lector["nombre_completo"].ToString().Trim(),
                                     Correo = lector["correo"].ToString(),
                                     Password = lector["password"].ToString(),
                                     IdRol = (int)lector["id_rol"]
@@ -251,8 +253,7 @@ namespace SistemaVentas.DAL
                 {
                     conexion.Open();
                     // El filtrado ocurre en el motor de base de datos
-                    string consulta = "SELECT id_usuario, nombre_completo, correo, password, id_rol FROM Usuario WHERE id_rol = @IdRol";
-
+                    string consulta = "SELECT id_usuario, (RTRIM(ISNULL(nombre, '')) + ' ' + ISNULL(apellido, '')) AS nombre_completo, correo, password, id_rol FROM Usuario WHERE id_rol = @IdRol";
                     using (SqlCommand comando = new SqlCommand(consulta, conexion))
                     {
                         // Usamos parámetros por seguridad
@@ -265,7 +266,7 @@ namespace SistemaVentas.DAL
                                 usuarios.Add(new Usuario
                                 {
                                     IdUsuario = (int)lector["id_usuario"],
-                                    Nombre = lector["nombre_completo"].ToString(),
+                                    Nombre = lector["nombre_completo"].ToString().Trim(),
                                     Correo = lector["correo"].ToString(),
                                     Password = lector["password"].ToString(),
                                     IdRol = (int)lector["id_rol"]

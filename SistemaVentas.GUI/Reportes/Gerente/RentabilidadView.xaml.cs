@@ -28,7 +28,7 @@ namespace SistemaVentas.GUI.Views.Reportes.Gerente
         {
             var rentabilidad = _service.ObtenerRentabilidad();
             TxtTotalVentas.Text = rentabilidad.TotalVentas.ToString("C");
-            TxtTotalCompras.Text = rentabilidad.TotalCompras.ToString("C");
+            TxtTotalCompras.Text = rentabilidad.TotalCostos.ToString("C");
             TxtGananciaNeta.Text = rentabilidad.GananciaNeta.ToString("C");
         }
     }

@@ -21,7 +21,22 @@ namespace SistemaVentas.GUI.Views.Reportes.Gerente
         public AuditoriaView()
         {
             InitializeComponent();
-            DgAuditoria.ItemsSource = _service.ObtenerAuditoria();
+            this.Loaded += AuditoriaView_Loaded;
+        }
+
+        private void AuditoriaView_Loaded(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (DgAuditoria != null)
+                {
+                    DgAuditoria.ItemsSource = _service.ObtenerAuditoria();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar el reporte de Auditoría: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 }

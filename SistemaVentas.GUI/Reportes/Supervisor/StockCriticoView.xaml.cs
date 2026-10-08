@@ -21,7 +21,22 @@ namespace SistemaVentas.GUI.Views.Reportes.Supervisor
         public StockCriticoView()
         {
             InitializeComponent();
-            DgStockCritico.ItemsSource = _service.ObtenerStockCritico();
+            this.Loaded += StockCriticoView_Loaded;
+        }
+
+        private void StockCriticoView_Loaded(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (DgStockCritico != null)
+                {
+                    DgStockCritico.ItemsSource = _service.ObtenerStockCritico();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar el reporte de Stock Crítico: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 }

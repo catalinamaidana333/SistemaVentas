@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             mc:Ignorable="d" d:DesignHeight="600" d:DesignWidth="900">    
+             mc:Ignorable="d" d:DesignHeight="600" d:DesignWidth="900">
     <UserControl.Resources>
         <SolidColorBrush x:Key="AzulOscuro" Color="#0B132B"/>
         <SolidColorBrush x:Key="AzulMedio" Color="#1C2541"/>
@@ -28,9 +28,11 @@
                   Foreground="Black"
                   HeadersVisibility="Column">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Vendedor" Binding="{Binding NombreVendedor}" Width="2*"/>
-                <DataGridTextColumn Header="Cantidad de Ventas" Binding="{Binding CantidadVentas}" Width="2*"/>
-                <DataGridTextColumn Header="Total Recaudado" Binding="{Binding TotalRecaudado, StringFormat='c'}" Width="2*"/>
+                <DataGridTextColumn Header="Vendedor" Binding="{Binding NombreCompleto}" Width="2*"/>
+                <DataGridTextColumn Header="Correo" Binding="{Binding Correo}" Width="2*"/>
+                <DataGridTextColumn Header="Cantidad de Ventas" Binding="{Binding TotalVentas}" Width="2*"/>
+                <DataGridTextColumn Header="Total Recaudado" Binding="{Binding TotalMonto, StringFormat='${0:N2}'}" Width="2*"/>
+                <DataGridTextColumn Header="Última Venta" Binding="{Binding UltimaVenta, StringFormat='dd/MM/yyyy HH:mm'}" Width="2*"/>
             </DataGrid.Columns>
         </DataGrid>
     </Grid>

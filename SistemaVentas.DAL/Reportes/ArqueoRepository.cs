@@ -23,52 +23,52 @@ namespace SistemaVentas.DAL.Reportes
         /// <summary>
         /// Obtiene el resumen de arqueo de una sesión de caja específica
         /// </summary>
-        public ArqueoResumen ObtenerResumenPorCajaUsuario(int idCajaUsuario)
+        public ArqueoResumen ObtenerResumenPorCaja(int idUsuario)
         {
-            try
+            ArqueoResumen resumen = null;
+
+            using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
             {
-                using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
+                conexion.Open();
+                string consulta = @"
+            SELECT TOP 1
+                cu.fecha_apertura,
+                cu.fecha_cierre,
+                cu.monto_inicial,
+                ISNULL(SUM(CASE WHEN v.metodo_pago = 'EFECTIVO' THEN v.total ELSE 0 END), 0) AS total_efectivo,
+                ISNULL(SUM(CASE WHEN v.metodo_pago = 'MERCADOPAGO' THEN v.total ELSE 0 END), 0) AS total_mp
+            FROM dbo.CajaUsuario cu
+            LEFT JOIN dbo.Venta v ON cu.id_caja_usuario = v.id_caja_usuario
+            WHERE cu.id_usuario = @idUsuario
+            GROUP BY cu.id_caja_usuario, cu.fecha_apertura, cu.fecha_cierre, cu.monto_inicial
+            ORDER BY cu.id_caja_usuario DESC;";
+
+                using (SqlCommand comando = new SqlCommand(consulta, conexion))
                 {
-                    conexion.Open();
-
-                    string consulta = @"SELECT fecha_apertura, fecha_cierre, monto_inicial, 
-                                       total_ventas_efectivo, total_ventas_mp, total_compras_efectivo, 
-                                       monto_sys, monto_declarado, diferencia, estado
-                                       FROM CajaUsuario
-                                       WHERE id_caja_usuario = @idCajaUsuario";
-
-                    using (SqlCommand comando = new SqlCommand(consulta, conexion))
+                    comando.Parameters.AddWithValue("@idUsuario", idUsuario);
+                    using (SqlDataReader lector = comando.ExecuteReader())
                     {
-                        comando.Parameters.AddWithValue("@idCajaUsuario", idCajaUsuario);
-
-                        using (SqlDataReader lector = comando.ExecuteReader())
+                        if (lector.Read())
                         {
-                            if (lector.Read())
+                            decimal inicial = Convert.ToDecimal(lector["monto_inicial"]);
+                            decimal efec = Convert.ToDecimal(lector["total_efectivo"]);
+                            decimal mp = Convert.ToDecimal(lector["total_mp"]);
+
+                            resumen = new ArqueoResumen
                             {
-                                return new ArqueoResumen
-                                {
-                                    FechaApertura = Convert.ToDateTime(lector["fecha_apertura"]),
-                                    FechaCierre = lector["fecha_cierre"] != DBNull.Value ? Convert.ToDateTime(lector["fecha_cierre"]) : (DateTime?)null,
-                                    MontoInicial = Convert.ToDecimal(lector["monto_inicial"]),
-                                    TotalVentasEfectivo = Convert.ToDecimal(lector["total_ventas_efectivo"]),
-                                    TotalVentasMp = Convert.ToDecimal(lector["total_ventas_mp"]),
-                                    TotalComprasEfectivo = Convert.ToDecimal(lector["total_compras_efectivo"]),
-                                    MontoSistema = lector["monto_sys"] != DBNull.Value ? Convert.ToDecimal(lector["monto_sys"]) : 0,
-                                    MontoDeclarado = lector["monto_declarado"] != DBNull.Value ? Convert.ToDecimal(lector["monto_declarado"]) : (decimal?)null,
-                                    Diferencia = lector["diferencia"] != DBNull.Value ? Convert.ToDecimal(lector["diferencia"]) : (decimal?)null,
-                                    Estado = lector["estado"].ToString()
-                                };
-                            }
+                                FechaApertura = Convert.ToDateTime(lector["fecha_apertura"]),
+                                FechaCierre = lector["fecha_cierre"] != DBNull.Value ? Convert.ToDateTime(lector["fecha_cierre"]) : (DateTime?)null,
+                                MontoInicial = inicial,
+                                TotalVentasEfectivo = efec,
+                                TotalVentasMp = mp,
+                                TotalComprasEfectivo = 0,
+                                MontoSistema = inicial + efec
+                            };
                         }
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                throw new Exception($"Error al obtener el resumen de arqueo: {ex.Message}", ex);
-            }
-
-            return null;
+            return resumen;
         }
     }
 }
