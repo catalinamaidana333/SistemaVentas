@@ -8,7 +8,8 @@ namespace SistemaVentas.Entities.Reportes
     {
         public int Anio { get; set; }
         public int Mes { get; set; }
-        public int TotalTransacciones { get; set; }
+        public int TotalVentas { get; set; }
         public decimal TotalMonto { get; set; }
+        public decimal TicketPromedio { get; set; }
     }
 }

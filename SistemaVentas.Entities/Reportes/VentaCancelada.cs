@@ -10,5 +10,6 @@ namespace SistemaVentas.Entities.Reportes
         public DateTime FechaHora { get; set; }
         public string MetodoPago { get; set; } = string.Empty;
         public decimal Total { get; set; }
+        public string Vendedor { get; set; } = string.Empty;
     }
 }

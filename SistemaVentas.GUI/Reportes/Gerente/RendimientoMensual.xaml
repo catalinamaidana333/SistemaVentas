@@ -21,17 +21,18 @@
                    FontSize="24" FontWeight="Bold" Margin="20"/>
 
         <DataGrid Grid.Row="1" x:Name="DgRendimiento"
-                  Margin="20,0,20,20"
-                  AutoGenerateColumns="False"
-                  IsReadOnly="True"
-                  Background="{StaticResource AzulMedio}"
-                  Foreground="Black"
-                  HeadersVisibility="Column">
+          Margin="20,0,20,20"
+          AutoGenerateColumns="False"
+          IsReadOnly="True"
+          Background="{StaticResource AzulMedio}"
+          Foreground="Black"
+          HeadersVisibility="Column">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Año" Binding="{Binding Anio}" Width="*"/>
                 <DataGridTextColumn Header="Mes" Binding="{Binding Mes}" Width="*"/>
-                <DataGridTextColumn Header="Total Transacciones" Binding="{Binding TotalTransacciones}" Width="*"/>
-                <DataGridTextColumn Header="Monto Recaudado" Binding="{Binding TotalMonto, StringFormat='c'}" Width="*"/>
+                <DataGridTextColumn Header="Total Ventas" Binding="{Binding TotalVentas}" Width="1.5*"/>
+                <DataGridTextColumn Header="Monto Recaudado" Binding="{Binding TotalMonto, StringFormat='${0:N2}'}" Width="2*"/>
+                <DataGridTextColumn Header="Ticket Promedio" Binding="{Binding TicketPromedio, StringFormat='${0:N2}'}" Width="2*"/>
             </DataGrid.Columns>
         </DataGrid>
     </Grid>

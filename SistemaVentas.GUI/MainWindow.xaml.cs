@@ -18,27 +18,47 @@ namespace SistemaVentas.GUI
 {
     public partial class MainWindow : Window
     {
-
         private UsuarioBLL _usuarioLogica = new UsuarioBLL();
 
         public MainWindow()
         {
             InitializeComponent();
-
-            // Llamás a este método apenas arranca la ventana principal
-            ConfigurarMenu();
+            ConfigurarMenuPorRol();
         }
 
-        private void ConfigurarMenu()
+        private void ConfigurarMenuPorRol()
         {
-            // Traemos el rol de la sesión global
+            if (SesionGlobal.UsuarioActual == null) return;
+
             int idRolActual = SesionGlobal.UsuarioActual.IdRol;
 
-            // Le preguntamos a la BLL si tiene acceso
-            if (!_usuarioLogica.PuedeAccederPantallaUsuarios(idRolActual))
+            // Ocultamos todos los submenús al arrancar
+            OcultarSubmenus();
+
+            // Mapeo según tu Base de Datos:
+            // 1: GERENTE | 2: VENDEDOR | 3: SUPERVISOR
+            switch (idRolActual)
             {
-          
-                btnUsuarios.IsEnabled = false;
+                case 1: // GERENTE
+                    btnUsuarios.Visibility = Visibility.Visible;
+                    btnCompra.Visibility = Visibility.Visible;
+                    btnProductos.Visibility = Visibility.Visible;
+                    btnReportes.Visibility = Visibility.Visible;
+                    break;
+
+                case 2: // VENDEDOR (Sin acceso a Usuarios, Compras ni Productos)
+                    btnUsuarios.Visibility = Visibility.Collapsed;
+                    btnCompra.Visibility = Visibility.Collapsed;
+                    btnProductos.Visibility = Visibility.Collapsed;
+                    btnReportes.Visibility = Visibility.Visible;
+                    break;
+
+                case 3: // SUPERVISOR
+                    btnUsuarios.Visibility = Visibility.Collapsed;
+                    btnCompra.Visibility = Visibility.Visible;
+                    btnProductos.Visibility = Visibility.Visible;
+                    btnReportes.Visibility = Visibility.Visible;
+                    break;
             }
 
             // Configurar acceso al módulo de Backups (solo Gerente)
@@ -58,70 +78,6 @@ namespace SistemaVentas.GUI
             CargarMenuSegunRol();
         }
 
-        private void btnVentas_Click(object sender, RoutedEventArgs e)
-        {
-            ContenedorPrincipal.Content = new Ventas();
-        }
-
-        private void btnProductos_Click(object sender, RoutedEventArgs e)
-        {
-            ContenedorPrincipal.Content = new ProductoControl();
-        }
-
-        private void btnUsuarios_Click(object sender, RoutedEventArgs e)
-        {
-            ContenedorPrincipal.Content = new UsuarioControl();
-        }
-
-        private void btnCompra_Click(object sender, RoutedEventArgs e)
-        {
-            ContenedorPrincipal.Content = new Compra();
-        }
-
-        private void btnBackup_Click(object sender, RoutedEventArgs e)
-        {
-            ContenedorPrincipal.Content = new BackUpControl();
-        }
-
-        // Nuevo método para Cerrar Sesión
-        private void btnLogout_Click(object sender, RoutedEventArgs e)
-        {
-            // 1. Limpiamos la variable global
-            SesionGlobal.CerrarSesion();
-
-            // 2. Abrimos la ventana de Login (Asegúrate de poner el nombre correcto de tu ventana de Login)
-            Login ventanaLogin = new Login();
-            ventanaLogin.Show();
-
-            // 3. Cerramos el MainWindow actual
-            this.Close();
-        }
-
-        // Eventos Gerente
-        private void btnSubRentabilidad_Click(object sender, RoutedEventArgs e)
-            => ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Gerente.RentabilidadView();
-
-        private void btnSubAuditoria_Click(object sender, RoutedEventArgs e)
-            => ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Gerente.AuditoriaView();
-
-        private void btnSubRendimiento_Click(object sender, RoutedEventArgs e)
-            => ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Gerente.RendimientoMensualView();
-
-        // Eventos Supervisor
-        private void btnSubStockCritico_Click(object sender, RoutedEventArgs e)
-            => ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Supervisor.StockCriticoView();
-
-        private void btnSubVentasCanceladas_Click(object sender, RoutedEventArgs e)
-            => ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Supervisor.VentasCanceladasView();
-
-        private void btnSubVentasVendedor_Click(object sender, RoutedEventArgs e)
-            => ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Supervisor.VentasVendedorView();
-
-        // Evento Vendedor
-        private void btnSubArqueoDiario_Click(object sender, RoutedEventArgs e)
-             => ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Vendedor.ArqueoDiarioView(1);
-        
-
         private void OcultarSubmenus()
         {
             btnSubRentabilidad.Visibility = Visibility.Collapsed;
@@ -133,13 +89,40 @@ namespace SistemaVentas.GUI
             btnSubVentasVendedor.Visibility = Visibility.Collapsed;
         }
 
+        private void btnVentas_Click(object sender, RoutedEventArgs e)
+        {
+            OcultarSubmenus();
+            ContenedorPrincipal.Content = new Ventas();
+        }
+
+        private void btnProductos_Click(object sender, RoutedEventArgs e)
+        {
+            OcultarSubmenus();
+            ContenedorPrincipal.Content = new ProductoControl();
+        }
+
+        private void btnUsuarios_Click(object sender, RoutedEventArgs e)
+        {
+            OcultarSubmenus();
+            ContenedorPrincipal.Content = new UsuarioControl();
+        }
+
+        private void btnCompra_Click(object sender, RoutedEventArgs e)
+        {
+            OcultarSubmenus();
+            ContenedorPrincipal.Content = new Compra();
+        }
+
         private void btnReportes_Click(object sender, RoutedEventArgs e)
         {
+            if (SesionGlobal.UsuarioActual == null) return;
+
             int idRol = SesionGlobal.UsuarioActual.IdRol;
+            int idUsuario = SesionGlobal.UsuarioActual.IdUsuario;
 
             OcultarSubmenus();
 
-            if (idRol == 1) // Gerente
+            if (idRol == 1) // 1 = GERENTE
             {
                 btnSubRentabilidad.Visibility = Visibility.Visible;
                 btnSubAuditoria.Visibility = Visibility.Visible;
@@ -147,7 +130,12 @@ namespace SistemaVentas.GUI
 
                 ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Gerente.RentabilidadView();
             }
-            else if (idRol == 3) // Supervisor
+            else if (idRol == 2) // 2 = VENDEDOR
+            {
+                // El Vendedor solo ve su Arqueo Diario directamente y sin submenús
+                ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Vendedor.ArqueoDiarioView(idUsuario);
+            }
+            else if (idRol == 3) // 3 = SUPERVISOR
             {
                 btnSubStockCritico.Visibility = Visibility.Visible;
                 btnSubVentasCanceladas.Visibility = Visibility.Visible;
@@ -155,33 +143,26 @@ namespace SistemaVentas.GUI
 
                 ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Supervisor.StockCriticoView();
             }
-            else if (idRol == 2) // Vendedor
-
-                btnSubArqueoDiario.Visibility = Visibility.Visible;
-            {
-                ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Vendedor.ArqueoDiarioView(1);
-            }
         }
 
-        private void btnCaja_Click(object sender, RoutedEventArgs e)
-        {
-       
-            // Reemplaza 'ContenedorPrincipal' por el x:Name del ContentControl/Grid de tu MainWindow
-            ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.CajaView();
-        }
-        private void CargarMenuSegunRol()
-        {
-            int idRol = SesionGlobal.UsuarioActual.IdRol;
+        // Submenús Gerente
+        private void btnSubRentabilidad_Click(object sender, RoutedEventArgs e)
+            => ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Gerente.RentabilidadView();
 
-            // Solo habilitar el botón de Cajas si idRol es 1 (Gerente)
-            if (idRol == 1)
-            {
-                btnCaja.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                btnCaja.Visibility = Visibility.Collapsed;
-            }
-        }
+        private void btnSubAuditoria_Click(object sender, RoutedEventArgs e)
+            => ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Gerente.AuditoriaView();
+
+        private void btnSubRendimiento_Click(object sender, RoutedEventArgs e)
+            => ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Gerente.RendimientoMensualView();
+
+        // Submenús Supervisor
+        private void btnSubStockCritico_Click(object sender, RoutedEventArgs e)
+            => ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Supervisor.StockCriticoView();
+
+        private void btnSubVentasCanceladas_Click(object sender, RoutedEventArgs e)
+            => ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Supervisor.VentasCanceladasView();
+
+        private void btnSubVentasVendedor_Click(object sender, RoutedEventArgs e)
+            => ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Supervisor.VentasVendedorView();
     }
 }

@@ -8,11 +8,11 @@ namespace SistemaVentas.BLL.Reportes
 {
     public class ArqueoService
     {
-        private readonly ArqueoRepository _repository = new ArqueoRepository();
+        private readonly ArqueoRepository _repo = new ArqueoRepository();
 
         public ArqueoResumen ObtenerResumen(int idCajaUsuario)
         {
-            return _repository.ObtenerResumenPorCajaUsuario(idCajaUsuario);
+            return _repo.ObtenerResumenPorCaja(idCajaUsuario);
         }
     }
 }

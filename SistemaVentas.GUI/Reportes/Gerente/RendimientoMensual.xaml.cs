@@ -21,7 +21,22 @@ namespace SistemaVentas.GUI.Views.Reportes.Gerente
         public RendimientoMensualView()
         {
             InitializeComponent();
-            DgRendimiento.ItemsSource = _service.ObtenerRendimientoMensual();
+            this.Loaded += RendimientoMensualView_Loaded;
+        }
+
+        private void RendimientoMensualView_Loaded(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (DgRendimiento != null)
+                {
+                    DgRendimiento.ItemsSource = _service.ObtenerRendimientoMensual();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar el Rendimiento Mensual: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 }

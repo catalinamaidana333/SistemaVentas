@@ -7,7 +7,9 @@ namespace SistemaVentas.Entities.Reportes
     public class RentabilidadResumen
     {
         public decimal TotalVentas { get; set; }
-        public decimal TotalCompras { get; set; }
-        public decimal GananciaNeta => TotalVentas - TotalCompras;
+        public decimal TotalCostos { get; set; }
+
+        // Propiedad calculada automáticamente: Ventas menos Costos de lo vendido
+        public decimal GananciaNeta => TotalVentas - TotalCostos;
     }
 }
