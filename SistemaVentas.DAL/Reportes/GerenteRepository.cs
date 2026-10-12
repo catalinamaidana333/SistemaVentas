@@ -24,12 +24,12 @@ namespace SistemaVentas.DAL.Reportes
             try
             {
                 string consulta = @"
-            SELECT 
-                ISNULL(SUM(dv.precio_venta * dv.cantidad), 0) AS total_ingresos,
-                ISNULL(SUM(dv.precio_costo * dv.cantidad), 0) AS total_costos
-            FROM DetalleVenta dv
-            INNER JOIN Venta v ON dv.id_venta = v.id_venta
-            WHERE 1=1";
+                    SELECT 
+                        ISNULL(SUM(dv.precio_venta * dv.cantidad), 0) AS total_ingresos,
+                        ISNULL(SUM(dv.precio_costo * dv.cantidad), 0) AS total_costos
+                    FROM DetalleVenta dv
+                    INNER JOIN Venta v ON dv.id_venta = v.id_venta
+                    WHERE 1=1";
 
                 if (fechaInicio.HasValue)
                 {
@@ -55,10 +55,8 @@ namespace SistemaVentas.DAL.Reportes
                         {
                             if (lector.Read())
                             {
-                                // Asignamos a las propiedades de RentabilidadResumen
                                 resultado.TotalVentas = Convert.ToDecimal(lector["total_ingresos"]);
                                 resultado.TotalCostos = Convert.ToDecimal(lector["total_costos"]);
-                                // GananciaNeta no se asigna porque ya se calcula sola mediante '=> TotalVentas - TotalCostos'
                             }
                         }
                     }
@@ -77,35 +75,21 @@ namespace SistemaVentas.DAL.Reportes
         {
             var lista = new List<UsuarioAuditoria>();
 
-            string consulta = @"
-        SELECT 
-            (u.nombre + ' ' + u.apellido) AS nombre_completo,
-            u.correo,
-            r.nombre AS nombre_rol,
-            COUNT(v.id_venta) AS total_ventas,
-            ISNULL(SUM(v.total), 0) AS total_monto,
-            MAX(v.fecha_hora) AS ultima_venta
-        FROM Usuario u
-        INNER JOIN Rol r ON u.id_rol = r.id_rol
-        LEFT JOIN CajaUsuario cu ON u.id_usuario = cu.id_usuario
-        LEFT JOIN Venta v ON cu.id_caja_usuario = v.id_caja_usuario
-        GROUP BY (u.nombre + ' ' + u.apellido), u.correo, r.nombre";
-
-            using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
+            try
             {
                 string consulta = @"
-            SELECT 
-                (RTRIM(ISNULL(u.nombre, '')) + ' ' + ISNULL(u.apellido, '')) AS nombre_completo,
-                u.correo,
-                r.nombre AS nombre_rol,
-                COUNT(v.id_venta) AS total_ventas,
-                ISNULL(SUM(v.total), 0) AS total_monto_vendido,
-                MAX(v.fecha_hora) AS fecha_ultima_venta
-            FROM dbo.Usuario u
-            INNER JOIN dbo.Rol r ON u.id_rol = r.id_rol
-            LEFT JOIN dbo.CajaUsuario cu ON u.id_usuario = cu.id_usuario
-            LEFT JOIN dbo.Venta v ON cu.id_caja_usuario = v.id_caja_usuario
-            WHERE 1=1";
+                    SELECT 
+                        (RTRIM(ISNULL(u.nombre, '')) + ' ' + ISNULL(u.apellido, '')) AS nombre_completo,
+                        u.correo,
+                        r.nombre AS nombre_rol,
+                        COUNT(v.id_venta) AS total_ventas,
+                        ISNULL(SUM(v.total), 0) AS total_monto_vendido,
+                        MAX(v.fecha_hora) AS fecha_ultima_venta
+                    FROM dbo.Usuario u
+                    INNER JOIN dbo.Rol r ON u.id_rol = r.id_rol
+                    LEFT JOIN dbo.CajaUsuario cu ON u.id_usuario = cu.id_usuario
+                    LEFT JOIN dbo.Venta v ON cu.id_caja_usuario = v.id_caja_usuario
+                    WHERE 1=1";
 
                 if (fechaInicio.HasValue)
                 {
@@ -117,8 +101,8 @@ namespace SistemaVentas.DAL.Reportes
                 }
 
                 consulta += @"
-            GROUP BY u.nombre, u.apellido, u.correo, r.nombre
-            ORDER BY total_ventas DESC";
+                    GROUP BY u.nombre, u.apellido, u.correo, r.nombre
+                    ORDER BY total_ventas DESC";
 
                 using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
                 {
@@ -169,17 +153,16 @@ namespace SistemaVentas.DAL.Reportes
                 {
                     conexion.Open();
 
-                    // 1. Consulta SQL ajustada a los campos que necesitas
                     string consulta = @"
-        SELECT 
-            YEAR(fecha_hora) AS Anio,
-            MONTH(fecha_hora) AS Mes,
-            COUNT(id_venta) AS TotalVentas,
-            ISNULL(SUM(total), 0) AS TotalMonto,
-            ISNULL(AVG(total), 0) AS TicketPromedio
-        FROM dbo.Venta
-        GROUP BY YEAR(fecha_hora), MONTH(fecha_hora)
-        ORDER BY Anio DESC, Mes DESC;";
+                        SELECT 
+                            YEAR(fecha_hora) AS Anio,
+                            MONTH(fecha_hora) AS Mes,
+                            COUNT(id_venta) AS TotalVentas,
+                            ISNULL(SUM(total), 0) AS TotalMonto,
+                            ISNULL(AVG(total), 0) AS TicketPromedio
+                        FROM dbo.Venta
+                        GROUP BY YEAR(fecha_hora), MONTH(fecha_hora)
+                        ORDER BY Anio DESC, Mes DESC;";
 
                     using (SqlCommand comando = new SqlCommand(consulta, conexion))
                     {
@@ -187,7 +170,6 @@ namespace SistemaVentas.DAL.Reportes
                         {
                             while (lector.Read())
                             {
-                                // 2. Mapeo directo a la entidad RendimientoMensual
                                 lista.Add(new RendimientoMensual()
                                 {
                                     Anio = Convert.ToInt32(lector["Anio"]),
