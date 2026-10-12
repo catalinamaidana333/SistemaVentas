@@ -75,7 +75,6 @@ namespace SistemaVentas.GUI
             {
                 txtNombreUsuario.Text = "Usuario no identificado";
             }
-            CargarMenuSegunRol();
         }
 
         private void OcultarSubmenus()
@@ -111,6 +110,33 @@ namespace SistemaVentas.GUI
         {
             OcultarSubmenus();
             ContenedorPrincipal.Content = new Compra();
+        }
+
+        private void btnCaja_Click(object sender, RoutedEventArgs e)
+        {
+            OcultarSubmenus();
+            // ContenedorPrincipal.Content = new CajaView(); // Descomentar si usas la vista de caja
+        }
+
+        private void btnBackup_Click(object sender, RoutedEventArgs e)
+        {
+            OcultarSubmenus();
+            // Lógica o vista de Backup
+        }
+
+        private void btnSubArqueoDiario_Click(object sender, RoutedEventArgs e)
+        {
+            if (SesionGlobal.UsuarioActual == null) return;
+            OcultarSubmenus();
+            ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Vendedor.ArqueoDiarioView(SesionGlobal.UsuarioActual.IdUsuario);
+        }
+
+        private void btnLogout_Click(object sender, RoutedEventArgs e)
+        {
+            SesionGlobal.UsuarioActual = null;
+            Login login = new Login();
+            login.Show();
+            this.Close();
         }
 
         private void btnReportes_Click(object sender, RoutedEventArgs e)
