@@ -32,28 +32,55 @@ namespace SistemaVentas.GUI
 
         private void BtnGenerarBackup_Click(object sender, RoutedEventArgs e)
         {
-            try
+            // 1. Abrir la ventana para elegir dónde guardarlo (Pendrive o carpeta de la Nube)
+            Microsoft.Win32.SaveFileDialog saveFileDialog = new Microsoft.Win32.SaveFileDialog
             {
-                // Simular generación de backup
-                contadorBackups++;
-                DateTime ahora = DateTime.Now;
+                FileName = $"SistemaVentas_Backup_{DateTime.Now:yyyyMMdd_HHmmss}.bak",
+                DefaultExt = ".bak",
+                Filter = "Backup Files (*.bak)|*.bak|All Files (*.*)|*.*"
+            };
 
-                var nuevoBackup = new BackupInfo
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                try
                 {
-                    BackupId = contadorBackups,
-                    NombreArchivo = $"SistemaVentas_Backup_{ahora:yyyyMMdd_HHmmss}.bak",
-                    FechaHora = ahora,
-                    Estado = "Completado"
-                };
+                    string rutaArchivo = saveFileDialog.FileName;
 
-                backups.Insert(0, nuevoBackup); // Agregar al inicio
+                    // 2. Ejecutar el backup real en SQL Server mediante la BLL
+                    SistemaVentas.BLL.BackupBLL backupBll = new SistemaVentas.BLL.BackupBLL();
+                    backupBll.GenerarRespaldo(rutaArchivo);
 
-                // Mostrar mensaje de éxito
-                MostrarMensajeExito();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error al generar backup: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    // 3. Registrar en la tabla visual
+                    contadorBackups++;
+                    DateTime ahora = DateTime.Now;
+
+                    var nuevoBackup = new BackupInfo
+                    {
+                        BackupId = contadorBackups,
+                        NombreArchivo = System.IO.Path.GetFileName(rutaArchivo), // Muestra el nombre del archivo
+                        FechaHora = ahora,
+                        Estado = "Completado"
+                    };
+
+                    backups.Insert(0, nuevoBackup); // Agregar al inicio de la tabla
+
+                    // 4. Mostrar mensaje de éxito con la ruta exacta de guardado
+                    MostrarMensajeExito();
+
+                    MessageBox.Show(
+                        $"¡Copia de seguridad realizada con éxito!\n\nGuardado en:\n{rutaArchivo}",
+                        "Respaldo Exitoso",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information
+                    );
+
+                    // 5. Abrir automáticamente la carpeta en el Explorador de Windows
+                    System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{rutaArchivo}\"");
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error al generar backup: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
 
