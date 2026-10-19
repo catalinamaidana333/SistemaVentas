@@ -121,7 +121,15 @@ namespace SistemaVentas.GUI
         private void btnBackup_Click(object sender, RoutedEventArgs e)
         {
             OcultarSubmenus();
-            // Lógica o vista de Backup
+
+            // Validación de seguridad (Solo el Gerente - Rol 1 puede acceder)
+            if (SesionGlobal.UsuarioActual == null || SesionGlobal.UsuarioActual.IdRol != 1)
+            {
+                MessageBox.Show("No tienes permisos para realizar copias de seguridad.", "Acceso denegado", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            // Cargar vista de backup en el contenedor principal
+            ContenedorPrincipal.Content = new SistemaVentas.GUI.BackUpControl();
         }
 
         private void btnSubArqueoDiario_Click(object sender, RoutedEventArgs e)
