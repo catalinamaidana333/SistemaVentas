@@ -34,18 +34,19 @@ namespace SistemaVentas.DAL
 
         public int Insertar(Compra compra)
         {
+            // Solo validamos nulidad extrema del objeto, el resto de validaciones se borran porque ya las hizo la BLL.
             if (compra == null)
                 throw new ArgumentNullException(nameof(compra));
-            if (compra.IdCajaUsuario <= 0)
-                throw new ArgumentException("La compra debe pertenecer a una sesión de caja válida.", nameof(compra));
 
+            // Consulta actualizada con los nuevos campos de tu migración
             const string consultaCompra = @"INSERT INTO dbo.Compra
-                                            (id_usuario, id_caja_usuario, id_proveedor, fecha_hora, metodo_pago, total)
-                                            OUTPUT INSERTED.id_compra
-                                            VALUES (@id_usuario, @id_caja_usuario, @id_proveedor, GETDATE(), @metodo_pago, @total);";
+                                    (id_usuario, id_caja_usuario, id_proveedor, fecha_hora, metodo_pago, total, numero_factura, observaciones, origen_efectivo)
+                                    OUTPUT INSERTED.id_compra
+                                    VALUES (@id_usuario, @id_caja_usuario, @id_proveedor, GETDATE(), @metodo_pago, @total, @numero_factura, @observaciones, @origen_efectivo);";
+
             const string consultaDetalle = @"INSERT INTO dbo.DetalleCompra
-                                             (id_compra, id_producto, cantidad, costo_unitario_hist, subtotal)
-                                             VALUES (@id_compra, @id_producto, @cantidad, @costo_unitario, @subtotal);";
+                                     (id_compra, id_producto, cantidad, costo_unitario_hist, subtotal)
+                                     VALUES (@id_compra, @id_producto, @cantidad, @costo_unitario, @subtotal);";
 
             using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
             {
@@ -58,10 +59,22 @@ namespace SistemaVentas.DAL
                         using (SqlCommand comando = new SqlCommand(consultaCompra, conexion, transaccion))
                         {
                             comando.Parameters.AddWithValue("@id_usuario", compra.IdUsuario);
-                            comando.Parameters.AddWithValue("@id_caja_usuario", compra.IdCajaUsuario);
+
+                            // La sesión de caja es opcional
+                            if (compra.IdCajaUsuario.HasValue)
+                                comando.Parameters.AddWithValue("@id_caja_usuario", compra.IdCajaUsuario.Value);
+                            else
+                                comando.Parameters.AddWithValue("@id_caja_usuario", DBNull.Value);
+
                             comando.Parameters.AddWithValue("@id_proveedor", compra.IdProveedor);
                             comando.Parameters.AddWithValue("@metodo_pago", compra.MetodoPago);
                             comando.Parameters.AddWithValue("@total", compra.Total);
+
+                            // Mapeo de los nuevos campos, gestionando strings nulos/vacíos a DBNull
+                            comando.Parameters.AddWithValue("@numero_factura", string.IsNullOrWhiteSpace(compra.NumeroFactura) ? DBNull.Value : compra.NumeroFactura);
+                            comando.Parameters.AddWithValue("@observaciones", string.IsNullOrWhiteSpace(compra.Observaciones) ? DBNull.Value : compra.Observaciones);
+                            comando.Parameters.AddWithValue("@origen_efectivo", string.IsNullOrWhiteSpace(compra.OrigenEfectivo) ? DBNull.Value : compra.OrigenEfectivo);
+
                             idCompra = Convert.ToInt32(comando.ExecuteScalar());
                         }
 
@@ -88,4 +101,4 @@ namespace SistemaVentas.DAL
             }
         }
     }
-}
+        }
