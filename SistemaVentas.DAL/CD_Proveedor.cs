@@ -195,5 +195,22 @@ namespace SistemaVentas.DAL
 
             return null;
         }
+
+        public bool ExisteCuit(string cuit, int idProveedorExcluir = 0)
+        {
+            const string query = @"SELECT COUNT(1)
+                                   FROM dbo.Proveedor
+                                   WHERE REPLACE(REPLACE(cuit, '-', ''), ' ', '') = @cuit
+                                     AND id_proveedor <> @id_proveedor_excluir";
+
+            using (SqlConnection conexion = new SqlConnection(cadena))
+            using (SqlCommand comando = new SqlCommand(query, conexion))
+            {
+                comando.Parameters.AddWithValue("@cuit", cuit);
+                comando.Parameters.AddWithValue("@id_proveedor_excluir", idProveedorExcluir);
+                conexion.Open();
+                return Convert.ToInt32(comando.ExecuteScalar()) > 0;
+            }
+        }
     }
 }

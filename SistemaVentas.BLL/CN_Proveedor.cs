@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using SistemaVentas.DAL;
 using SistemaVentas.Entities;
 
@@ -49,9 +50,21 @@ namespace SistemaVentas.BLL
                 return false;
             }
 
+            if (!EsCuitValido(obj.Cuit))
+            {
+                Mensaje = "El CUIT del proveedor no tiene un formato válido.";
+                return false;
+            }
+
             // 2. La capa de datos solo ejecuta el SQL y devuelve el resultado
             try
             {
+                if (objcd_proveedor.ExisteCuit(NormalizarCuit(obj.Cuit)))
+                {
+                    Mensaje = "Ya existe un proveedor registrado con ese CUIT.";
+                    return false;
+                }
+
                 if (!objcd_proveedor.Registrar(Normalizar(obj)))
                 {
                     Mensaje = "No se pudo guardar el proveedor.";
@@ -99,9 +112,21 @@ namespace SistemaVentas.BLL
                 return false;
             }
 
+            if (!EsCuitValido(obj.Cuit))
+            {
+                Mensaje = "El CUIT del proveedor no tiene un formato válido.";
+                return false;
+            }
+
             // 2. La capa de datos solo ejecuta el SQL y devuelve el resultado
             try
             {
+                if (objcd_proveedor.ExisteCuit(NormalizarCuit(obj.Cuit), obj.IdProveedor))
+                {
+                    Mensaje = "Ya existe otro proveedor registrado con ese CUIT.";
+                    return false;
+                }
+
                 if (!objcd_proveedor.Editar(Normalizar(obj)))
                 {
                     Mensaje = "No se pudo actualizar la información del proveedor.";
@@ -134,6 +159,30 @@ namespace SistemaVentas.BLL
                 NombreContacto = obj.NombreContacto?.Trim() ?? string.Empty,
                 Activo = obj.Activo
             };
+        }
+
+        private static bool EsCuitValido(string cuit)
+        {
+            if (cuit.Any(caracter => !char.IsAsciiDigit(caracter) && caracter != '-' && !char.IsWhiteSpace(caracter)))
+                return false;
+
+            string digitos = NormalizarCuit(cuit);
+            if (digitos.Length != 11)
+                return false;
+
+            int[] ponderaciones = { 5, 4, 3, 2, 7, 6, 5, 4, 3, 2 };
+            int suma = 0;
+            for (int indice = 0; indice < ponderaciones.Length; indice++)
+                suma += (digitos[indice] - '0') * ponderaciones[indice];
+
+            int resto = suma % 11;
+            int digitoVerificador = resto == 0 ? 0 : resto == 1 ? 9 : 11 - resto;
+            return digitos[10] - '0' == digitoVerificador;
+        }
+
+        private static string NormalizarCuit(string cuit)
+        {
+            return string.Concat(cuit.Where(char.IsAsciiDigit));
         }
     }
 }
