@@ -15,7 +15,7 @@ namespace SistemaVentas.Entities
         public string Observaciones { get; set; } = string.Empty;
 
         // Origen del efectivo: "Caja" | "Externa" | null (Mercado Pago)
-        public string OrigenEfectivo { get; set; }
+        public string? OrigenEfectivo { get; set; }
 
         public DateTime FechaHora { get; set; }
 

@@ -52,7 +52,8 @@ namespace SistemaVentas.DAL
             // La compra suma existencias y actualiza el costo del producto con el último costo de compra.
             const string consultaActualizaProducto = @"UPDATE dbo.Producto
                                             SET stock_actual = stock_actual + @cantidad,
-                                                precio_costo = @costo
+                                                precio_costo = @costo,
+                                                activo = 1
                                             WHERE id_producto = @id_producto;";
 
             using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
