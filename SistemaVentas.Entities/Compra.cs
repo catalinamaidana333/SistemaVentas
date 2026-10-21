@@ -20,5 +20,9 @@ namespace SistemaVentas.Entities
         public DateTime FechaHora { get; set; }
 
         public List<DetalleCompra> Detalles { get; set; } = new();
+
+        // Campos de solo lectura para el historial (se completan con los JOINs del DAL)
+        public string RazonSocialProveedor { get; set; } = string.Empty;
+        public string NombreUsuario { get; set; } = string.Empty;
     }
 }
