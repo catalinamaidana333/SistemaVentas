@@ -10,6 +10,7 @@ namespace SistemaVentas.Entities
 
         public string NombreProducto { get; set; } = string.Empty;
         public string CodigoBarras { get; set; } = string.Empty;
+        public int StockActual { get; set; }
 
         // Propiedad calculada para que WPF la muestre en el DataGrid
         public decimal Subtotal => Cantidad * CostoUnitario;
