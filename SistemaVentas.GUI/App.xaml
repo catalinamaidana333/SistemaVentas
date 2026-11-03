@@ -54,6 +54,7 @@
         <FontFamily x:Key="FuentePrimaria">Segoe UI, Arial, sans-serif</FontFamily>
 
         <SolidColorBrush x:Key="TextoDeshabilitado" Color="#505050"/>
+        <SolidColorBrush x:Key="TextoSecundario" Color="#A0A0A0"/>
 
         <!-- ========================================== -->
         <!-- 💅 ESTILOS DE COMPONENTES GLOBALES           -->
