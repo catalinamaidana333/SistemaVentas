@@ -175,6 +175,50 @@ namespace SistemaVentas.DAL
 
             return respuesta;
         }
+
+        public bool ActualizarPrecioVenta(int idProducto, decimal nuevoPrecioVenta, out string Mensaje)
+        {
+            bool respuesta = false;
+            Mensaje = string.Empty;
+
+            using (SqlConnection oconexion = new SqlConnection(cadena))
+            {
+                try
+                {
+                    oconexion.Open();
+
+                    string query = @"UPDATE dbo.Producto
+                             SET precio_venta = @precio_venta
+                             WHERE id_producto = @id_producto";
+
+                    using (SqlCommand cmd = new SqlCommand(query, oconexion))
+                    {
+                        cmd.Parameters.AddWithValue("@id_producto", idProducto);
+                        cmd.Parameters.AddWithValue("@precio_venta", nuevoPrecioVenta);
+
+                        respuesta = cmd.ExecuteNonQuery() > 0;
+
+                        if (!respuesta)
+                            Mensaje = "No se encontró el producto a actualizar.";
+                    }
+                }
+                catch (SqlException ex)
+                {
+                    respuesta = false;
+                    System.Diagnostics.Debug.WriteLine($"Error SQL al actualizar precio de producto ID {idProducto}: {ex.Message}");
+                    Mensaje = "No se pudo actualizar el precio de venta del producto.";
+                }
+                catch (Exception ex)
+                {
+                    respuesta = false;
+                    System.Diagnostics.Debug.WriteLine($"Error inesperado al actualizar precio de producto ID {idProducto}: {ex.Message}");
+                    Mensaje = "Ocurrió un error inesperado al procesar la solicitud.";
+                }
+            }
+
+            return respuesta;
+        }
+
         public bool Eliminar(Producto obj, out string Mensaje)
         {
             bool respuesta = false;

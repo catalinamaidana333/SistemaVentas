@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -53,26 +52,10 @@ namespace SistemaVentas.GUI.Dialogs
                 return;
             }
 
-            // Obtener producto actual
-            var productos = _cnProducto.Listar();
-            var producto = productos.FirstOrDefault(p => p.IdProducto == item.IdProducto);
-            if (producto == null)
-            {
-                MessageBox.Show("No se encontró el producto.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
-            // Actualizar precio de venta
-            producto.PrecioVenta = item.NuevoPrecioVenta;
-            // Mantener costo actual (ya actualizado por la compra) - el costo ya fue actualizado en CompraDAL
-            // pero necesitamos asegurarnos de tener el costo correcto
-            producto.PrecioCosto = item.CostoNuevo;
-
-            if (_cnProducto.Editar(producto, out string mensaje))
+            if (_cnProducto.ActualizarPrecioVenta(item.IdProducto, item.NuevoPrecioVenta, out string mensaje))
             {
                 MessageBox.Show($"Precio de venta actualizado para {item.NombreProducto}.", "Éxito", 
                     MessageBoxButton.OK, MessageBoxImage.Information);
-                // Remover el item aplicado
                 _items.Remove(item);
             }
             else
