@@ -70,9 +70,9 @@ namespace SistemaVentas.DAL
         }
 
         /// <summary>
-        /// Da de alta un proveedor. Devuelve true si la fila fue insertada.
+        /// Da de alta un proveedor y devuelve su ID. Devuelve 0 si el CUIT ya existe.
         /// </summary>
-        public bool Registrar(Proveedor obj)
+        public int Registrar(Proveedor obj)
         {
             using (SqlConnection oconexion = new SqlConnection(cadena))
             {
@@ -82,6 +82,7 @@ namespace SistemaVentas.DAL
 
                     string query = @"INSERT INTO dbo.Proveedor
                              (razon_social, cuit, telefono, nombre_contacto, activo)
+                             OUTPUT INSERTED.id_proveedor
                              VALUES
                              (@razon_social, @cuit, @telefono, @nombre_contacto, @activo)";
 
@@ -93,8 +94,13 @@ namespace SistemaVentas.DAL
                         cmd.Parameters.AddWithValue("@nombre_contacto", string.IsNullOrWhiteSpace(obj.NombreContacto) ? (object)DBNull.Value : obj.NombreContacto);
                         cmd.Parameters.AddWithValue("@activo", obj.Activo ? 1 : 0);
 
-                        return cmd.ExecuteNonQuery() > 0;
+                        object? resultado = cmd.ExecuteScalar();
+                        return resultado == null || resultado == DBNull.Value ? 0 : Convert.ToInt32(resultado);
                     }
+                }
+                catch (SqlException ex) when (ex.Number is 2601 or 2627)
+                {
+                    return 0;
                 }
                 catch (Exception ex)
                 {

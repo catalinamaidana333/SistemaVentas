@@ -29,6 +29,12 @@ namespace SistemaVentas.BLL
 
         public bool Registrar(Proveedor obj, out string Mensaje)
         {
+            return Registrar(obj, out _, out Mensaje);
+        }
+
+        public bool Registrar(Proveedor obj, out int idProveedor, out string Mensaje)
+        {
+            idProveedor = 0;
             Mensaje = string.Empty;
 
             // 1. Validación de campos obligatorios
@@ -65,14 +71,16 @@ namespace SistemaVentas.BLL
                     return false;
                 }
 
-                if (!objcd_proveedor.Registrar(Normalizar(obj)))
+                idProveedor = objcd_proveedor.Registrar(Normalizar(obj));
+                if (idProveedor <= 0)
                 {
-                    Mensaje = "No se pudo guardar el proveedor.";
+                    Mensaje = "Ya existe un proveedor registrado con ese CUIT.";
                     return false;
                 }
             }
             catch (Exception ex)
             {
+                idProveedor = 0;
                 // Detalle técnico solo para el log del desarrollador
                 Debug.WriteLine($"Error inesperado al registrar proveedor: {ex.Message}");
                 Mensaje = "No se pudo guardar el proveedor debido a un inconveniente con el servidor o los datos ingresados.";
@@ -163,21 +171,17 @@ namespace SistemaVentas.BLL
 
         private static bool EsCuitValido(string cuit)
         {
-            if (cuit.Any(caracter => !char.IsAsciiDigit(caracter) && caracter != '-' && !char.IsWhiteSpace(caracter)))
-                return false;
-
-            string digitos = NormalizarCuit(cuit);
-            if (digitos.Length != 11)
+            if (cuit.Length != 11 || cuit.Any(caracter => !char.IsAsciiDigit(caracter)))
                 return false;
 
             int[] ponderaciones = { 5, 4, 3, 2, 7, 6, 5, 4, 3, 2 };
             int suma = 0;
             for (int indice = 0; indice < ponderaciones.Length; indice++)
-                suma += (digitos[indice] - '0') * ponderaciones[indice];
+                suma += (cuit[indice] - '0') * ponderaciones[indice];
 
             int resto = suma % 11;
             int digitoVerificador = resto == 0 ? 0 : resto == 1 ? 9 : 11 - resto;
-            return digitos[10] - '0' == digitoVerificador;
+            return cuit[10] - '0' == digitoVerificador;
         }
 
         private static string NormalizarCuit(string cuit)
