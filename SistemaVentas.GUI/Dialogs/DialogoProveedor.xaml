@@ -28,7 +28,7 @@
 
         <TextBlock Grid.Row="3" Text="CUIT:" Margin="0,0,0,5"/>
         <TextBox x:Name="txtCuit" Grid.Row="4" Height="38" Margin="0,0,0,10" Style="{StaticResource InputTexto}"
-                 ToolTip="Ingrese 11 dígitos sin guiones. Ejemplo: 30712345671"/>
+                 ToolTip="Ingrese CUIT de 11 dígitos (con o sin guiones). Ejemplo: 30-71234567-1"/>
 
         <TextBlock Grid.Row="5" Text="Teléfono:" Margin="0,0,0,5"/>
         <TextBox x:Name="txtTelefono" Grid.Row="6" Height="38" Margin="0,0,0,10" Style="{StaticResource InputTexto}"/>

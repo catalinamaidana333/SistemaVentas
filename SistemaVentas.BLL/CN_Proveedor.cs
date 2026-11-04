@@ -171,17 +171,21 @@ namespace SistemaVentas.BLL
 
         private static bool EsCuitValido(string cuit)
         {
-            if (cuit.Length != 11 || cuit.Any(caracter => !char.IsAsciiDigit(caracter)))
+            if (cuit.Any(caracter => !char.IsAsciiDigit(caracter) && caracter != '-' && !char.IsWhiteSpace(caracter)))
+                return false;
+
+            string digitos = NormalizarCuit(cuit);
+            if (digitos.Length != 11)
                 return false;
 
             int[] ponderaciones = { 5, 4, 3, 2, 7, 6, 5, 4, 3, 2 };
             int suma = 0;
             for (int indice = 0; indice < ponderaciones.Length; indice++)
-                suma += (cuit[indice] - '0') * ponderaciones[indice];
+                suma += (digitos[indice] - '0') * ponderaciones[indice];
 
             int resto = suma % 11;
             int digitoVerificador = resto == 0 ? 0 : resto == 1 ? 9 : 11 - resto;
-            return cuit[10] - '0' == digitoVerificador;
+            return digitos[10] - '0' == digitoVerificador;
         }
 
         private static string NormalizarCuit(string cuit)
