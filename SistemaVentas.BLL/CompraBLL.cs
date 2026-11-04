@@ -76,16 +76,20 @@ namespace SistemaVentas.BLL
             foreach (DetalleCompra detalle in compra.Detalles)
             {
                 Producto producto = productos[detalle.IdProducto];
-                if (detalle.CostoUnitario <= producto.PrecioCosto)
+                bool precioVentaInvalido = producto.PrecioVenta <= 0;
+
+                if (!precioVentaInvalido && detalle.CostoUnitario <= producto.PrecioCosto)
                     continue;
 
-                if (producto.PrecioVenta <= 0)
-                    throw new ArgumentException($"El producto {producto.Nombre} no tiene un precio de venta válido para calcular su margen.", nameof(compra));
+                decimal margenAnterior = precioVentaInvalido
+                    ? 0m
+                    : ((producto.PrecioVenta - producto.PrecioCosto) / producto.PrecioVenta) * 100;
 
-                decimal margenAnterior = ((producto.PrecioVenta - producto.PrecioCosto) / producto.PrecioVenta) * 100;
-                decimal margenNuevo = ((producto.PrecioVenta - detalle.CostoUnitario) / producto.PrecioVenta) * 100;
+                decimal margenNuevo = precioVentaInvalido
+                    ? 0m
+                    : ((producto.PrecioVenta - detalle.CostoUnitario) / producto.PrecioVenta) * 100;
 
-                if (margenNuevo < margenAnterior && margenNuevo < 20m)
+                if (precioVentaInvalido || (margenNuevo < margenAnterior && margenNuevo < 20m))
                 {
                     alertas.Add(new AlertaMargen
                     {
