@@ -61,6 +61,25 @@ namespace SistemaVentas.BLL
             return objcd_producto.Editar(obj, out Mensaje);
         }
 
+        public bool ActualizarPrecioVenta(int idProducto, decimal nuevoPrecioVenta, out string Mensaje)
+        {
+            Mensaje = string.Empty;
+
+            if (idProducto <= 0)
+            {
+                Mensaje = "El producto indicado no es válido.";
+                return false;
+            }
+
+            if (nuevoPrecioVenta <= 0)
+            {
+                Mensaje = "El nuevo precio de venta debe ser mayor a 0.";
+                return false;
+            }
+
+            return objcd_producto.ActualizarPrecioVenta(idProducto, nuevoPrecioVenta, out Mensaje);
+        }
+
         public bool Eliminar(Producto obj, out string Mensaje)
         {
             Mensaje = string.Empty;

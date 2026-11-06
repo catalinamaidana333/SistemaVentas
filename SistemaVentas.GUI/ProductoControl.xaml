@@ -43,7 +43,14 @@
                 <DataGridTextColumn Header="P. COSTO" Binding="{Binding PrecioCosto}" Width="120"/>
                 <DataGridTextColumn Header="P. VENTA" Binding="{Binding PrecioVenta}" Width="120"/>
                 <DataGridTextColumn Header="STOCK" Binding="{Binding StockActual}" Width="120"/>
-    
+                <DataGridTemplateColumn Header="ACCIÓN" Width="100">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="Editar" Style="{StaticResource BotonPrimario}"
+                                    Click="btnEditar_Click" Padding="6,3"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
             </DataGrid.Columns>
         </DataGrid>
     </Grid>

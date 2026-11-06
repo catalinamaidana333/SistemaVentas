@@ -46,16 +46,16 @@ namespace SistemaVentas.GUI
                     btnReportes.Visibility = Visibility.Visible;
                     break;
 
-                case 2: // VENDEDOR (Sin acceso a Usuarios, Compras ni Productos)
+                case 2: // VENDEDOR
                     btnUsuarios.Visibility = Visibility.Collapsed;
-                    btnCompra.Visibility = Visibility.Collapsed;
+                    btnCompra.Visibility = Visibility.Visible;
                     btnProductos.Visibility = Visibility.Collapsed;
                     btnReportes.Visibility = Visibility.Visible;
                     break;
 
                 case 3: // SUPERVISOR
                     btnUsuarios.Visibility = Visibility.Collapsed;
-                    btnCompra.Visibility = Visibility.Visible;
+                    btnCompra.Visibility = Visibility.Collapsed;
                     btnProductos.Visibility = Visibility.Visible;
                     btnReportes.Visibility = Visibility.Visible;
                     break;
@@ -108,6 +108,12 @@ namespace SistemaVentas.GUI
 
         private void btnCompra_Click(object sender, RoutedEventArgs e)
         {
+            if (SesionGlobal.UsuarioActual == null || SesionGlobal.UsuarioActual.IdRol is not (1 or 2))
+            {
+                MessageBox.Show("No tienes permisos para acceder al módulo de compras.", "Acceso denegado", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             OcultarSubmenus();
             ContenedorPrincipal.Content = new Compra();
         }

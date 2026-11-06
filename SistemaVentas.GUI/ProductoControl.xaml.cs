@@ -9,6 +9,7 @@ namespace SistemaVentas.GUI
     public partial class ProductoControl : UserControl
     {
         private CN_Producto objCN_Producto = new CN_Producto();
+        private Producto? _productoEnEdicion;
 
         public ProductoControl()
         {
@@ -56,24 +57,36 @@ namespace SistemaVentas.GUI
                 return;
             }
 
-            if (!decimal.TryParse(txtPrecioCosto.Text, out decimal precioCosto) ||
-                !decimal.TryParse(txtPrecioVenta.Text, out decimal precioVenta) ||
+            decimal precioCosto;
+            if (_productoEnEdicion != null)
+            {
+                precioCosto = _productoEnEdicion.PrecioCosto;
+            }
+            else if (!decimal.TryParse(txtPrecioCosto.Text, out precioCosto))
+            {
+                MessageBox.Show("Revise el campo numérico del precio de costo.",
+                    "Atención", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (!decimal.TryParse(txtPrecioVenta.Text, out decimal precioVenta) ||
                 !int.TryParse(txtStock.Text, out int stock))
             {
-                MessageBox.Show("Revise los campos numéricos (precio costo, precio venta, stock).",
+                MessageBox.Show("Revise los campos numéricos (precio venta, stock).",
                     "Atención", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
             Producto objProducto = new Producto()
             {
-                IdProducto = Convert.ToInt32(txtIdProducto.Text),
+                IdProducto = _productoEnEdicion?.IdProducto ?? 0,
                 Nombre = txtNombre.Text.Trim(),
                 PrecioCosto = precioCosto,
                 PrecioVenta = precioVenta,
                 StockActual = stock,
-                CodigoBarras = null,
-                Activo = true,
+                CodigoBarras = _productoEnEdicion?.CodigoBarras,
+                Activo = _productoEnEdicion?.Activo ?? true,
+                StockMinimo = _productoEnEdicion?.StockMinimo ?? 0,
                 oCategoria = new Categoria()
                 {
                     IdCategoria = (int)cmbCategoria.SelectedValue
@@ -110,20 +123,19 @@ namespace SistemaVentas.GUI
 
         private void btnEditar_Click(object sender, RoutedEventArgs e)
         {
-            Button btn = sender as Button;
-            Producto seleccionado = btn.DataContext as Producto;
+            if ((sender as Button)?.DataContext is not Producto seleccionado)
+                return;
 
-            if (seleccionado != null)
-            {
-                txtIdProducto.Text = seleccionado.IdProducto.ToString();
-                txtNombre.Text = seleccionado.Nombre;
-                txtPrecioCosto.Text = seleccionado.PrecioCosto.ToString();
-                txtPrecioVenta.Text = seleccionado.PrecioVenta.ToString();
-                txtStock.Text = seleccionado.StockActual.ToString();
-                cmbCategoria.SelectedValue = seleccionado.oCategoria.IdCategoria;
+            _productoEnEdicion = seleccionado;
+            txtIdProducto.Text = seleccionado.IdProducto.ToString();
+            txtNombre.Text = seleccionado.Nombre;
+            txtPrecioCosto.Text = seleccionado.PrecioCosto.ToString();
+            txtPrecioCosto.IsReadOnly = true;
+            txtPrecioVenta.Text = seleccionado.PrecioVenta.ToString();
+            txtStock.Text = seleccionado.StockActual.ToString();
+            cmbCategoria.SelectedValue = seleccionado.oCategoria.IdCategoria;
 
-                btnGuardar.Content = "Actualizar Producto";
-            }
+            btnGuardar.Content = "Actualizar Producto";
         }
 
         private void btnEliminar_Click(object sender, RoutedEventArgs e)
@@ -167,9 +179,11 @@ namespace SistemaVentas.GUI
 
         private void LimpiarFormulario()
         {
+            _productoEnEdicion = null;
             txtIdProducto.Text = "0";
             txtNombre.Clear();
             txtPrecioCosto.Clear();
+            txtPrecioCosto.IsReadOnly = false;
             txtPrecioVenta.Clear();
             txtStock.Clear();
             cmbCategoria.SelectedIndex = -1;
