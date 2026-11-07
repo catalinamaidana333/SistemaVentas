@@ -1,9 +1,13 @@
 ﻿using SistemaVentas.BLL;
+using SistemaVentas.BLL.Tickets;
 using SistemaVentas.Entities;
+using SistemaVentas.Entities.Tickets;
 using SistemaVentas.GUI.Contexto;
 using SistemaVentas.GUI.Dialogs;
 
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -19,7 +23,11 @@ namespace SistemaVentas.GUI
         private readonly ObservableCollection<Producto> _productos;
         private readonly CN_Producto _productoBLL;
         private readonly VentaBLL _ventaBLL;
+        private readonly TicketService _ticketService = new();
         private ComboBox _cmbProductos = null!;
+        private Venta? _ventaParaTicket;
+        private int _idVentaGenerada;
+        private string? _rutaUltimoTicket;
         
 
         // ELIMINADO: private bool _cajaAbierta = false;
@@ -226,9 +234,10 @@ namespace SistemaVentas.GUI
                 // Llamamos al método Insertar (que a su vez llama a tu DAL transaccional)
                 int idVentaGenerada = _ventaBLL.RegistrarVenta(nuevaVenta);
 
-                // Si llegó hasta aquí, la transacción fue exitosa
-                MessageBox.Show($"Venta #{idVentaGenerada} generada con éxito.\nTotal: ${totalVenta:N2}\nVuelto: ${vuelto:N2}",
-                                "Venta Exitosa", MessageBoxButton.OK, MessageBoxImage.Information);
+                // Guardamos la venta registrada para generar y reimprimir su ticket.
+                _ventaParaTicket = nuevaVenta;
+                _idVentaGenerada = idVentaGenerada;
+                GenerarYVisualizarTicket();
 
                 // 6. Limpiar la UI para el próximo cliente
                 _carrito.Clear();
@@ -241,6 +250,109 @@ namespace SistemaVentas.GUI
             {
                 // Si falló algo en la BD (ej. se cortó la conexión), el Rollback ya se hizo en la DAL
                 MessageBox.Show($"Ocurrió un error al guardar la venta:\n{ex.Message}", "Error BD", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void GenerarYVisualizarTicket()
+        {
+            try
+            {
+                _rutaUltimoTicket = GenerarTicketDesdeUltimaVenta();
+                AbrirPdf(_rutaUltimoTicket);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"La venta se registró correctamente, pero no se pudo generar el ticket:\n{ex.Message}",
+                    "Ticket", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void btnImprimir_Click(object sender, RoutedEventArgs e)
+        {
+            if (_ventaParaTicket is null)
+            {
+                MessageBox.Show("Primero debe registrarse una venta.", "Ticket",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            try
+            {
+                string rutaPdf = _rutaUltimoTicket ?? GenerarTicketDesdeUltimaVenta();
+                if (!File.Exists(rutaPdf))
+                    rutaPdf = GenerarTicketDesdeUltimaVenta();
+
+                _rutaUltimoTicket = rutaPdf;
+
+                if (!IntentarImprimir(rutaPdf))
+                {
+                    AbrirPdf(_rutaUltimoTicket);
+                    MessageBox.Show(
+                        "No se pudo enviar el ticket a la impresora. Se abrió el PDF en pantalla.",
+                        "Impresión", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"No se pudo generar el ticket:\n{ex.Message}",
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private string GenerarTicketDesdeUltimaVenta()
+        {
+            if (_ventaParaTicket is null)
+                throw new InvalidOperationException("No hay una venta registrada para generar el ticket.");
+
+            var ticket = new TicketVenta
+            {
+                IdVenta = _idVentaGenerada,
+                FechaHora = DateTime.Now,
+                NombreMinimercado = TicketService.NombreMinimercado,
+                NombreCajero = SesionGlobal.NombreCompletoActual,
+                MetodoPago = _ventaParaTicket.MetodoPago,
+                Total = _ventaParaTicket.Total,
+                MontoAbonado = _ventaParaTicket.MontoAbonado,
+                Vuelto = _ventaParaTicket.Vuelto,
+                Detalles = _ventaParaTicket.Detalles.Select(d => new DetalleTicket
+                {
+                    NombreProducto = d.NombreProducto,
+                    Cantidad = d.Cantidad,
+                    PrecioUnitario = d.PrecioUnitario,
+                    Subtotal = d.Subtotal
+                }).ToList()
+            };
+
+            return _ticketService.GenerarTicket(ticket);
+        }
+
+        private static void AbrirPdf(string rutaPdf)
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = rutaPdf,
+                UseShellExecute = true
+            });
+        }
+
+        private static bool IntentarImprimir(string rutaPdf)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = rutaPdf,
+                    Verb = "print",
+                    UseShellExecute = true,
+                    CreateNoWindow = true
+                });
+
+                return true;
+            }
+            catch
+            {
+                return false;
             }
         }
 

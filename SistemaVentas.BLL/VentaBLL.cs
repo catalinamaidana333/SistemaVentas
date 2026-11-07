@@ -37,7 +37,8 @@ namespace SistemaVentas.BLL
 
                
                 detalle.PrecioUnitario = producto.PrecioVenta;
-                
+                detalle.NombreProducto = producto.Nombre;
+
             }
 
             foreach (var grupo in venta.Detalles.GroupBy(detalle => detalle.IdProducto))
