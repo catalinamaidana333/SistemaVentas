@@ -19,6 +19,39 @@ namespace SistemaVentas.BLL
             return objcd_producto.ListarCategorias();
         }
 
+        public string GenerarCodigoBarrasUnico(int longitud = 13)
+        {
+            if (longitud <= 0)
+                throw new ArgumentOutOfRangeException(nameof(longitud),
+                    "La longitud del código debe ser mayor a cero.");
+
+            const int maxIntentos = 1000;
+
+            for (int intento = 0; intento < maxIntentos; intento++)
+            {
+                string codigo = GenerarCadenaNumerica(longitud);
+
+                if (!objcd_producto.ExisteCodigoBarras(codigo))
+                    return codigo;
+            }
+
+            throw new InvalidOperationException(
+                "No se pudo generar un código de barras único después de varios intentos.");
+        }
+
+        private string GenerarCadenaNumerica(int longitud)
+        {
+            char[] digitos = new char[longitud];
+
+            for (int i = 0; i < longitud; i++)
+            {
+                int min = (i == 0 && longitud > 1) ? 1 : 0;
+                digitos[i] = (char)('0' + Random.Shared.Next(min, 10));
+            }
+
+            return new string(digitos);
+        }
+
         public bool Registrar(Producto obj, out string Mensaje)
         {
             Mensaje = string.Empty;

@@ -16,6 +16,7 @@ namespace SistemaVentas.GUI
             InitializeComponent();
             CargarCategorias();
             CargarProductos();
+            GenerarCodigoBarras();
         }
 
         private void CargarProductos()
@@ -43,6 +44,22 @@ namespace SistemaVentas.GUI
             {
                 MessageBox.Show($"Ocurrió un error al cargar las categorías:\n{ex.Message}",
                                 "Error de Conexión",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Error);
+            }
+        }
+
+        private void GenerarCodigoBarras()
+        {
+            try
+            {
+                txtCodigoBarras.Text = objCN_Producto.GenerarCodigoBarrasUnico();
+            }
+            catch (Exception ex)
+            {
+                txtCodigoBarras.Text = string.Empty;
+                MessageBox.Show($"No se pudo generar el código de barras:\n{ex.Message}",
+                                "Atención",
                                 MessageBoxButton.OK,
                                 MessageBoxImage.Error);
             }
@@ -84,7 +101,9 @@ namespace SistemaVentas.GUI
                 PrecioCosto = precioCosto,
                 PrecioVenta = precioVenta,
                 StockActual = stock,
-                CodigoBarras = _productoEnEdicion?.CodigoBarras,
+                CodigoBarras = _productoEnEdicion != null
+                    ? _productoEnEdicion.CodigoBarras
+                    : txtCodigoBarras.Text,
                 Activo = _productoEnEdicion?.Activo ?? true,
                 StockMinimo = _productoEnEdicion?.StockMinimo ?? 0,
                 oCategoria = new Categoria()
@@ -128,6 +147,7 @@ namespace SistemaVentas.GUI
 
             _productoEnEdicion = seleccionado;
             txtIdProducto.Text = seleccionado.IdProducto.ToString();
+            txtCodigoBarras.Text = seleccionado.CodigoBarras;
             txtNombre.Text = seleccionado.Nombre;
             txtPrecioCosto.Text = seleccionado.PrecioCosto.ToString();
             txtPrecioCosto.IsReadOnly = true;
@@ -181,6 +201,8 @@ namespace SistemaVentas.GUI
         {
             _productoEnEdicion = null;
             txtIdProducto.Text = "0";
+            txtCodigoBarras.Clear();
+            GenerarCodigoBarras();
             txtNombre.Clear();
             txtPrecioCosto.Clear();
             txtPrecioCosto.IsReadOnly = false;

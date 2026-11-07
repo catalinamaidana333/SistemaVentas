@@ -10,6 +10,10 @@
 
         <StackPanel Grid.Column="0" Margin="0,0,15,0">
             <TextBox x:Name="txtIdProducto" Text="0" Visibility="Collapsed"/>
+            <TextBlock Text="Código de Barras:" FontWeight="Bold" Margin="0,5,0,2"/>
+            <TextBox x:Name="txtCodigoBarras" Padding="3"
+                     IsReadOnly="True" IsTabStop="False"
+                     Background="#EEEEEE"/>
             <TextBlock Text="Nombre del Producto:" FontWeight="Bold" Margin="0,5,0,2"/>
             <TextBox x:Name="txtNombre" Padding="3"/>
             <TextBlock Text="Precio Costo:" FontWeight="Bold" Margin="0,5,0,2"/>
@@ -39,7 +43,7 @@
             <DataGrid.Columns>
                 <DataGridTextColumn Header="CÓDIGO BARRAS" Binding="{Binding CodigoBarras}" Width="130"/>
                 <DataGridTextColumn Header="PRODUCTO" Binding="{Binding Nombre}" Width="120"/>
-                <DataGridTextColumn Header="CATEGORÍA" Binding="{Binding Categoria.Nombre}" Width="120"/>
+                <DataGridTextColumn Header="CATEGORÍA" Binding="{Binding oCategoria.Nombre}" Width="120"/>
                 <DataGridTextColumn Header="P. COSTO" Binding="{Binding PrecioCosto}" Width="120"/>
                 <DataGridTextColumn Header="P. VENTA" Binding="{Binding PrecioVenta}" Width="120"/>
                 <DataGridTextColumn Header="STOCK" Binding="{Binding StockActual}" Width="120"/>
