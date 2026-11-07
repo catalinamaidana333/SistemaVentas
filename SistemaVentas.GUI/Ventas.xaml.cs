@@ -65,14 +65,28 @@ namespace SistemaVentas.GUI
         {
             try
             {
-                foreach (Producto producto in _productoBLL.Listar().Where(producto => producto.Activo))
+                _productos.Clear();
+                foreach (Producto producto in _productoBLL.ListarDisponiblesParaVenta())
                     _productos.Add(producto);
+
+                cmbProductos.SelectedIndex = -1;
+                cmbProductos.Text = string.Empty;
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"No se pudo cargar el catálogo de productos.\n{ex.Message}",
                     "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private void RecargarProductos()
+        {
+            CargarProductos();
+        }
+
+        private Producto? ObtenerProductoDelCatalogo(int idProducto)
+        {
+            return _productos.FirstOrDefault(producto => producto.IdProducto == idProducto);
         }
 
         private void btnAgregarProducto_Click(object sender, RoutedEventArgs e)
@@ -86,11 +100,20 @@ namespace SistemaVentas.GUI
 
             // 1. Buscamos si el producto ya existe en el carrito
             var itemExistente = _carrito.FirstOrDefault(d => d.IdProducto == producto.IdProducto);
+            int cantidadSolicitada = (itemExistente?.Cantidad ?? 0) + 1;
+
+            // 2. Validamos el stock disponible antes de agregar o incrementar
+            if (!_productoBLL.ValidarCantidadDisponible(producto, cantidadSolicitada, out string mensaje))
+            {
+                MessageBox.Show(mensaje, "Stock insuficiente",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
 
             if (itemExistente != null)
             {
-                // 2. Si existe, incrementamos la cantidad
-                itemExistente.Cantidad += 1;
+                // 3. Si existe, incrementamos la cantidad
+                itemExistente.Cantidad = cantidadSolicitada;
             }
             else
             {
@@ -98,6 +121,7 @@ namespace SistemaVentas.GUI
                 _carrito.Add(new DetalleVenta
                 {
                     IdProducto = producto.IdProducto,
+                    NombreProducto = producto.Nombre,
                     Cantidad = 1,
                     PrecioUnitario = producto.PrecioVenta,
                     // Subtotal se calcula automáticamente en la entidad DetalleVenta
@@ -242,6 +266,10 @@ namespace SistemaVentas.GUI
                 // 6. Limpiar la UI para el próximo cliente
                 _carrito.Clear();
                 ActualizarTotal();
+
+                // 7. Recargar el catálogo para reflejar el nuevo stock
+                //    (los productos agotados dejan de estar disponibles)
+                RecargarProductos();
 
                 // Opcional: resetear el método de pago por defecto
                 _cmbMetodoPago.SelectedIndex = 0;
@@ -452,21 +480,49 @@ private void btnSumar_Click(object sender, RoutedEventArgs e)
     // --- 3. Métodos centralizados para actualizar la fila ---
     private void ModificarCantidad(DetalleVenta item, int variacion)
     {
+        int nuevaCantidad = item.Cantidad + variacion;
+
         // Si al restar llega a 0, lo quitamos del carrito
-        if (item.Cantidad + variacion <= 0)
+        if (nuevaCantidad <= 0)
         {
             _carrito.Remove(item);
-        }
-        else
-        {
-            item.Cantidad += variacion;
+            ActualizarTotal();
+            return;
         }
 
+        // No permitimos superar el stock disponible del producto
+        Producto? producto = ObtenerProductoDelCatalogo(item.IdProducto);
+        if (producto != null &&
+            !_productoBLL.ValidarCantidadDisponible(producto, nuevaCantidad, out string mensaje))
+        {
+            MessageBox.Show(mensaje, "Stock insuficiente",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        item.Cantidad = nuevaCantidad;
         ActualizarTotal(); // Tu método existente
     }
 
     private void FijarCantidadExacta(DetalleVenta item, int cantidadExacta)
     {
+        Producto? producto = ObtenerProductoDelCatalogo(item.IdProducto);
+
+        // Ajustamos la cantidad al stock disponible si se intenta superar
+        if (producto != null && cantidadExacta > producto.StockActual)
+        {
+            cantidadExacta = producto.StockActual;
+            MessageBox.Show($"La cantidad se ajustó al stock disponible ({producto.StockActual}).",
+                "Stock insuficiente", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+
+        if (cantidadExacta <= 0)
+        {
+            _carrito.Remove(item);
+            ActualizarTotal();
+            return;
+        }
+
         item.Cantidad = cantidadExacta;
         
         dgVentas.Items.Refresh();

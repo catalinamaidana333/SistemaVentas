@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using SistemaVentas.DAL;
 using SistemaVentas.Entities; // O SistemaVentas.Entidades según tu proyecto
 
@@ -12,6 +13,45 @@ namespace SistemaVentas.BLL
         public List<Producto> Listar()
         {
             return objcd_producto.Listar();
+        }
+
+        /// <summary>
+        /// Devuelve únicamente los productos disponibles para la venta:
+        /// activos y con stock mayor a cero.
+        /// </summary>
+        public List<Producto> ListarDisponiblesParaVenta()
+        {
+            return objcd_producto.Listar()
+                .Where(producto => producto.Activo && producto.StockActual > 0)
+                .ToList();
+        }
+
+        /// <summary>
+        /// Valida si la cantidad solicitada puede cubrirse con el stock disponible.
+        /// </summary>
+        public bool ValidarCantidadDisponible(Producto producto, int cantidadSolicitada, out string Mensaje)
+        {
+            Mensaje = string.Empty;
+
+            if (producto == null)
+            {
+                Mensaje = "No se indicó un producto válido.";
+                return false;
+            }
+
+            if (cantidadSolicitada <= 0)
+            {
+                Mensaje = "La cantidad solicitada debe ser mayor a cero.";
+                return false;
+            }
+
+            if (cantidadSolicitada > producto.StockActual)
+            {
+                Mensaje = $"Stock insuficiente para '{producto.Nombre}'. Disponible: {producto.StockActual}.";
+                return false;
+            }
+
+            return true;
         }
 
         public List<Categoria> ListarCategorias()
