@@ -83,13 +83,6 @@ namespace SistemaVentas.GUI
             {
                 // 2. Si existe, incrementamos la cantidad
                 itemExistente.Cantidad += 1;
-
-                
-
-                // 3. Forzamos a la grilla a redibujarse para mostrar la nueva cantidad y subtotal
-                // Esto es necesario porque una ObservableCollection detecta cuando se agrega/quita una fila, 
-                // pero NO detecta cuando cambia una propiedad interna de una fila existente.
-                dgVentas.Items.Refresh();
             }
             else
             {
@@ -355,9 +348,8 @@ private void btnSumar_Click(object sender, RoutedEventArgs e)
         else
         {
             item.Cantidad += variacion;
-           
-            dgVentas.Items.Refresh(); // Obliga a la grilla a actualizar los textos
         }
+
         ActualizarTotal(); // Tu método existente
     }
 

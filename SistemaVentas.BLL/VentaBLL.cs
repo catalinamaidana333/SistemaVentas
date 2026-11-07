@@ -40,6 +40,16 @@ namespace SistemaVentas.BLL
                 
             }
 
+            foreach (var grupo in venta.Detalles.GroupBy(detalle => detalle.IdProducto))
+            {
+                Producto producto = productos[grupo.Key];
+                int cantidadSolicitada = grupo.Sum(detalle => detalle.Cantidad);
+
+                if (cantidadSolicitada > producto.StockActual)
+                    throw new InvalidOperationException(
+                        $"Stock insuficiente para '{producto.Nombre}'. Disponible: {producto.StockActual}, solicitado: {cantidadSolicitada}.");
+            }
+
             venta.Total = venta.Detalles.Sum(detalle => detalle.Subtotal);
             return _ventaDAL.Insertar(venta);
         }

@@ -72,6 +72,33 @@ namespace SistemaVentas.DAL
             return lista;
         }
 
+        public bool ExisteCodigoBarras(string codigoBarras)
+        {
+            bool existe = false;
+
+            using (SqlConnection oconexion = new SqlConnection(cadena))
+            {
+                try
+                {
+                    oconexion.Open();
+
+                    string query = "SELECT COUNT(1) FROM dbo.Producto WHERE codigo_barras = @codigo_barras";
+
+                    using (SqlCommand cmd = new SqlCommand(query, oconexion))
+                    {
+                        cmd.Parameters.AddWithValue("@codigo_barras", codigoBarras);
+                        existe = Convert.ToInt32(cmd.ExecuteScalar()) > 0;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("Error al verificar el código de barras en la base de datos: " + ex.Message, ex);
+                }
+            }
+
+            return existe;
+        }
+
         public bool Registrar(Producto obj, out string Mensaje)
         {
             bool respuesta = false;
