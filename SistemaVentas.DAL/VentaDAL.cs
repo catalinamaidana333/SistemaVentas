@@ -42,6 +42,13 @@ namespace SistemaVentas.DAL
                                      (id_venta, id_producto, cantidad, precio_unitario_historico, subtotal)
                                      VALUES (@id_venta, @id_producto, @cantidad, @precio_unitario, @subtotal);";
 
+            // Descuenta el stock de forma atómica. El WHERE evita que el stock quede negativo
+            // si otro proceso vendió las mismas unidades entre la validación de la BLL y este INSERT.
+            const string consultaDescuentaStock = @"UPDATE dbo.Producto
+                                            SET stock_actual = stock_actual - @cantidad
+                                            WHERE id_producto = @id_producto
+                                              AND stock_actual >= @cantidad;";
+
             using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
             {
                 conexion.Open();
@@ -72,9 +79,15 @@ namespace SistemaVentas.DAL
                             comandoDetalle.Parameters.AddWithValue("@precio_unitario", detalle.PrecioUnitario);
                             comandoDetalle.Parameters.AddWithValue("@subtotal", detalle.Subtotal);
                             comandoDetalle.ExecuteNonQuery();
-                        }
 
-                        // Aquí podrías agregar el UPDATE para descontar el stock si lo necesitas
+                            using SqlCommand comandoStock = new SqlCommand(consultaDescuentaStock, conexion, transaccion);
+                            comandoStock.Parameters.AddWithValue("@id_producto", detalle.IdProducto);
+                            comandoStock.Parameters.AddWithValue("@cantidad", detalle.Cantidad);
+
+                            if (comandoStock.ExecuteNonQuery() == 0)
+                                throw new InvalidOperationException(
+                                    $"No hay stock suficiente para el producto {detalle.IdProducto}.");
+                        }
 
                         transaccion.Commit();
                         return idVenta;
