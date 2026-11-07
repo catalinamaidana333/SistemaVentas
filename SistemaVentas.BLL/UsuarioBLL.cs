@@ -54,11 +54,9 @@ namespace SistemaVentas.BLL
                 throw new ValidacionException("Los datos del nuevo usuario no pueden ser nulos.");
             }
 
-            // 2. Verificamos que el correo no exista ya en la base de datos
-            if (usuarioDAL.ExisteUsuarioPorCorreo(nuevoUsuario.Correo))
-            {
-                throw new UsuarioException("Ya existe un usuario registrado con este correo electrónico.");
-            }
+            // 2. Validamos siempre los datos de formato y unicidad dentro de la BLL,
+            //    sin depender de que la capa de presentación lo haya hecho antes.
+            ValidarDatosNuevoUsuarioOrThrow(nuevoUsuario);
 
             // 3. Hashear la contraseña (transformación de seguridad)
             string passwordHasheada = HashearPassword(nuevoUsuario.Password);
@@ -67,38 +65,49 @@ namespace SistemaVentas.BLL
             // 4. Mandamos a guardar a la Capa de Datos (DAL)
             return usuarioDAL.GuardarUsuario(nuevoUsuario);
         }
+
+        /// <summary>
+        /// Ejecuta todas las validaciones de un usuario nuevo y lanza la excepción correspondiente
+        /// si alguna regla no se cumple. Es el núcleo de validación que usa CrearUsuario.
+        /// </summary>
+        private void ValidarDatosNuevoUsuarioOrThrow(Usuario usuario)
+        {
+            if (usuario == null)
+                throw new ValidacionException("Los datos del usuario no pueden ser nulos.");
+
+            ValidarNombreUsuario(usuario.NombreUsuario);
+            ValidarNombre(usuario.Nombree);
+            ValidarAppellido(usuario.Apellido);
+            ValidarDNI(usuario.DNI);              // incluye verificación de DNI duplicado
+            ValidarFechaNacimiento(usuario.FechaNacimiento);
+            ValidarDireccion(usuario.Direccion);
+            ValidarCorreo(usuario.Correo);        // incluye verificación de correo duplicado
+
+            if (string.IsNullOrWhiteSpace(usuario.Password))
+                throw new ValidacionException("La contraseña es obligatoria para un nuevo usuario.");
+
+            ValidarPassword(usuario.Password);
+        }
+
         public bool ValidarDatosNuevoUsuario(Usuario usuario, out string mensajeError)
         {
             mensajeError = string.Empty;
 
             try
             {
-                // Llamamos a todos tus métodos de validación ya creados
-                ValidarNombreUsuario(usuario.NombreUsuario);
-                ValidarNombre(usuario.Nombree);
-                ValidarAppellido(usuario.Apellido);
-                ValidarDNI(usuario.DNI);
-                ValidarFechaNacimiento(usuario.FechaNacimiento);
-                ValidarDireccion(usuario.Direccion);
-
-                // Opcional: Si en el formulario de creación también validamos correo y pass:
-                ValidarCorreo(usuario.Correo);
-
-                // Si el usuario es nuevo, validamos la contraseña obligatoriamente.
-                if (string.IsNullOrWhiteSpace(usuario.Password))
-                {
-                    throw new ValidacionException("La contraseña es obligatoria para un nuevo usuario.");
-                }
-                ValidarPassword(usuario.Password);
-
-                // Si todas las líneas de arriba se ejecutaron sin lanzar un "throw", 
-                // significa que los datos están perfectos.
+                // Delegamos en el núcleo de validación para no duplicar reglas.
+                ValidarDatosNuevoUsuarioOrThrow(usuario);
                 return true;
             }
             catch (ValidacionException ex)
             {
-                // Si CUALQUIERA de tus métodos privados lanza un error, cae automáticamente acá.
-                // Agarramos tu mensaje personalizado y lo mandamos a la interfaz.
+                // Errores de formato o reglas de negocio.
+                mensajeError = ex.Message;
+                return false;
+            }
+            catch (UsuarioException ex)
+            {
+                // Duplicados de DNI o correo detectados contra la base de datos.
                 mensajeError = ex.Message;
                 return false;
             }
