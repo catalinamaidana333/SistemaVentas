@@ -261,7 +261,13 @@ namespace SistemaVentas.GUI
                 // Guardamos la venta registrada para generar y reimprimir su ticket.
                 _ventaParaTicket = nuevaVenta;
                 _idVentaGenerada = idVentaGenerada;
-                GenerarYVisualizarTicket();
+                GenerarTicketSinVisualizar();
+
+                MessageBox.Show(
+                    "Venta registrada correctamente. Presione RECEIPT para ver el comprobante.",
+                    "Venta exitosa",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
 
                 // 6. Limpiar la UI para el próximo cliente
                 _carrito.Clear();
@@ -281,18 +287,17 @@ namespace SistemaVentas.GUI
             }
         }
 
-        private void GenerarYVisualizarTicket()
+        private void GenerarTicketSinVisualizar()
         {
             try
             {
                 _rutaUltimoTicket = GenerarTicketDesdeUltimaVenta();
-                AbrirPdf(_rutaUltimoTicket);
             }
             catch (Exception ex)
             {
                 MessageBox.Show(
                     $"La venta se registró correctamente, pero no se pudo generar el ticket:\n{ex.Message}",
-                    "Ticket", MessageBoxButton.OK, MessageBoxImage.Error);
+                    "Ticket", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 
@@ -312,14 +317,7 @@ namespace SistemaVentas.GUI
                     rutaPdf = GenerarTicketDesdeUltimaVenta();
 
                 _rutaUltimoTicket = rutaPdf;
-
-                if (!IntentarImprimir(rutaPdf))
-                {
-                    AbrirPdf(_rutaUltimoTicket);
-                    MessageBox.Show(
-                        "No se pudo enviar el ticket a la impresora. Se abrió el PDF en pantalla.",
-                        "Impresión", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
+                AbrirPdf(_rutaUltimoTicket);
             }
             catch (Exception ex)
             {
@@ -362,26 +360,6 @@ namespace SistemaVentas.GUI
                 FileName = rutaPdf,
                 UseShellExecute = true
             });
-        }
-
-        private static bool IntentarImprimir(string rutaPdf)
-        {
-            try
-            {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = rutaPdf,
-                    Verb = "print",
-                    UseShellExecute = true,
-                    CreateNoWindow = true
-                });
-
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
         }
 
         private void btnAbrirCerrarCaja_Click(object sender, RoutedEventArgs e)
