@@ -253,7 +253,7 @@ La base de datos `SistemaVentas` está compuesta por las siguientes tablas:
 1. Clonar el repositorio:
 
    ```bash
-   git clone <URL_DEL_REPOSITORIO>
+   git clone https://github.com/catalinamaidana333/SistemaVentas.git
    ```
 
 2. Crear la base de datos y el esquema ejecutando `database/scriptSistVentas2309.sql` en SQL Server.
