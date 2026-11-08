@@ -40,6 +40,15 @@ namespace SistemaVentas.GUI.Contexto
         public static string NombreUsuarioActual => UsuarioActual?.Nombree ?? "Invitado";
 
         /// <summary>
+        /// Obtiene el nombre completo del usuario actualmente logueado.
+        /// Retorna "Invitado" si no hay usuario logueado.
+        /// </summary>
+        public static string NombreCompletoActual =>
+            UsuarioActual is null
+                ? "Invitado"
+                : $"{UsuarioActual.Nombree} {UsuarioActual.Apellido}".Trim();
+
+        /// <summary>
         /// Obtiene el rol del usuario actualmente logueado.
         /// Retorna -1 si no hay usuario logueado.
         /// </summary>

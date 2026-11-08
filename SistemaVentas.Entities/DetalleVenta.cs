@@ -11,6 +11,7 @@ namespace SistemaVentas.Entities
         public int IdDetalleVenta { get; set; }
         public int IdVenta { get; set; }
         public int IdProducto { get; set; }
+        public string NombreProducto { get; set; } = string.Empty;
 
         public int Cantidad
         {
