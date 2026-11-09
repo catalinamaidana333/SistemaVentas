@@ -280,6 +280,11 @@ namespace SistemaVentas.GUI
                 // Opcional: resetear el método de pago por defecto
                 _cmbMetodoPago.SelectedIndex = 0;
             }
+            catch (StockInsuficienteException ex)
+            {
+                // La validación de la BLL o el SP detectaron que el stock ya no alcanza.
+                MessageBox.Show(ex.Message, "Stock insuficiente", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
             catch (Exception ex)
             {
                 // Si falló algo en la BD (ej. se cortó la conexión), el Rollback ya se hizo en la DAL

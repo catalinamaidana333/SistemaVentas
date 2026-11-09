@@ -47,7 +47,7 @@ namespace SistemaVentas.BLL
                 int cantidadSolicitada = grupo.Sum(detalle => detalle.Cantidad);
 
                 if (cantidadSolicitada > producto.StockActual)
-                    throw new InvalidOperationException(
+                    throw new StockInsuficienteException(
                         $"Stock insuficiente para '{producto.Nombre}'. Disponible: {producto.StockActual}, solicitado: {cantidadSolicitada}.");
             }
 
