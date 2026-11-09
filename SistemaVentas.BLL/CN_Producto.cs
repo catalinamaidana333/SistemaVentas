@@ -7,12 +7,53 @@ namespace SistemaVentas.BLL
 {
     public class CN_Producto
     {
+        private const int LongitudCodigoBarras = 13;
+
         // Se reutiliza una única instancia a nivel de clase
         private CD_Producto objcd_producto = new CD_Producto();
 
         public List<Producto> Listar()
         {
             return objcd_producto.Listar();
+        }
+
+        /// <summary>
+        /// Busca un producto por código de barras de 13 dígitos.
+        /// Devuelve null y un mensaje cuando no hay coincidencias o no hay stock.
+        /// </summary>
+        public Producto? BuscarProducto(string criterio, out string Mensaje)
+        {
+            Mensaje = string.Empty;
+
+            if (string.IsNullOrWhiteSpace(criterio))
+            {
+                Mensaje = "Ingrese un código de barras.";
+                return null;
+            }
+
+            criterio = criterio.Trim();
+
+            if (criterio.Length != LongitudCodigoBarras || !criterio.All(char.IsDigit))
+            {
+                Mensaje = $"El código de barras debe tener {LongitudCodigoBarras} dígitos numéricos.";
+                return null;
+            }
+
+            Producto? producto = objcd_producto.ObtenerPorCodigo(criterio);
+
+            if (producto == null)
+            {
+                Mensaje = "Código de barras no encontrado.";
+                return null;
+            }
+
+            if (producto.StockActual <= 0)
+            {
+                Mensaje = $"El producto '{producto.Nombre}' no tiene stock disponible.";
+                return null;
+            }
+
+            return producto;
         }
 
         /// <summary>

@@ -43,23 +43,7 @@ namespace SistemaVentas.DAL
                     {
                         while (dr.Read())
                         {
-                            lista.Add(new Producto()
-                            {
-                                IdProducto = Convert.ToInt32(dr["id_producto"]),
-                                IdCategoria = Convert.ToInt32(dr["id_categoria"]),
-                                CodigoBarras = dr["codigo_barras"] != DBNull.Value ? dr["codigo_barras"].ToString() : "",
-                                Nombre = dr["nombre"].ToString(),
-                                PrecioCosto = Convert.ToDecimal(dr["precio_costo"]),
-                                PrecioVenta = Convert.ToDecimal(dr["precio_venta"]),
-                                StockActual = Convert.ToInt32(dr["stock_actual"]),
-                                StockMinimo = Convert.ToInt32(dr["stock_minimo"]),
-                                Activo = Convert.ToBoolean(dr["activo"]),
-                                oCategoria = new Categoria()
-                                {
-                                    IdCategoria = Convert.ToInt32(dr["id_categoria"]),
-                                    Nombre = dr["NombreCategoria"].ToString()
-                                }
-                            });
+                            lista.Add(MapearProducto(dr));
                         }
                     }
                 }
@@ -70,6 +54,69 @@ namespace SistemaVentas.DAL
                 }
             }
             return lista;
+        }
+
+        public Producto? ObtenerPorCodigo(string codigoBarras)
+        {
+            using (SqlConnection oconexion = new SqlConnection(cadena))
+            {
+                try
+                {
+                    string query = @"
+                SELECT TOP 1
+                        p.id_producto,
+                        p.id_categoria,
+                        p.codigo_barras,
+                        p.nombre,
+                        p.precio_costo,
+                        p.precio_venta,
+                        p.stock_actual,
+                        p.stock_minimo,
+                        p.activo,
+                        c.nombre AS NombreCategoria
+                FROM    dbo.Producto p
+                INNER JOIN dbo.Categoria c ON c.id_categoria = p.id_categoria
+                WHERE   p.codigo_barras = @codigo_barras
+                        AND p.activo = 1";
+
+                    using (SqlCommand cmd = new SqlCommand(query, oconexion))
+                    {
+                        cmd.Parameters.AddWithValue("@codigo_barras", codigoBarras);
+
+                        oconexion.Open();
+
+                        using (SqlDataReader dr = cmd.ExecuteReader())
+                        {
+                            return dr.Read() ? MapearProducto(dr) : null;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("Error al buscar el producto por código de barras: " + ex.Message, ex);
+                }
+            }
+        }
+
+        private static Producto MapearProducto(SqlDataReader dr)
+        {
+            return new Producto()
+            {
+                IdProducto = Convert.ToInt32(dr["id_producto"]),
+                IdCategoria = Convert.ToInt32(dr["id_categoria"]),
+                CodigoBarras = dr["codigo_barras"] != DBNull.Value ? dr["codigo_barras"].ToString() : "",
+                Nombre = dr["nombre"].ToString(),
+                PrecioCosto = Convert.ToDecimal(dr["precio_costo"]),
+                PrecioVenta = Convert.ToDecimal(dr["precio_venta"]),
+                StockActual = Convert.ToInt32(dr["stock_actual"]),
+                StockMinimo = Convert.ToInt32(dr["stock_minimo"]),
+                Activo = Convert.ToBoolean(dr["activo"]),
+                oCategoria = new Categoria()
+                {
+                    IdCategoria = Convert.ToInt32(dr["id_categoria"]),
+                    Nombre = dr["NombreCategoria"].ToString()
+                }
+            };
         }
 
         public bool ExisteCodigoBarras(string codigoBarras)
