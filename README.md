@@ -112,7 +112,8 @@ SistemaVentas/
 │   ├── script.sql                     # Script de tablas
 │   └── migrations/
 │       ├── migracion_compras.sql
-│       └── migracion_cuit_unico_proveedor.sql
+│       ├── migracion_cuit_unico_proveedor.sql
+│       └── migracion_venta_sp.sql
 ├── .github/
 ├── SistemaVentas.slnx
 └── README.md
@@ -137,7 +138,7 @@ SistemaVentas/
 - Modificación de cantidades con botones y atajos de teclado (`+`, `-`, números).
 - Métodos de pago: **Efectivo**, **Mercado Pago** y **Transferencia**.
 - Diálogo de cobro en efectivo con cálculo de vuelto.
-- Registro transaccional de la venta y actualización de stock.
+- Registro transaccional de la venta y actualización atómica de stock mediante el procedimiento almacenado `dbo.usp_RegistrarVenta`.
 - Generación de ticket en PDF con **QuestPDF**.
 - Reimpresión del último ticket generado.
 
@@ -265,6 +266,7 @@ La base de datos `SistemaVentas` está compuesta por las siguientes tablas:
    ```text
    migracion_compras.sql
    migracion_cuit_unico_proveedor.sql
+   migracion_venta_sp.sql
    ```
 
 4. Configurar la cadena de conexión en `SistemaVentas.GUI/App.config`:
