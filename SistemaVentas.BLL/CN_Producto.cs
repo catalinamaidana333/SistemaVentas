@@ -12,9 +12,9 @@ namespace SistemaVentas.BLL
         // Se reutiliza una única instancia a nivel de clase
         private CD_Producto objcd_producto = new CD_Producto();
 
-        public List<Producto> Listar()
+        public List<Producto> Listar(bool incluirInactivos = true)
         {
-            return objcd_producto.Listar();
+            return objcd_producto.Listar(incluirInactivos);
         }
 
         /// <summary>

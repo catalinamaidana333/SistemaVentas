@@ -11,7 +11,7 @@ namespace SistemaVentas.DAL
     {
         private readonly string cadena = ConfigurationManager.ConnectionStrings["ConexionBD"].ConnectionString;
 
-        public List<Producto> Listar()
+        public List<Producto> Listar(bool incluirInactivos = true)
         {
             List<Producto> lista = new List<Producto>();
 
@@ -32,10 +32,12 @@ namespace SistemaVentas.DAL
                         c.nombre AS NombreCategoria
                 FROM    dbo.Producto p
                 INNER JOIN dbo.Categoria c ON c.id_categoria = p.id_categoria
+                WHERE   (@incluir_inactivos = 1 OR p.activo = 1)
                 ORDER BY p.id_producto DESC";
 
                     SqlCommand cmd = new SqlCommand(query, oconexion);
                     cmd.CommandType = CommandType.Text;
+                    cmd.Parameters.AddWithValue("@incluir_inactivos", incluirInactivos ? 1 : 0);
 
                     oconexion.Open();
 

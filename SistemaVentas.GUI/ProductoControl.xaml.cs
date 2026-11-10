@@ -23,7 +23,8 @@ namespace SistemaVentas.GUI
         {
             try
             {
-                dgvProductos.ItemsSource = objCN_Producto.Listar();
+                bool incluirInactivos = chkMostrarInactivos?.IsChecked == true;
+                dgvProductos.ItemsSource = objCN_Producto.Listar(incluirInactivos);
             }
             catch (Exception ex)
             {
@@ -158,37 +159,86 @@ namespace SistemaVentas.GUI
             btnGuardar.Content = "Actualizar Producto";
         }
 
+        private void chkMostrarInactivos_Checked(object sender, RoutedEventArgs e)
+        {
+            CargarProductos();
+        }
+
+        private void chkMostrarInactivos_Unchecked(object sender, RoutedEventArgs e)
+        {
+            CargarProductos();
+        }
+
         private void btnEliminar_Click(object sender, RoutedEventArgs e)
         {
-            Button btn = sender as Button;
-            Producto seleccionado = btn.DataContext as Producto;
+            if ((sender as Button)?.DataContext is not Producto seleccionado)
+                return;
 
-            if (seleccionado != null)
+            if (!seleccionado.Activo)
             {
-                MessageBoxResult result = MessageBox.Show(
-                    $"¿Está seguro de eliminar el producto '{seleccionado.Nombre}'?",
-                    "Confirmar Eliminación",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question);
+                MessageBox.Show("El producto ya se encuentra dado de baja.",
+                    "Atención", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
 
-                if (result == MessageBoxResult.Yes)
-                {
-                    string mensaje = string.Empty;
-                    bool respuesta = objCN_Producto.Eliminar(seleccionado, out mensaje);
+            MessageBoxResult result = MessageBox.Show(
+                $"¿Dar de baja el producto '{seleccionado.Nombre}'? Dejará de estar disponible para la venta.",
+                "Confirmar Baja",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
 
-                    if (respuesta)
-                    {
-                        MessageBox.Show("Producto eliminado correctamente.", "Éxito",
-                            MessageBoxButton.OK, MessageBoxImage.Information);
-                        CargarProductos();
-                        LimpiarFormulario();
-                    }
-                    else
-                    {
-                        MessageBox.Show(mensaje, "Error",
-                            MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
-                }
+            if (result != MessageBoxResult.Yes)
+                return;
+
+            string mensaje = string.Empty;
+            bool respuesta = objCN_Producto.Eliminar(seleccionado, out mensaje);
+
+            if (respuesta)
+            {
+                MessageBox.Show("Producto dado de baja correctamente.", "Éxito",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                CargarProductos();
+                LimpiarFormulario();
+            }
+            else
+            {
+                MessageBox.Show(mensaje, "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void btnReactivar_Click(object sender, RoutedEventArgs e)
+        {
+            if ((sender as Button)?.DataContext is not Producto seleccionado)
+                return;
+
+            MessageBoxResult result = MessageBox.Show(
+                $"¿Reactivar el producto '{seleccionado.Nombre}'? Volverá a estar disponible para la venta.",
+                "Confirmar Reactivación",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result != MessageBoxResult.Yes)
+                return;
+
+            bool estadoAnterior = seleccionado.Activo;
+            seleccionado.Activo = true;
+
+            string mensaje = string.Empty;
+            bool respuesta = objCN_Producto.Editar(seleccionado, out mensaje);
+
+            if (respuesta)
+            {
+                MessageBox.Show("Producto reactivado correctamente.", "Éxito",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                CargarProductos();
+                LimpiarFormulario();
+            }
+            else
+            {
+                seleccionado.Activo = estadoAnterior;
+                MessageBox.Show(mensaje, "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
