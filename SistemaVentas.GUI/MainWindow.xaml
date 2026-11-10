@@ -49,6 +49,7 @@
                             Style="{StaticResource BotonMenuLateral}"
                             Click="btnCaja_Click"/>
                 <Button x:Name="btnBackup" Content="Gestión de Backups" Style="{StaticResource BotonMenuLateral}" Click="btnBackup_Click"/>
+                    <Button x:Name="btnManual" Content="Manual de Usuario" Style="{StaticResource BotonMenuLateral}" Click="btnManual_Click"/>
                     <!-- Botón Principal de Reportes -->
                     <Button x:Name="btnReportes" Content="Reportes" 
             Style="{StaticResource BotonMenuLateral}" 

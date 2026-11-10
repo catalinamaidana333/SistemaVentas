@@ -138,6 +138,12 @@ namespace SistemaVentas.GUI
             ContenedorPrincipal.Content = new SistemaVentas.GUI.BackUpControl();
         }
 
+        private void btnManual_Click(object sender, RoutedEventArgs e)
+        {
+            OcultarSubmenus();
+            ContenedorPrincipal.Content = new ManualUsuarioView();
+        }
+
         private void btnSubArqueoDiario_Click(object sender, RoutedEventArgs e)
         {
             if (SesionGlobal.UsuarioActual == null) return;

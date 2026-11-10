@@ -1,0 +1,25 @@
+<UserControl x:Class="SistemaVentas.GUI.ManualUsuarioView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:markdig="clr-namespace:Markdig.Wpf;assembly=Markdig.Wpf"
+             Background="{StaticResource BgFondoPrincipal}">
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Manual de Usuario"
+                   Style="{StaticResource TituloPrincipal}"
+                   Margin="0,0,0,15" />
+
+        <Border Grid.Row="1"
+                Background="{StaticResource BgFondoPrincipal}"
+                BorderBrush="{StaticResource DoradoSaffron}"
+                BorderThickness="1"
+                CornerRadius="8">
+            <markdig:MarkdownViewer x:Name="Viewer" />
+        </Border>
+    </Grid>
+</UserControl>
