@@ -12,6 +12,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using SistemaVentas.BLL;
+using SistemaVentas.Entities;
 
 namespace SistemaVentas.GUI
 {
@@ -98,16 +100,113 @@ namespace SistemaVentas.GUI
             };
             timer.Start();
         }
-    }
 
-    /// <summary>
-    /// Modelo para representar la información de un backup
-    /// </summary>
-    public class BackupInfo
-    {
-        public int BackupId { get; set; }
-        public string NombreArchivo { get; set; }
-        public DateTime FechaHora { get; set; }
-        public string Estado { get; set; }
+        // =========================================================================
+        // MÉTODO DE DOBLE AUTORIZACIÓN (Gerente -> Supervisor) - DENTRO DE LA CLASE CORRECTA
+        // =========================================================================
+        private bool ValidarDobleAutorizacionJerarquica()
+        {
+            // --- NIVEL 1: AUTORIZACIÓN DEL GERENTE ---
+            DialogoCredencial ventanaGerente = new DialogoCredencial("Autorización 1/2: Ingrese Gerente");
+            if (ventanaGerente.ShowDialog() == true)
+            {
+                var gerente = ventanaGerente.UsuarioValidado;
+                if (gerente == null || gerente.IdRol != 1) // 1 = Rol de Gerente
+                {
+                    MessageBox.Show("Acceso denegado: El usuario no posee permisos de Gerente.", "Seguridad", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return false;
+                }
+
+                // --- NIVEL 2: AUTORIZACIÓN DEL SUPERVISOR ---
+                DialogoCredencial ventanaSupervisor = new DialogoCredencial("Autorización 2/2: Ingrese Supervisor");
+                if (ventanaSupervisor.ShowDialog() == true)
+                {
+                    var supervisor = ventanaSupervisor.UsuarioValidado;
+                    if (supervisor == null || supervisor.IdRol != 3) // 3 = Rol de Supervisor 
+                    {
+                        MessageBox.Show("Acceso denegado: El usuario no posee permisos de Supervisor.", "Seguridad", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return false;
+                    }
+
+                    return true; // ¡Ambos pasaron con éxito!
+                }
+            }
+            return false;
+        }
+
+        // =========================================================================
+        // EVENTO DEL BOTÓN RESTAURAR - DENTRO DE LA CLASE CORRECTA
+        // =========================================================================
+        private void BtnRestaurarBackup_Click(object sender, RoutedEventArgs e)
+        {
+            // 1. Abrir explorador para elegir el archivo .bak
+            Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "Backup Files (*.bak)|*.bak|All Files (*.*)|*.*",
+                Title = "Seleccionar respaldo para restaurar"
+            };
+
+            if (openFileDialog.ShowDialog() == true)
+            {
+                string archivoSeleccionado = openFileDialog.FileName;
+
+                // 2. Ejecutar la doble validación jerárquica
+                if (!ValidarDobleAutorizacionJerarquica())
+                {
+                    return; // Si cancelan o no tienen los roles, se cancela todo
+                }
+
+                // 3. Confirmación de seguridad
+                var confirmacion = MessageBox.Show(
+                    "ADVERTENCIA: La restauración sobrescribirá los datos actuales con los del backup seleccionado.\n\n¿Deseas continuar?",
+                    "Confirmar Restauración",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning
+                );
+
+                if (confirmacion == MessageBoxResult.Yes)
+                {
+                    try
+                    {
+                        // 4. Llamada a la BLL para ejecutar el RESTORE en SQL Server
+                        BackupBLL backupBll = new BackupBLL();
+                        backupBll.RestaurarBaseDeDatos(archivoSeleccionado);
+
+                        MessageBox.Show(
+                            "¡Base de datos restaurada con éxito! Por seguridad, la aplicación se cerrará.",
+                            "Restauración Exitosa",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Information
+                        );
+
+                        Application.Current.Shutdown();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Error al restaurar la base de datos: {ex.Message}", "Error Crítico", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+            }
+        }
+
+        private void CargarHistorialDesdeBD()
+        {
+            try
+            {
+                BackupBLL backupBll = new BackupBLL();
+                var listaDb = backupBll.ObtenerHistorialBackups();
+
+                backups = new ObservableCollection<BackupInfo>(listaDb);
+                DgBackups.ItemsSource = backups;
+            }
+            catch (Exception ex)
+            {
+                // Esto te mostrará si hay un error con la tabla o la conexión
+                MessageBox.Show($"Error al cargar el historial desde la base de datos: {ex.Message}", "Aviso", MessageBoxButton.OK, MessageBoxImage.Warning);
+
+                backups = new ObservableCollection<BackupInfo>();
+                DgBackups.ItemsSource = backups;
+            }
+        }
     }
 }

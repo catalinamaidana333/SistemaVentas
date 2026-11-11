@@ -24,6 +24,10 @@ namespace SistemaVentas.GUI
         {
             InitializeComponent();
             ConfigurarMenuPorRol();
+
+            // 1. CARGAR POR DEFECTO EL PUNTO DE VENTA AL ABRIR EL MAINWINDOW
+            OcultarSubmenus();
+            ContenedorPrincipal.Content = new Ventas();
         }
 
         private void ConfigurarMenuPorRol()
@@ -32,39 +36,43 @@ namespace SistemaVentas.GUI
 
             int idRolActual = SesionGlobal.UsuarioActual.IdRol;
 
-            // Ocultamos todos los submenús al arrancar
+            // Ocultamos submenús al arrancar
             OcultarSubmenus();
 
-            // Mapeo según tu Base de Datos:
+            // 2. CONFIGURACIÓN DE ACCESOS (Visible/Habilitado vs En Gris Abajo)
             // 1: GERENTE | 2: VENDEDOR | 3: SUPERVISOR
             switch (idRolActual)
             {
-                case 1: // GERENTE
-                    btnUsuarios.Visibility = Visibility.Visible;
-                    btnCompra.Visibility = Visibility.Visible;
-                    btnProductos.Visibility = Visibility.Visible;
-                    btnReportes.Visibility = Visibility.Visible;
+                case 1: // GERENTE (Tiene acceso a todo)
+                    EstablecerAccesoBoton(btnUsuarios, true);
+                    EstablecerAccesoBoton(btnCompra, true);
+                    EstablecerAccesoBoton(btnProductos, true);
+                    EstablecerAccesoBoton(btnReportes, true);
                     break;
 
-                case 2: // VENDEDOR
-                    btnUsuarios.Visibility = Visibility.Collapsed;
-                    btnCompra.Visibility = Visibility.Visible;
-                    btnProductos.Visibility = Visibility.Collapsed;
-                    btnReportes.Visibility = Visibility.Visible;
+                case 2: // VENDEDOR (Sin acceso a Usuarios, Compras ni Productos -> Se muestran abajo en gris)
+                    EstablecerAccesoBoton(btnUsuarios, false);
+                    EstablecerAccesoBoton(btnCompra, false);
+                    EstablecerAccesoBoton(btnProductos, false);
+                    EstablecerAccesoBoton(btnReportes, true);
                     break;
 
-                case 3: // SUPERVISOR
-                    btnUsuarios.Visibility = Visibility.Collapsed;
-                    btnCompra.Visibility = Visibility.Collapsed;
-                    btnProductos.Visibility = Visibility.Visible;
-                    btnReportes.Visibility = Visibility.Visible;
+                case 3: // SUPERVISOR (Sin acceso a Usuarios -> Se muestra abajo en gris)
+                    EstablecerAccesoBoton(btnUsuarios, false);
+                    EstablecerAccesoBoton(btnCompra, true);
+                    EstablecerAccesoBoton(btnProductos, true);
+                    EstablecerAccesoBoton(btnReportes, true);
                     break;
             }
 
-            // Configurar acceso al módulo de Backups (solo Gerente)
-            if (idRolActual != 1) // idRol == 1 es Gerente
+            // Configurar acceso al módulo de Backups (solo Gerente, el resto en gris abajo)
+            if (idRolActual != 1)
             {
-                btnBackup.IsEnabled = false;
+                EstablecerAccesoBoton(btnBackup, false);
+            }
+            else
+            {
+                EstablecerAccesoBoton(btnBackup, true);
             }
 
             if (SesionGlobal.HayUsuarioLogueado)
@@ -74,6 +82,35 @@ namespace SistemaVentas.GUI
             else
             {
                 txtNombreUsuario.Text = "Usuario no identificado";
+            }
+        }
+
+        /// <summary>
+        /// Manda los botones sin permisos al fondo visualmente (si están en un StackPanel) y los pone en gris (Opacity = 0.4 e IsEnabled = false)
+        /// </summary>
+        private void EstablecerAccesoBoton(Button boton, bool tieneAcceso)
+        {
+            if (boton == null) return;
+
+            if (tieneAcceso)
+            {
+                boton.Visibility = Visibility.Visible;
+                boton.IsEnabled = true;
+                boton.Opacity = 1.0;
+            }
+            else
+            {
+                // En vez de ocultarlo (Collapsed), lo dejamos visible pero inactivo y translúcido
+                boton.Visibility = Visibility.Visible;
+                boton.IsEnabled = false;
+                boton.Opacity = 0.4; // Apariencia en gris / deshabilitado
+
+                // Si están dentro de un StackPanel, esto los desplaza dinámicamente hacia el final del contenedor
+                if (boton.Parent is Panel panelPadre)
+                {
+                    panelPadre.Children.Remove(boton);
+                    panelPadre.Children.Add(boton); // Lo manda al último lugar (abajo de todo)
+                }
             }
         }
 
@@ -121,20 +158,18 @@ namespace SistemaVentas.GUI
         private void btnCaja_Click(object sender, RoutedEventArgs e)
         {
             OcultarSubmenus();
-            // ContenedorPrincipal.Content = new CajaView(); // Descomentar si usas la vista de caja
+            // ContenedorPrincipal.Content = new CajaView(); 
         }
 
         private void btnBackup_Click(object sender, RoutedEventArgs e)
         {
             OcultarSubmenus();
 
-            // Validación de seguridad (Solo el Gerente - Rol 1 puede acceder)
             if (SesionGlobal.UsuarioActual == null || SesionGlobal.UsuarioActual.IdRol != 1)
             {
                 MessageBox.Show("No tienes permisos para realizar copias de seguridad.", "Acceso denegado", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
-            // Cargar vista de backup en el contenedor principal
             ContenedorPrincipal.Content = new SistemaVentas.GUI.BackUpControl();
         }
 
@@ -162,7 +197,7 @@ namespace SistemaVentas.GUI
 
             OcultarSubmenus();
 
-            if (idRol == 1) // 1 = GERENTE
+            if (idRol == 1) // GERENTE
             {
                 btnSubRentabilidad.Visibility = Visibility.Visible;
                 btnSubAuditoria.Visibility = Visibility.Visible;
@@ -170,12 +205,11 @@ namespace SistemaVentas.GUI
 
                 ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Gerente.RentabilidadView();
             }
-            else if (idRol == 2) // 2 = VENDEDOR
+            else if (idRol == 2) // VENDEDOR
             {
-                // El Vendedor solo ve su Arqueo Diario directamente y sin submenús
                 ContenedorPrincipal.Content = new SistemaVentas.GUI.Views.Reportes.Vendedor.ArqueoDiarioView(idUsuario);
             }
-            else if (idRol == 3) // 3 = SUPERVISOR
+            else if (idRol == 3) // SUPERVISOR
             {
                 btnSubStockCritico.Visibility = Visibility.Visible;
                 btnSubVentasCanceladas.Visibility = Visibility.Visible;

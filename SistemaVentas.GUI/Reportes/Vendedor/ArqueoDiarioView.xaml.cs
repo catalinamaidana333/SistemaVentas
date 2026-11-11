@@ -3,7 +3,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using SistemaVentas.BLL.Reportes;
-using SistemaVentas.DAL.Reportes;
 
 namespace SistemaVentas.GUI.Views.Reportes.Vendedor
 {
