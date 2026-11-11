@@ -19,6 +19,9 @@ namespace SistemaVentas.GUI
 {
     public partial class Ventas : UserControl
     {
+        private const string ProductoRapido1 = "Coca-Cola";
+        private const string ProductoRapido2 = "Coca-Cola Zero";
+
         private readonly ObservableCollection<DetalleVenta> _carrito;
         private readonly ObservableCollection<Producto> _productos;
         private readonly CN_Producto _productoBLL;
@@ -48,6 +51,9 @@ namespace SistemaVentas.GUI
 
             // Validar estado visual del botón al cargar el control
             ActualizarBotonCaja();
+
+            // Dejar el foco listo para el primer escaneo del lector
+            Loaded += (_, _) => txtBuscador.Focus();
         }
 
         private void ActualizarBotonCaja()
@@ -98,6 +104,12 @@ namespace SistemaVentas.GUI
                 return;
             }
 
+            AgregarAlCarrito(producto);
+            txtBuscador.Focus();
+        }
+
+        private void AgregarAlCarrito(Producto producto)
+        {
             // 1. Buscamos si el producto ya existe en el carrito
             var itemExistente = _carrito.FirstOrDefault(d => d.IdProducto == producto.IdProducto);
             int cantidadSolicitada = (itemExistente?.Cantidad ?? 0) + 1;
@@ -132,6 +144,86 @@ namespace SistemaVentas.GUI
             cmbProductos.SelectedIndex = -1;
             cmbProductos.Text = string.Empty;
             ActualizarTotal();
+        }
+
+        private void txtBuscador_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key != Key.Enter)
+                return;
+
+            e.Handled = true;
+
+            string criterio = txtBuscador.Text;
+            txtBuscador.Clear();
+            txtBuscador.Focus();
+
+            if (string.IsNullOrWhiteSpace(criterio))
+                return;
+
+            try
+            {
+                Producto? producto = _productoBLL.BuscarProducto(criterio, out string mensaje);
+
+                if (producto is null)
+                {
+                    MessageBox.Show(mensaje, "Producto no encontrado",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                AgregarAlCarrito(producto);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"No se pudo buscar el producto:\n{ex.Message}", "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                // El lector debe seguir teniendo el foco para el próximo escaneo
+                txtBuscador.Focus();
+            }
+        }
+
+        private void txtBuscador_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            // El buscador solo acepta dígitos porque es exclusivo para códigos de barras
+            e.Handled = !e.Text.All(char.IsDigit);
+        }
+
+        private void btnProductoRapido1_Click(object sender, RoutedEventArgs e)
+        {
+            AgregarProductoRapido(ProductoRapido1);
+        }
+
+        private void btnProductoRapido2_Click(object sender, RoutedEventArgs e)
+        {
+            AgregarProductoRapido(ProductoRapido2);
+        }
+
+        private void AgregarProductoRapido(string nombreProducto)
+        {
+            string buscado = Normalizar(nombreProducto);
+
+            Producto? producto = _productos
+                .Where(p => Normalizar(p.Nombre).Contains(buscado, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(p => Normalizar(p.Nombre).Length)
+                .FirstOrDefault();
+
+            if (producto is null)
+            {
+                MessageBox.Show($"No se encontró el producto '{nombreProducto}' en el catálogo.",
+                    "Producto no encontrado", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            AgregarAlCarrito(producto);
+            txtBuscador.Focus();
+        }
+
+        private static string Normalizar(string texto)
+        {
+            return texto.Replace("-", "").Replace(" ", "").Trim();
         }
 
         private void ActualizarTotal()

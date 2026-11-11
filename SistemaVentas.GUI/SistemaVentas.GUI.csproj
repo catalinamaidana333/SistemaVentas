@@ -13,4 +13,12 @@
     <ProjectReference Include="..\SistemaVentas.Entities\SistemaVentas.Entities.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Markdig.Wpf" Version="0.5.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Docs\MANUAL_DE_USUARIO.md" />
+  </ItemGroup>
+
 </Project>
