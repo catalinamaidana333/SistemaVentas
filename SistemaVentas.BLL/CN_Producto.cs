@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using SistemaVentas.DAL;
 using SistemaVentas.Entities; // O SistemaVentas.Entidades según tu proyecto
 
@@ -14,9 +15,81 @@ namespace SistemaVentas.BLL
             return objcd_producto.Listar();
         }
 
+        /// <summary>
+        /// Devuelve únicamente los productos disponibles para la venta:
+        /// activos y con stock mayor a cero.
+        /// </summary>
+        public List<Producto> ListarDisponiblesParaVenta()
+        {
+            return objcd_producto.Listar()
+                .Where(producto => producto.Activo && producto.StockActual > 0)
+                .ToList();
+        }
+
+        /// <summary>
+        /// Valida si la cantidad solicitada puede cubrirse con el stock disponible.
+        /// </summary>
+        public bool ValidarCantidadDisponible(Producto producto, int cantidadSolicitada, out string Mensaje)
+        {
+            Mensaje = string.Empty;
+
+            if (producto == null)
+            {
+                Mensaje = "No se indicó un producto válido.";
+                return false;
+            }
+
+            if (cantidadSolicitada <= 0)
+            {
+                Mensaje = "La cantidad solicitada debe ser mayor a cero.";
+                return false;
+            }
+
+            if (cantidadSolicitada > producto.StockActual)
+            {
+                Mensaje = $"Stock insuficiente para '{producto.Nombre}'. Disponible: {producto.StockActual}.";
+                return false;
+            }
+
+            return true;
+        }
+
         public List<Categoria> ListarCategorias()
         {
             return objcd_producto.ListarCategorias();
+        }
+
+        public string GenerarCodigoBarrasUnico(int longitud = 13)
+        {
+            if (longitud <= 0)
+                throw new ArgumentOutOfRangeException(nameof(longitud),
+                    "La longitud del código debe ser mayor a cero.");
+
+            const int maxIntentos = 1000;
+
+            for (int intento = 0; intento < maxIntentos; intento++)
+            {
+                string codigo = GenerarCadenaNumerica(longitud);
+
+                if (!objcd_producto.ExisteCodigoBarras(codigo))
+                    return codigo;
+            }
+
+            throw new InvalidOperationException(
+                "No se pudo generar un código de barras único después de varios intentos.");
+        }
+
+        private string GenerarCadenaNumerica(int longitud)
+        {
+            char[] digitos = new char[longitud];
+
+            for (int i = 0; i < longitud; i++)
+            {
+                int min = (i == 0 && longitud > 1) ? 1 : 0;
+                digitos[i] = (char)('0' + Random.Shared.Next(min, 10));
+            }
+
+            return new string(digitos);
         }
 
         public bool Registrar(Producto obj, out string Mensaje)
@@ -59,6 +132,25 @@ namespace SistemaVentas.BLL
             }
 
             return objcd_producto.Editar(obj, out Mensaje);
+        }
+
+        public bool ActualizarPrecioVenta(int idProducto, decimal nuevoPrecioVenta, out string Mensaje)
+        {
+            Mensaje = string.Empty;
+
+            if (idProducto <= 0)
+            {
+                Mensaje = "El producto indicado no es válido.";
+                return false;
+            }
+
+            if (nuevoPrecioVenta <= 0)
+            {
+                Mensaje = "El nuevo precio de venta debe ser mayor a 0.";
+                return false;
+            }
+
+            return objcd_producto.ActualizarPrecioVenta(idProducto, nuevoPrecioVenta, out Mensaje);
         }
 
         public bool Eliminar(Producto obj, out string Mensaje)

@@ -1,9 +1,13 @@
 ﻿using SistemaVentas.BLL;
+using SistemaVentas.BLL.Tickets;
 using SistemaVentas.Entities;
+using SistemaVentas.Entities.Tickets;
 using SistemaVentas.GUI.Contexto;
 using SistemaVentas.GUI.Dialogs;
 
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -19,7 +23,11 @@ namespace SistemaVentas.GUI
         private readonly ObservableCollection<Producto> _productos;
         private readonly CN_Producto _productoBLL;
         private readonly VentaBLL _ventaBLL;
+        private readonly TicketService _ticketService = new();
         private ComboBox _cmbProductos = null!;
+        private Venta? _ventaParaTicket;
+        private int _idVentaGenerada;
+        private string? _rutaUltimoTicket;
         
 
         // ELIMINADO: private bool _cajaAbierta = false;
@@ -57,14 +65,28 @@ namespace SistemaVentas.GUI
         {
             try
             {
-                foreach (Producto producto in _productoBLL.Listar().Where(producto => producto.Activo))
+                _productos.Clear();
+                foreach (Producto producto in _productoBLL.ListarDisponiblesParaVenta())
                     _productos.Add(producto);
+
+                cmbProductos.SelectedIndex = -1;
+                cmbProductos.Text = string.Empty;
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"No se pudo cargar el catálogo de productos.\n{ex.Message}",
                     "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private void RecargarProductos()
+        {
+            CargarProductos();
+        }
+
+        private Producto? ObtenerProductoDelCatalogo(int idProducto)
+        {
+            return _productos.FirstOrDefault(producto => producto.IdProducto == idProducto);
         }
 
         private void btnAgregarProducto_Click(object sender, RoutedEventArgs e)
@@ -78,18 +100,20 @@ namespace SistemaVentas.GUI
 
             // 1. Buscamos si el producto ya existe en el carrito
             var itemExistente = _carrito.FirstOrDefault(d => d.IdProducto == producto.IdProducto);
+            int cantidadSolicitada = (itemExistente?.Cantidad ?? 0) + 1;
+
+            // 2. Validamos el stock disponible antes de agregar o incrementar
+            if (!_productoBLL.ValidarCantidadDisponible(producto, cantidadSolicitada, out string mensaje))
+            {
+                MessageBox.Show(mensaje, "Stock insuficiente",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
 
             if (itemExistente != null)
             {
-                // 2. Si existe, incrementamos la cantidad
-                itemExistente.Cantidad += 1;
-
-                
-
-                // 3. Forzamos a la grilla a redibujarse para mostrar la nueva cantidad y subtotal
-                // Esto es necesario porque una ObservableCollection detecta cuando se agrega/quita una fila, 
-                // pero NO detecta cuando cambia una propiedad interna de una fila existente.
-                dgVentas.Items.Refresh();
+                // 3. Si existe, incrementamos la cantidad
+                itemExistente.Cantidad = cantidadSolicitada;
             }
             else
             {
@@ -97,6 +121,7 @@ namespace SistemaVentas.GUI
                 _carrito.Add(new DetalleVenta
                 {
                     IdProducto = producto.IdProducto,
+                    NombreProducto = producto.Nombre,
                     Cantidad = 1,
                     PrecioUnitario = producto.PrecioVenta,
                     // Subtotal se calcula automáticamente en la entidad DetalleVenta
@@ -233,22 +258,113 @@ namespace SistemaVentas.GUI
                 // Llamamos al método Insertar (que a su vez llama a tu DAL transaccional)
                 int idVentaGenerada = _ventaBLL.RegistrarVenta(nuevaVenta);
 
-                // Si llegó hasta aquí, la transacción fue exitosa
-                MessageBox.Show($"Venta #{idVentaGenerada} generada con éxito.\nTotal: ${totalVenta:N2}\nVuelto: ${vuelto:N2}",
-                                "Venta Exitosa", MessageBoxButton.OK, MessageBoxImage.Information);
+                // Guardamos la venta registrada para generar y reimprimir su ticket.
+                _ventaParaTicket = nuevaVenta;
+                _idVentaGenerada = idVentaGenerada;
+                GenerarTicketSinVisualizar();
+
+                MessageBox.Show(
+                    "Venta registrada correctamente. Presione RECEIPT para ver el comprobante.",
+                    "Venta exitosa",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
 
                 // 6. Limpiar la UI para el próximo cliente
                 _carrito.Clear();
                 ActualizarTotal();
 
+                // 7. Recargar el catálogo para reflejar el nuevo stock
+                //    (los productos agotados dejan de estar disponibles)
+                RecargarProductos();
+
                 // Opcional: resetear el método de pago por defecto
                 _cmbMetodoPago.SelectedIndex = 0;
+            }
+            catch (StockInsuficienteException ex)
+            {
+                // La validación de la BLL o el SP detectaron que el stock ya no alcanza.
+                MessageBox.Show(ex.Message, "Stock insuficiente", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
             catch (Exception ex)
             {
                 // Si falló algo en la BD (ej. se cortó la conexión), el Rollback ya se hizo en la DAL
                 MessageBox.Show($"Ocurrió un error al guardar la venta:\n{ex.Message}", "Error BD", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private void GenerarTicketSinVisualizar()
+        {
+            try
+            {
+                _rutaUltimoTicket = GenerarTicketDesdeUltimaVenta();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"La venta se registró correctamente, pero no se pudo generar el ticket:\n{ex.Message}",
+                    "Ticket", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        private void btnImprimir_Click(object sender, RoutedEventArgs e)
+        {
+            if (_ventaParaTicket is null)
+            {
+                MessageBox.Show("Primero debe registrarse una venta.", "Ticket",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            try
+            {
+                string rutaPdf = _rutaUltimoTicket ?? GenerarTicketDesdeUltimaVenta();
+                if (!File.Exists(rutaPdf))
+                    rutaPdf = GenerarTicketDesdeUltimaVenta();
+
+                _rutaUltimoTicket = rutaPdf;
+                AbrirPdf(_rutaUltimoTicket);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"No se pudo generar el ticket:\n{ex.Message}",
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private string GenerarTicketDesdeUltimaVenta()
+        {
+            if (_ventaParaTicket is null)
+                throw new InvalidOperationException("No hay una venta registrada para generar el ticket.");
+
+            var ticket = new TicketVenta
+            {
+                IdVenta = _idVentaGenerada,
+                FechaHora = DateTime.Now,
+                NombreMinimercado = TicketService.NombreMinimercado,
+                NombreCajero = SesionGlobal.NombreCompletoActual,
+                MetodoPago = _ventaParaTicket.MetodoPago,
+                Total = _ventaParaTicket.Total,
+                MontoAbonado = _ventaParaTicket.MontoAbonado,
+                Vuelto = _ventaParaTicket.Vuelto,
+                Detalles = _ventaParaTicket.Detalles.Select(d => new DetalleTicket
+                {
+                    NombreProducto = d.NombreProducto,
+                    Cantidad = d.Cantidad,
+                    PrecioUnitario = d.PrecioUnitario,
+                    Subtotal = d.Subtotal
+                }).ToList()
+            };
+
+            return _ticketService.GenerarTicket(ticket);
+        }
+
+        private static void AbrirPdf(string rutaPdf)
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = rutaPdf,
+                UseShellExecute = true
+            });
         }
 
         private void btnAbrirCerrarCaja_Click(object sender, RoutedEventArgs e)
@@ -347,22 +463,49 @@ private void btnSumar_Click(object sender, RoutedEventArgs e)
     // --- 3. Métodos centralizados para actualizar la fila ---
     private void ModificarCantidad(DetalleVenta item, int variacion)
     {
+        int nuevaCantidad = item.Cantidad + variacion;
+
         // Si al restar llega a 0, lo quitamos del carrito
-        if (item.Cantidad + variacion <= 0)
+        if (nuevaCantidad <= 0)
         {
             _carrito.Remove(item);
+            ActualizarTotal();
+            return;
         }
-        else
+
+        // No permitimos superar el stock disponible del producto
+        Producto? producto = ObtenerProductoDelCatalogo(item.IdProducto);
+        if (producto != null &&
+            !_productoBLL.ValidarCantidadDisponible(producto, nuevaCantidad, out string mensaje))
         {
-            item.Cantidad += variacion;
-           
-            dgVentas.Items.Refresh(); // Obliga a la grilla a actualizar los textos
+            MessageBox.Show(mensaje, "Stock insuficiente",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
         }
+
+        item.Cantidad = nuevaCantidad;
         ActualizarTotal(); // Tu método existente
     }
 
     private void FijarCantidadExacta(DetalleVenta item, int cantidadExacta)
     {
+        Producto? producto = ObtenerProductoDelCatalogo(item.IdProducto);
+
+        // Ajustamos la cantidad al stock disponible si se intenta superar
+        if (producto != null && cantidadExacta > producto.StockActual)
+        {
+            cantidadExacta = producto.StockActual;
+            MessageBox.Show($"La cantidad se ajustó al stock disponible ({producto.StockActual}).",
+                "Stock insuficiente", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+
+        if (cantidadExacta <= 0)
+        {
+            _carrito.Remove(item);
+            ActualizarTotal();
+            return;
+        }
+
         item.Cantidad = cantidadExacta;
         
         dgVentas.Items.Refresh();

@@ -145,6 +145,12 @@ namespace SistemaVentas.GUI
 
         private void btnCompra_Click(object sender, RoutedEventArgs e)
         {
+            if (SesionGlobal.UsuarioActual == null || SesionGlobal.UsuarioActual.IdRol is not (1 or 2))
+            {
+                MessageBox.Show("No tienes permisos para acceder al módulo de compras.", "Acceso denegado", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             OcultarSubmenus();
             ContenedorPrincipal.Content = new Compra();
         }

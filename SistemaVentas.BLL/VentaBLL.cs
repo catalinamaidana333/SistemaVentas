@@ -37,7 +37,18 @@ namespace SistemaVentas.BLL
 
                
                 detalle.PrecioUnitario = producto.PrecioVenta;
-                
+                detalle.NombreProducto = producto.Nombre;
+
+            }
+
+            foreach (var grupo in venta.Detalles.GroupBy(detalle => detalle.IdProducto))
+            {
+                Producto producto = productos[grupo.Key];
+                int cantidadSolicitada = grupo.Sum(detalle => detalle.Cantidad);
+
+                if (cantidadSolicitada > producto.StockActual)
+                    throw new StockInsuficienteException(
+                        $"Stock insuficiente para '{producto.Nombre}'. Disponible: {producto.StockActual}, solicitado: {cantidadSolicitada}.");
             }
 
             venta.Total = venta.Detalles.Sum(detalle => detalle.Subtotal);

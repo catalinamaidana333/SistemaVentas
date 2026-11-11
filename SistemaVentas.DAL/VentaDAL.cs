@@ -31,61 +31,63 @@ namespace SistemaVentas.DAL
                 throw new ArgumentNullException(nameof(venta));
             if (venta.IdCajaUsuario <= 0)
                 throw new ArgumentException("La venta debe pertenecer a una sesión de caja válida.", nameof(venta));
+            if (venta.Detalles == null || venta.Detalles.Count == 0)
+                throw new ArgumentException("La venta debe contener al menos un producto.", nameof(venta));
 
-            // 1. Agregamos monto_abonado y vuelto al INSERT y a los VALUES
-            const string consultaVenta = @"INSERT INTO dbo.Venta 
-                                   (id_caja_usuario, fecha_hora, metodo_pago, total, monto_abonado, vuelto)
-                                   OUTPUT INSERTED.id_venta
-                                   VALUES (@id_caja_usuario, GETDATE(), @metodo_pago, @total, @monto_abonado, @vuelto);";
-
-            const string consultaDetalle = @"INSERT INTO dbo.DetalleVenta
-                                     (id_venta, id_producto, cantidad, precio_unitario_historico, subtotal)
-                                     VALUES (@id_venta, @id_producto, @cantidad, @precio_unitario, @subtotal);";
-
+            // La transacción, el alta de Venta/DetalleVenta y el descuento atómico
+            // de stock viven dentro del SP. La DAL solo envía el carrito como TVP.
             using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
+            using (SqlCommand comando = new SqlCommand("dbo.usp_RegistrarVenta", conexion))
             {
-                conexion.Open();
-                using (SqlTransaction transaccion = conexion.BeginTransaction())
+                comando.CommandType = CommandType.StoredProcedure;
+
+                comando.Parameters.AddWithValue("@id_caja_usuario", venta.IdCajaUsuario);
+                comando.Parameters.AddWithValue("@metodo_pago", venta.MetodoPago);
+                comando.Parameters.AddWithValue("@total", venta.Total);
+                comando.Parameters.AddWithValue("@monto_abonado", venta.MontoAbonado);
+                comando.Parameters.AddWithValue("@vuelto", venta.Vuelto);
+
+                SqlParameter parametroDetalle = comando.Parameters.Add("@detalle", SqlDbType.Structured);
+                parametroDetalle.TypeName = "dbo.DetalleVentaTipo";
+                parametroDetalle.Value = CrearTablaDetalle(venta.Detalles);
+
+                SqlParameter parametroIdVenta = comando.Parameters.Add("@id_venta", SqlDbType.Int);
+                parametroIdVenta.Direction = ParameterDirection.Output;
+
+                try
                 {
-                    try
-                    {
-                        int idVenta;
-                        using (SqlCommand comando = new SqlCommand(consultaVenta, conexion, transaccion))
-                        {
-                            comando.Parameters.AddWithValue("@id_caja_usuario", venta.IdCajaUsuario);
-                            comando.Parameters.AddWithValue("@metodo_pago", venta.MetodoPago);
-                            comando.Parameters.AddWithValue("@total", venta.Total);
-
-                            // 2. Pasamos los valores al comando SQL
-                            comando.Parameters.AddWithValue("@monto_abonado", venta.MontoAbonado);
-                            comando.Parameters.AddWithValue("@vuelto", venta.Vuelto);
-
-                            idVenta = Convert.ToInt32(comando.ExecuteScalar());
-                        }
-
-                        foreach (DetalleVenta detalle in venta.Detalles)
-                        {
-                            using SqlCommand comandoDetalle = new SqlCommand(consultaDetalle, conexion, transaccion);
-                            comandoDetalle.Parameters.AddWithValue("@id_venta", idVenta);
-                            comandoDetalle.Parameters.AddWithValue("@id_producto", detalle.IdProducto);
-                            comandoDetalle.Parameters.AddWithValue("@cantidad", detalle.Cantidad);
-                            comandoDetalle.Parameters.AddWithValue("@precio_unitario", detalle.PrecioUnitario);
-                            comandoDetalle.Parameters.AddWithValue("@subtotal", detalle.Subtotal);
-                            comandoDetalle.ExecuteNonQuery();
-                        }
-
-                        // Aquí podrías agregar el UPDATE para descontar el stock si lo necesitas
-
-                        transaccion.Commit();
-                        return idVenta;
-                    }
-                    catch
-                    {
-                        transaccion.Rollback();
-                        throw;
-                    }
+                    conexion.Open();
+                    comando.ExecuteNonQuery();
                 }
+                catch (SqlException ex) when (ex.Number == 50001)
+                {
+                    // El SP lanza 50001 cuando el UPDATE condicionado no pudo
+                    // descontar el stock de todos los productos pedidos.
+                    throw new StockInsuficienteException(ex.Message, ex);
+                }
+
+                return Convert.ToInt32(parametroIdVenta.Value);
             }
+        }
+
+        private static DataTable CrearTablaDetalle(IEnumerable<DetalleVenta> detalles)
+        {
+            DataTable tabla = new DataTable();
+            tabla.Columns.Add("id_producto", typeof(int));
+            tabla.Columns.Add("cantidad", typeof(int));
+            tabla.Columns.Add("precio_unitario_historico", typeof(decimal));
+            tabla.Columns.Add("subtotal", typeof(decimal));
+
+            foreach (DetalleVenta detalle in detalles)
+            {
+                tabla.Rows.Add(
+                    detalle.IdProducto,
+                    detalle.Cantidad,
+                    detalle.PrecioUnitario,
+                    detalle.Subtotal);
+            }
+
+            return tabla;
         }
 
         private decimal ObtenerTotalPorMetodoPago(int idCajaUsuario, string metodoPago)

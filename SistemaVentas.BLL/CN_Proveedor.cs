@@ -1,0 +1,196 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using SistemaVentas.DAL;
+using SistemaVentas.Entities;
+
+namespace SistemaVentas.BLL
+{
+    /// <summary>
+    /// Capa de negocio del Proveedor.
+    /// Es el único lugar donde se validan las reglas del dominio y se redactan
+    /// los mensajes que se muestran al usuario.
+    /// </summary>
+    public class CN_Proveedor
+    {
+        // Se reutiliza una única instancia a nivel de clase
+        private readonly CD_Proveedor objcd_proveedor = new CD_Proveedor();
+
+        public List<Proveedor> Listar()
+        {
+            return objcd_proveedor.Listar();
+        }
+
+        public Proveedor? ObtenerPorId(int idProveedor)
+        {
+            return objcd_proveedor.ObtenerPorId(idProveedor);
+        }
+
+        public bool Registrar(Proveedor obj, out string Mensaje)
+        {
+            return Registrar(obj, out _, out Mensaje);
+        }
+
+        public bool Registrar(Proveedor obj, out int idProveedor, out string Mensaje)
+        {
+            idProveedor = 0;
+            Mensaje = string.Empty;
+
+            // 1. Validación de campos obligatorios
+            if (obj == null)
+            {
+                Mensaje = "El proveedor a registrar no puede ser nulo.";
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(obj.RazonSocial))
+            {
+                Mensaje = "La razón social del proveedor no puede estar vacía.";
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(obj.Cuit))
+            {
+                Mensaje = "El CUIT del proveedor no puede estar vacío.";
+                return false;
+            }
+
+            if (!EsCuitValido(obj.Cuit))
+            {
+                Mensaje = "El CUIT del proveedor no tiene un formato válido.";
+                return false;
+            }
+
+            // 2. La capa de datos solo ejecuta el SQL y devuelve el resultado
+            try
+            {
+                if (objcd_proveedor.ExisteCuit(NormalizarCuit(obj.Cuit)))
+                {
+                    Mensaje = "Ya existe un proveedor registrado con ese CUIT.";
+                    return false;
+                }
+
+                idProveedor = objcd_proveedor.Registrar(Normalizar(obj));
+                if (idProveedor <= 0)
+                {
+                    Mensaje = "Ya existe un proveedor registrado con ese CUIT.";
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                idProveedor = 0;
+                // Detalle técnico solo para el log del desarrollador
+                Debug.WriteLine($"Error inesperado al registrar proveedor: {ex.Message}");
+                Mensaje = "No se pudo guardar el proveedor debido a un inconveniente con el servidor o los datos ingresados.";
+                return false;
+            }
+
+            Mensaje = "Proveedor registrado correctamente.";
+            return true;
+        }
+
+        public bool Editar(Proveedor obj, out string Mensaje)
+        {
+            Mensaje = string.Empty;
+
+            // 1. Validación de campos obligatorios
+            if (obj == null)
+            {
+                Mensaje = "El proveedor a editar no puede ser nulo.";
+                return false;
+            }
+
+            if (obj.IdProveedor <= 0)
+            {
+                Mensaje = "El proveedor a editar no es válido.";
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(obj.RazonSocial))
+            {
+                Mensaje = "La razón social del proveedor no puede estar vacía.";
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(obj.Cuit))
+            {
+                Mensaje = "El CUIT del proveedor no puede estar vacío.";
+                return false;
+            }
+
+            if (!EsCuitValido(obj.Cuit))
+            {
+                Mensaje = "El CUIT del proveedor no tiene un formato válido.";
+                return false;
+            }
+
+            // 2. La capa de datos solo ejecuta el SQL y devuelve el resultado
+            try
+            {
+                if (objcd_proveedor.ExisteCuit(NormalizarCuit(obj.Cuit), obj.IdProveedor))
+                {
+                    Mensaje = "Ya existe otro proveedor registrado con ese CUIT.";
+                    return false;
+                }
+
+                if (!objcd_proveedor.Editar(Normalizar(obj)))
+                {
+                    Mensaje = "No se pudo actualizar la información del proveedor.";
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Detalle técnico solo para el log del desarrollador
+                Debug.WriteLine($"Error inesperado al editar proveedor: {ex.Message}");
+                Mensaje = "No se pudo actualizar la información del proveedor debido a un inconveniente con el servidor o los datos ingresados.";
+                return false;
+            }
+
+            Mensaje = "Proveedor actualizado correctamente.";
+            return true;
+        }
+
+        /// <summary>
+        /// Normaliza los textos del proveedor (recorta espacios) antes de enviarlos a la capa de datos.
+        /// </summary>
+        private static Proveedor Normalizar(Proveedor obj)
+        {
+            return new Proveedor()
+            {
+                IdProveedor = obj.IdProveedor,
+                RazonSocial = obj.RazonSocial.Trim(),
+                Cuit = obj.Cuit.Trim(),
+                Telefono = obj.Telefono?.Trim() ?? string.Empty,
+                NombreContacto = obj.NombreContacto?.Trim() ?? string.Empty,
+                Activo = obj.Activo
+            };
+        }
+
+        private static bool EsCuitValido(string cuit)
+        {
+            if (cuit.Any(caracter => !char.IsAsciiDigit(caracter) && caracter != '-' && !char.IsWhiteSpace(caracter)))
+                return false;
+
+            string digitos = NormalizarCuit(cuit);
+            if (digitos.Length != 11)
+                return false;
+
+            int[] ponderaciones = { 5, 4, 3, 2, 7, 6, 5, 4, 3, 2 };
+            int suma = 0;
+            for (int indice = 0; indice < ponderaciones.Length; indice++)
+                suma += (digitos[indice] - '0') * ponderaciones[indice];
+
+            int resto = suma % 11;
+            int digitoVerificador = resto == 0 ? 0 : resto == 1 ? 9 : 11 - resto;
+            return digitos[10] - '0' == digitoVerificador;
+        }
+
+        private static string NormalizarCuit(string cuit)
+        {
+            return string.Concat(cuit.Where(char.IsAsciiDigit));
+        }
+    }
+}

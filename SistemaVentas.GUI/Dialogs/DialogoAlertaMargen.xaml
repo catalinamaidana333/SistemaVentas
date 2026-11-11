@@ -1,0 +1,45 @@
+<Window x:Class="SistemaVentas.GUI.Dialogs.DialogoAlertaMargen"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Alerta de Margen" Height="500" Width="900"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource BgPaneles}"
+        Foreground="{DynamicResource TextoClaro}"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Alerta: El costo ha subido y el margen bajará por debajo del 20%" 
+                   FontSize="16" FontWeight="Bold" Margin="0,0,0,15" TextWrapping="Wrap"/>
+
+        <DataGrid Grid.Row="1" x:Name="dgAlertas" AutoGenerateColumns="False" 
+                  CanUserAddRows="False" SelectionMode="Single" IsReadOnly="False"
+                  HeadersVisibility="Column">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Producto" Width="150" Binding="{Binding NombreProducto}" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Costo Anterior" Width="110" Binding="{Binding CostoAnterior, StringFormat=N2}" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Costo Nuevo" Width="110" Binding="{Binding CostoNuevo, StringFormat=N2}" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Margen % Antes" Width="110" Binding="{Binding MargenAnterior, StringFormat=N2}" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Margen % Después" Width="120" Binding="{Binding MargenNuevo, StringFormat=N2}" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Precio Venta Sugerido" Width="150" Binding="{Binding PrecioVentaSugerido, StringFormat=N2}" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Nuevo Precio Venta" Width="130" Binding="{Binding NuevoPrecioVenta, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}"/>
+                <DataGridTemplateColumn Header="Aplicar" Width="80">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="Aplicar" Click="btnAplicar_Click" Tag="{Binding}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
+            <Button Content="Cerrar" Style="{StaticResource BotonPrimario}" Width="100" Height="40" Click="btnCerrar_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

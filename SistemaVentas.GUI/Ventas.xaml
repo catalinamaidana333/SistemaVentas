@@ -164,7 +164,7 @@
                         <Button Grid.Row="0" Grid.Column="2" Content="LIMPIAR CARRITO" Style="{StaticResource BotonPrimario}" Click="Button_Click_1"/>
 
                         <!-- Fila 2 -->
-                        <Button Grid.Row="2" Grid.Column="0" Content="📄 RECEIPT" Style="{StaticResource BotonPrimario}"/>
+                        <Button Grid.Row="2" Grid.Column="0" x:Name="btnImprimir" Content="📄 RECEIPT" Style="{StaticResource BotonPrimario}" Click="btnImprimir_Click"/>
                         <Button Grid.Row="2" Grid.Column="2" Content="↪ CANCEL" Style="{StaticResource BotonPrimario}" Click="Button_Click_1"/>
                     </Grid>
 
