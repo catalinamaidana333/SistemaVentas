@@ -23,13 +23,13 @@ namespace SistemaVentas.GUI
     public partial class BackUpControl : UserControl
     {
         private ObservableCollection<BackupInfo> backups;
-        private int contadorBackups = 0;
 
         public BackUpControl()
         {
             InitializeComponent();
             backups = new ObservableCollection<BackupInfo>();
             DgBackups.ItemsSource = backups;
+            CargarHistorialDesdeBD();
         }
 
         private void BtnGenerarBackup_Click(object sender, RoutedEventArgs e)
@@ -52,19 +52,10 @@ namespace SistemaVentas.GUI
                     SistemaVentas.BLL.BackupBLL backupBll = new SistemaVentas.BLL.BackupBLL();
                     backupBll.GenerarRespaldo(rutaArchivo);
 
-                    // 3. Registrar en la tabla visual
-                    contadorBackups++;
-                    DateTime ahora = DateTime.Now;
-
-                    var nuevoBackup = new BackupInfo
-                    {
-                        BackupId = contadorBackups,
-                        NombreArchivo = System.IO.Path.GetFileName(rutaArchivo), // Muestra el nombre del archivo
-                        FechaHora = ahora,
-                        Estado = "Completado"
-                    };
-
-                    backups.Insert(0, nuevoBackup); // Agregar al inicio de la tabla
+                    // 3. Registrar en la BD y recargar historial persistido
+                    string nombreArchivo = System.IO.Path.GetFileName(rutaArchivo);
+                    backupBll.RegistrarHistorialBackup(nombreArchivo, "BACKUP");
+                    CargarHistorialDesdeBD();
 
                     // 4. Mostrar mensaje de éxito con la ruta exacta de guardado
                     MostrarMensajeExito();
