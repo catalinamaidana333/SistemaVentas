@@ -8,7 +8,7 @@ namespace SistemaVentas.DAL.Reportes
 {
     /// <summary>
     /// Clase de acceso a datos (DAL) para el reporte de Arqueo Diario.
-    /// Utiliza SQL Server y la conexión definida en App.config.
+    /// Corregido según los hallazgos de auditoría (filtrado por sesión, formatos de pago y completitud de datos).
     /// </summary>
     public class ArqueoRepository
     {
@@ -16,36 +16,64 @@ namespace SistemaVentas.DAL.Reportes
 
         public ArqueoRepository()
         {
-            // segun App.config
             _cadenaConexion = ConfigurationManager.ConnectionStrings["ConexionBD"].ConnectionString;
         }
 
         /// <summary>
-        /// Obtiene el resumen de arqueo de una sesión de caja específica
+        /// Obtiene el resumen de arqueo filtrando estrictamente por la sesión de caja (id_caja_usuario)
+        /// y completando los valores de ventas, compras, montos declarados y estado.
         /// </summary>
-        public ArqueoResumen ObtenerResumenPorCaja(int idUsuario)
+        public ArqueoResumen ObtenerResumenPorCaja(int idCajaUsuario)
         {
             ArqueoResumen resumen = null;
 
             using (SqlConnection conexion = new SqlConnection(_cadenaConexion))
             {
                 conexion.Open();
+
+                // Consulta optimizada que rescata datos de la caja, ventas agrupadas por tipo normalizado,
+                // compras de la sesión y los campos de cierre (declarado, diferencia, estado).
                 string consulta = @"
-            SELECT TOP 1
-                cu.fecha_apertura,
-                cu.fecha_cierre,
-                cu.monto_inicial,
-                ISNULL(SUM(CASE WHEN v.metodo_pago = 'EFECTIVO' THEN v.total ELSE 0 END), 0) AS total_efectivo,
-                ISNULL(SUM(CASE WHEN v.metodo_pago = 'MERCADOPAGO' THEN v.total ELSE 0 END), 0) AS total_mp
-            FROM dbo.CajaUsuario cu
-            LEFT JOIN dbo.Venta v ON cu.id_caja_usuario = v.id_caja_usuario
-            WHERE cu.id_usuario = @idUsuario
-            GROUP BY cu.id_caja_usuario, cu.fecha_apertura, cu.fecha_cierre, cu.monto_inicial
-            ORDER BY cu.id_caja_usuario DESC;";
+                    SELECT 
+                        cu.fecha_apertura,
+                        cu.fecha_cierre,
+                        cu.monto_inicial,
+                        ISNULL(cu.monto_declarado, 0) AS monto_declarado,
+                        ISNULL(cu.diferencia, 0) AS diferencia,
+                        ISNULL(cu.estado, 'Abierta') AS estado,
+                        
+                        -- Ventas en efectivo (normalizando formato y mayúsculas/minúsculas)
+                        ISNULL((
+                            SELECT SUM(v.total) 
+                            FROM dbo.Venta v 
+                            WHERE v.id_caja_usuario = cu.id_caja_usuario 
+                              AND UPPER(LTRIM(RTRIM(v.metodo_pago))) IN ('EFECTIVO', 'CASH')
+                        ), 0) AS total_efectivo,
+
+                        -- Ventas en Mercado Pago (normalizando variaciones de espacio o nombres)
+                        ISNULL((
+                            SELECT SUM(v.total) 
+                            FROM dbo.Venta v 
+                            WHERE v.id_caja_usuario = cu.id_caja_usuario 
+                              AND UPPER(LTRIM(RTRIM(v.metodo_pago))) IN ('MERCADOPAGO', 'MERCADO PAGO', 'MP')
+                        ), 0) AS total_mp,
+
+                        -- Compras en efectivo asociadas a la caja o periodo de la sesión
+                        ISNULL((
+                            SELECT SUM(c.total) 
+                            FROM dbo.Compra c 
+                            WHERE c.id_caja_usuario = cu.id_caja_usuario 
+                              AND UPPER(LTRIM(RTRIM(c.metodo_pago))) IN ('EFECTIVO', 'CASH')
+                        ), 0) AS total_compras_efectivo
+
+                    FROM dbo.CajaUsuario cu
+                    WHERE cu.id_caja_usuario = @idCajaUsuario;";
 
                 using (SqlCommand comando = new SqlCommand(consulta, conexion))
                 {
-                    comando.Parameters.AddWithValue("@idUsuario", idUsuario);
+                    // Corrección: Filtro por ID de Sesión de Caja exacto y no por ID de usuario general
+                    comando.Parameters.AddWithValue("@idCajaUsuario", idCajaUsuario);
+
                     using (SqlDataReader lector = comando.ExecuteReader())
                     {
                         if (lector.Read())
@@ -53,6 +81,7 @@ namespace SistemaVentas.DAL.Reportes
                             decimal inicial = Convert.ToDecimal(lector["monto_inicial"]);
                             decimal efec = Convert.ToDecimal(lector["total_efectivo"]);
                             decimal mp = Convert.ToDecimal(lector["total_mp"]);
+                            decimal comprasEfec = Convert.ToDecimal(lector["total_compras_efectivo"]);
 
                             resumen = new ArqueoResumen
                             {
@@ -61,8 +90,11 @@ namespace SistemaVentas.DAL.Reportes
                                 MontoInicial = inicial,
                                 TotalVentasEfectivo = efec,
                                 TotalVentasMp = mp,
-                                TotalComprasEfectivo = 0,
-                                MontoSistema = inicial + efec
+                                TotalComprasEfectivo = comprasEfec, // Ya no devuelve cero fijo
+                                MontoSistema = (inicial + efec) - comprasEfec,
+                                MontoDeclarado = Convert.ToDecimal(lector["monto_declarado"]),
+                                Diferencia = Convert.ToDecimal(lector["diferencia"]),
+                                Estado = lector["estado"].ToString()
                             };
                         }
                     }

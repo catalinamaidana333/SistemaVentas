@@ -24,6 +24,14 @@
                             Padding="20,10"
                             Margin="0,0,15,0"/>
 
+                    <Button x:Name="BtnRestaurarBackup" 
+                            Content="Restaurar Base de Datos" 
+                            Background="#F2C832" 
+                            Foreground="#000035" 
+                            FontWeight="Bold"
+                            Padding="15,8"
+                            Click="BtnRestaurarBackup_Click"/>
+
                     <!-- Mensaje de Éxito -->
                     <TextBlock x:Name="TbMensajeExito"
                                Text="✓ Backup generado exitosamente"
