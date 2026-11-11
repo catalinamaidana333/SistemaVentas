@@ -26,7 +26,7 @@ namespace SistemaVentas.DAL.Reportes
 
             string consulta = @"
                 SELECT 
-                    ISNULL(SUM(dv.precio * dv.cantidad), 0) AS total_ingresos,
+                    ISNULL(SUM(dv.precio_unitario_historico * dv.cantidad), 0) AS total_ingresos,
                     ISNULL(SUM(ISNULL(p.precio_costo, 0) * dv.cantidad), 0) AS total_costos
                 FROM dbo.DetalleVenta dv
                 INNER JOIN dbo.Venta v ON dv.id_venta = v.id_venta
